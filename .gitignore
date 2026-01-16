@@ -1,0 +1,21 @@
+# Flutter 共通
+**/build/
+**/.dart_tool/
+**/.packages
+**/pubspec.lock
+
+# IDE 関連
+**/.idea/
+**/.vscode/
+*.iml
+
+# iOS
+**/ios/Pods/
+**/ios/Runner.xcworkspace/
+
+# Android
+**/android/.gradle/
+**/android/app/build/
+
+# その他
+*.log

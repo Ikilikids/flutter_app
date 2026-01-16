@@ -1,0 +1,50 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "highlymathquiz",
+          "appId": "1:109841804761:android:73ae6c4fbe1ecb36fcfdc8",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "highlymathquiz",
+          "configurations": {
+            "android": "1:109841804761:android:73ae6c4fbe1ecb36fcfdc8",
+            "ios": "1:109841804761:ios:e87b1c019dd67575fcfdc8",
+            "macos": "1:109841804761:ios:e87b1c019dd67575fcfdc8",
+            "web": "1:109841804761:web:e7e834b777d51d6bfcfdc8",
+            "windows": "1:109841804761:web:d066d0dceba49870fcfdc8"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

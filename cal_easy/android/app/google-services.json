@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "517203206826",
+    "project_id": "easy-cal-6b8c0",
+    "storage_bucket": "easy-cal-6b8c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:517203206826:android:91a0429238b754e89b66d3",
+        "android_client_info": {
+          "package_name": "jp.ponta.cal_easy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCs8hoEw00ZrN4Q-yWiWQ-c-zKWWoqxtpI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

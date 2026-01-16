@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "109841804761",
+    "project_id": "highlymathquiz",
+    "storage_bucket": "highlymathquiz.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:109841804761:android:73ae6c4fbe1ecb36fcfdc8",
+        "android_client_info": {
+          "package_name": "jp.ponta.mathquiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChYRFXhPs1v_pwErVLyysjk1y--U_2pvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "870670936618",
+    "project_id": "reflect-ponta",
+    "storage_bucket": "reflect-ponta.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870670936618:android:21af3e9ab854bca3193153",
+        "android_client_info": {
+          "package_name": "jp.ponta.reflect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCV7W5x9H5LoaV4eN1PyMxYBV70sJKlua4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
