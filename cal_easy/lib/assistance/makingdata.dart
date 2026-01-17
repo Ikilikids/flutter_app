@@ -34,31 +34,36 @@ class OriginCentral {
       return candidates[random.nextInt(candidates.length)];
     }
 
-    if (mainsort == "1") { // plus
+    if (mainsort == "1") {
+      // plus
       int a, b;
       a = ran(1, 9);
       b = ran(1, 9);
       ss1 = (a + b).toString();
       q1 = "$a + $b = ？";
-    } else if (mainsort == "2") { // minus_e
+    } else if (mainsort == "2") {
+      // minus_e
       int a, b;
       b = ran(1, 19);
       a = ran(b, 19);
       ss1 = (a - b).toString();
       q1 = "$a - $b = ？";
-    } else if (mainsort == "3") { // times
+    } else if (mainsort == "3") {
+      // times
       int a, b;
       a = ran(1, 9);
       b = ran(1, 9);
       ss1 = (a * b).toString();
       q1 = "$a × $b = ？";
-    } else if (mainsort == "4") { // div
+    } else if (mainsort == "4") {
+      // div
       int a, b;
       b = ran(1, 9);
       a = b * ran(1, 9);
       ss1 = (a ~/ b).toString();
       q1 = "$a ÷ $b = ？";
-    } else if (mainsort == "5") { // plus2
+    } else if (mainsort == "5") {
+      // plus2
       int a, b, f;
       f = ran(22, 99);
       do {
@@ -67,13 +72,14 @@ class OriginCentral {
       } while ((a % 10 == 0 || b % 10 == 0));
       ss1 = f.toString();
       q1 = "$a + $b = ？";
-    } else if (mainsort == "6") { // minus2
+    } else if (mainsort == "6") {
+      // minus2
       int a, b, f;
-      f = ran(22, 88);
       do {
-        a = ran(f, 99);
-        b = a - f;
+        a = ran(22, 99);
+        b = ran(11, a - 11);
       } while ((a % 10 == 0 || b % 10 == 0));
+      f = a - b;
       ss1 = f.toString();
       q1 = "$a - $b = ？";
     }
@@ -88,4 +94,3 @@ class OriginCentral {
     return result;
   }
 }
-

@@ -240,53 +240,32 @@ class _SettingsPageState extends State<SettingsPage> {
 Future<void> _updateRankingsAfterNameChange(
     String uid, String newName, List<Map<String, String>> sortData) async {
   final firestore = FirebaseFirestore.instance;
-  final rankingCollections = ['rankings_t', 'rankings_g'];
   final quizTabs = sortData.map((s) => s['label']!).toList();
+  final periods = ['all', 'monthly', 'weekly'];
 
-  for (var collectionName in rankingCollections) {
-    final rankingsRef = firestore.collection(collectionName);
-    const int maxRetries = 3;
-    int attempt = 0;
-    while (attempt < maxRetries) {
-      attempt++;
-      try {
-        WriteBatch batch = firestore.batch();
-        int opsInBatch = 0;
-        final now = DateTime.now();
-        final monthKey = "monthly-${now.year}-${now.month}";
-        final weekKey = "weekly-${now.year}-${getWeekNumber(now)}";
+  for (var quizId in quizTabs) {
+    for (var period in periods) {
+      Query q = firestore
+          .collection("rankings_v2")
+          .where("quizId", isEqualTo: quizId)
+          .where("uid", isEqualTo: uid)
+          .where("period", isEqualTo: period);
 
-        for (var quizName in quizTabs) {
-          final docRef = rankingsRef.doc(quizName);
-          final List<DocumentReference> targets = [
-            docRef.collection('alltime').doc(uid),
-            docRef.collection(monthKey).doc(uid),
-            docRef.collection(weekKey).doc(uid),
-          ];
+      // monthly / weekly の場合は year/month/week も追加条件
+      final now = DateTime.now();
+      if (period == 'monthly') {
+        q = q
+            .where("year", isEqualTo: now.year)
+            .where("month", isEqualTo: now.month);
+      } else if (period == 'weekly') {
+        q = q
+            .where("year", isEqualTo: now.year)
+            .where("week", isEqualTo: getWeekNumber(now));
+      }
 
-          for (var target in targets) {
-            final snap = await target.get();
-            if (snap.exists) {
-              batch.update(target, {'userName': newName});
-              opsInBatch++;
-              if (opsInBatch >= 450) {
-                await batch.commit();
-                batch = firestore.batch();
-                opsInBatch = 0;
-              }
-            } else {}
-          }
-        }
-
-        if (opsInBatch > 0) {
-          await batch.commit();
-        }
-        break; // 成功したらループを抜ける
-      } catch (e) {
-        if (attempt >= maxRetries) {
-        } else {
-          await Future.delayed(Duration(milliseconds: 500 * attempt));
-        }
+      final snap = await q.get();
+      for (var doc in snap.docs) {
+        await doc.reference.update({"userName": newName});
       }
     }
   }

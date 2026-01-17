@@ -7,9 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class CommonRankingPage extends StatefulWidget {
-  const CommonRankingPage({
-    super.key,
-  });
+  const CommonRankingPage({super.key});
 
   @override
   State<CommonRankingPage> createState() => _CommonRankingPageState();
@@ -17,7 +15,7 @@ class CommonRankingPage extends StatefulWidget {
 
 class RankingEntry {
   final String userName;
-  final dynamic score;
+  final double score;
   final DateTime date;
   final String quizType;
 
@@ -30,18 +28,13 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   late TabController periodTabController;
 
   String selectedPeriod = '全期間';
-  String selectedSbject = "";
+  String selectedSubject = "";
   bool isLoading = true;
   bool isLimitedMode = false;
   late List<String> quizTabs;
   bool _areTabsInitialized = false;
 
-  final List<String> periodTabs = [
-    '全期間',
-    '月間',
-    '週間',
-  ];
-
+  final List<String> periodTabs = ['全期間', '月間', '週間'];
   Map<String, List<RankingEntry>> rankingData = {};
 
   @override
@@ -60,18 +53,33 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     super.dispose();
   }
 
-  void fetchAllRanking() async {
+  String _periodToV2(String period) {
+    switch (period) {
+      case '全期間':
+        return 'all';
+      case '月間':
+        return 'monthly';
+      case '週間':
+        return 'weekly';
+      default:
+        return 'all';
+    }
+  }
+
+  Future<void> fetchAllRanking() async {
     if (!mounted) return;
     setState(() => isLoading = true);
 
-    final key = selectedSbject;
+    final key = selectedSubject;
 
-    // CommonRankingManagerを使用
+    final periodV2 = _periodToV2(selectedPeriod);
+
     final data = await CommonRankingManager.getRanking(
-      selectedSbject,
-      selectedPeriod,
+      selectedSubject,
+      periodV2,
       isLimitedMode: isLimitedMode,
     );
+    print(data);
 
     if (!mounted) return;
 
@@ -79,7 +87,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
         .where((e) => (e['score'] ?? 0) > 0)
         .map((e) => RankingEntry(
               e['userName'] ?? '名無し',
-              e['score'] ?? 0.0,
+              (e['score'] as num).toDouble(),
               (e['date'] ?? DateTime.now()) as DateTime,
               isLimitedMode ? "g" : "t",
             ))
@@ -93,9 +101,10 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     final appConfig = Provider.of<AppConfig>(context, listen: false);
     final fix = appConfig.fix;
     final unit = appConfig.unit;
+
     if (!_areTabsInitialized) {
       quizTabs = appConfig.sortData.map((s) => s['label']!).toList();
-      selectedSbject = quizTabs.first;
+      selectedSubject = quizTabs.first;
       quizTabController = TabController(length: quizTabs.length, vsync: this);
       periodTabController =
           TabController(length: periodTabs.length, vsync: this);
@@ -104,25 +113,23 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     }
 
     final subjectData = appConfig.sortData.firstWhere(
-        (s) => s['label'] == selectedSbject,
+        (s) => s['label'] == selectedSubject,
         orElse: () => appConfig.sortData.first);
 
     final colorKey = isLimitedMode
         ? subjectData['limitColor']!
         : subjectData['normalColor']!;
-
-    Color tabcolor = getQuizColor2(colorKey, context, 1, 0.65, 1);
+    Color tabColor = getQuizColor2(colorKey, context, 1, 0.65, 1);
 
     return AppAdScaffold(
       appBar: AppBar(title: const Text("👑ランキング👑")),
       body: SafeArea(
         child: Column(
           children: [
+            // モード切替ボタン
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
                     child: ElevatedButton(
@@ -139,14 +146,11 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                             isLimitedMode ? Colors.grey : Colors.blue,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                            borderRadius: BorderRadius.circular(10)),
                         minimumSize: const Size(double.infinity, 50),
                       ),
-                      child: const Text(
-                        "無制限モード",
-                        style: TextStyle(fontSize: 18),
-                      ),
+                      child:
+                          const Text("無制限モード", style: TextStyle(fontSize: 18)),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -165,41 +169,40 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                             isLimitedMode ? Colors.red : Colors.grey,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                            borderRadius: BorderRadius.circular(10)),
                         minimumSize: const Size(double.infinity, 50),
                       ),
-                      child: const Text(
-                        "1日限定モード",
-                        style: TextStyle(fontSize: 18),
-                      ),
+                      child:
+                          const Text("1日限定モード", style: TextStyle(fontSize: 18)),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // クイズタブ
             if (_areTabsInitialized)
               TabBar(
                 controller: quizTabController,
-                indicatorColor: tabcolor,
-                labelColor: tabcolor,
+                indicatorColor: tabColor,
+                labelColor: tabColor,
                 unselectedLabelColor: textColor2(context),
-                dividerColor: textColor2(context),
                 tabs: quizTabs.map((name) => Tab(text: name)).toList(),
                 onTap: (index) {
                   setState(() {
-                    selectedSbject = quizTabs[index];
+                    selectedSubject = quizTabs[index];
                     fetchAllRanking();
                   });
                 },
               ),
+
+            // 期間タブ
             if (_areTabsInitialized)
               TabBar(
                 controller: periodTabController,
-                indicatorColor: tabcolor,
-                labelColor: tabcolor,
+                indicatorColor: tabColor,
+                labelColor: tabColor,
                 unselectedLabelColor: textColor2(context),
-                dividerColor: textColor2(context),
                 tabs: periodTabs.map((name) => Tab(text: name)).toList(),
                 onTap: (index) {
                   setState(() {
@@ -208,6 +211,8 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                   });
                 },
               ),
+
+            // ランキングリスト
             isLoading
                 ? const Expanded(
                     child: Center(child: CircularProgressIndicator()))
@@ -218,14 +223,13 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                       children: quizTabs.map((quizName) {
                         final key = quizName;
                         List<RankingEntry> data = rankingData[key] ?? [];
-                        if (data.isEmpty) {
+                        if (data.isEmpty)
                           return const Center(child: Text('データがありません'));
-                        }
 
                         return ListView.builder(
                           itemCount: data.length,
                           itemBuilder: (context, index) {
-                            RankingEntry entry = data[index];
+                            final entry = data[index];
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                   vertical: 6, horizontal: 10),
@@ -278,7 +282,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                             fit: BoxFit.scaleDown,
                                             alignment: Alignment.centerLeft,
                                             child: Text(
-                                              "${entry.userName}  ",
+                                              entry.userName,
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 20,
@@ -316,15 +320,13 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                               style: TextStyle(
                                                   fontSize: 100,
                                                   fontWeight: FontWeight.bold,
-                                                  color: tabcolor),
+                                                  color: tabColor),
                                             ),
-                                            Text(
-                                              unit,
-                                              style: TextStyle(
-                                                  fontSize: 50,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: tabcolor),
-                                            ),
+                                            Text(unit,
+                                                style: TextStyle(
+                                                    fontSize: 50,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: tabColor)),
                                             const SizedBox(width: 10),
                                           ],
                                         ),

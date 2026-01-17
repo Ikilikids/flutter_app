@@ -33,7 +33,6 @@ Future<void> multiplyAllScores() async {
         final snap = await col.get();
 
         if (snap.docs.isEmpty) {
-          print('⚠ $ranking / $quizTitle / $period は空');
           continue;
         }
 
@@ -42,13 +41,8 @@ Future<void> multiplyAllScores() async {
           final newScore = oldScore * 1000;
 
           await doc.reference.update({'score': newScore});
-
-          print(
-              '✅ $ranking/$quizTitle/$period/${doc.id}: $oldScore → $newScore');
         }
       }
     }
   }
-
-  print('🎉 全ランキングを1000倍完了');
 }

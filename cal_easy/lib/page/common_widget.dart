@@ -194,8 +194,10 @@ Widget pointwidget(int correctCount, BuildContext context) {
   );
 }
 
-Widget timewidget(double remainingTime, num totalScore, BuildContext context) {
+Widget timewidget(
+    String sort, double remainingTime, num totalScore, BuildContext context) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
+  int changeCount = sort == "56" ? 8 : 16;
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 5),
     child: Column(
@@ -252,7 +254,9 @@ Widget timewidget(double remainingTime, num totalScore, BuildContext context) {
               alignment: Alignment.center,
               fit: BoxFit.scaleDown,
               child: Text(
-                totalScore < 16 ? remainingTime.toStringAsFixed(2) : "??",
+                totalScore < changeCount
+                    ? remainingTime.toStringAsFixed(2)
+                    : "??",
                 style: TextStyle(
                   fontSize: 100,
                   fontWeight: FontWeight.bold,

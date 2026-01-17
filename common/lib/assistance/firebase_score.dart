@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 // getWeekNumber はHighScoreManagerとRankingManagerの両方で使うのでトップレベルに配置
 int getWeekNumber(DateTime date) {
@@ -10,226 +9,232 @@ int getWeekNumber(DateTime date) {
   return ((date.difference(firstMonday).inDays) / 7).ceil();
 }
 
+bool isBetter(num newScore, num prevScore) {
+  if (prevScore == 0) return true;
+  return newScore < prevScore; // タイム系
+}
+
 class CommonHighScoreManager {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final _firestore = FirebaseFirestore.instance;
 
-  /// ユーザーのハイスコアを取得
-  static Future<double> getHighScore(String quizTitle,
-      {required bool isLimitedMode}) async {
-    String jName = isLimitedMode ? 'highscores_g' : 'highscores_t';
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('User not logged in');
+  /// ユーザーの自己ベスト（users配下はそのまま）
+  static Future<double> getHighScore(
+    String quizId, {
+    required bool isLimitedMode,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return 0;
 
-      final doc = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection(jName)
-          .doc(quizTitle)
-          .get();
+    final jName = isLimitedMode ? 'highscores_g' : 'highscores_t';
 
-      final score = doc.data()?['score'];
-      return score is num ? score.toDouble() : 0.0;
-    } catch (e) {
-      debugPrint('ハイスコア取得失敗: $e');
-      return 0.0;
+    final doc = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection(jName)
+        .doc(quizId)
+        .get();
+
+    final score = doc.data()?['score'];
+    return score is num ? score.toDouble() : 0.0;
+  }
+
+  /// ランキング upsert（v2）
+  static Future<void> _upsertRanking({
+    required String rankingType,
+    required String quizId,
+    required String period,
+    required int year,
+    int? month,
+    int? week,
+    required String uid,
+    required String userName,
+    required double score,
+  }) async {
+    final query = await _firestore
+        .collection('rankings_v2')
+        .where('rankingType', isEqualTo: rankingType)
+        .where('quizId', isEqualTo: quizId)
+        .where('period', isEqualTo: period)
+        .where('year', isEqualTo: year)
+        .where(month != null ? 'month' : 'week', isEqualTo: month ?? week)
+        .where('uid', isEqualTo: uid)
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) {
+      await _firestore.collection('rankings_v2').add({
+        'rankingType': rankingType,
+        'quizId': quizId,
+        'period': period,
+        'year': year,
+        'month': month,
+        'week': week,
+        'uid': uid,
+        'userName': userName,
+        'score': score,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      final doc = query.docs.first;
+      final prev = (doc['score'] as num).toDouble();
+      if (isBetter(score, prev)) {
+        await doc.reference.update({
+          'score': score,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
     }
   }
 
-  /// ハイスコアとランキング（全期間・月間・週間）を同時に更新
-  /// ハイスコア更新
+  /// ハイスコア & ランキング更新（完全v2）
   static Future<void> setHighScoreSafe(
-      String quizTitle, num score, String userName,
-      {required bool isLimitedMode, required int roundingFactor}) async {
-    if (score <= 0) {
-      // タイムアタックで0秒は無意味 → 保存しない
-      debugPrint("タイムアタック: score=0 は保存しません");
-      return;
-    }
+    String quizId,
+    num score,
+    String userName, {
+    required bool isLimitedMode,
+    required int roundingFactor,
+  }) async {
+    if (score <= 0) return;
 
-    String jName = isLimitedMode ? 'highscores_g' : 'highscores_t';
-    String rankingName = isLimitedMode ? 'rankings_g' : 'rankings_t';
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User not logged in');
+    if (user == null) return;
 
     final now = DateTime.now();
-    final monthKey = "${now.year}-${now.month}";
-    final weekKey = "${now.year}-${getWeekNumber(now)}";
+    final rounded = (score * roundingFactor).roundToDouble() / roundingFactor;
 
+    final rankingType = isLimitedMode ? 'g' : 't';
+    final jName = isLimitedMode ? 'highscores_g' : 'highscores_t';
+
+    // 🔹 自己ベスト保存
     final userHighScoreRef = _firestore
         .collection('users')
         .doc(user.uid)
         .collection(jName)
-        .doc(quizTitle);
-
-    final alltimeRef = _firestore
-        .collection(rankingName)
-        .doc(quizTitle)
-        .collection('alltime')
-        .doc(user.uid);
-
-    final monthlyRef = _firestore
-        .collection(rankingName)
-        .doc(quizTitle)
-        .collection('monthly-$monthKey')
-        .doc(user.uid);
-
-    final weeklyRef = _firestore
-        .collection(rankingName)
-        .doc(quizTitle)
-        .collection('weekly-$weekKey')
-        .doc(user.uid);
-
-    // 指定された単位で丸める
-    final roundedScore =
-        (score * roundingFactor).roundToDouble() / roundingFactor;
+        .doc(quizId);
 
     await _firestore.runTransaction((tx) async {
-      final userSnap = await tx.get(userHighScoreRef);
-      final alltimeSnap = await tx.get(alltimeRef);
-      final monthSnap = await tx.get(monthlyRef);
-      final weekSnap = await tx.get(weeklyRef);
+      final snap = await tx.get(userHighScoreRef);
+      final prev = (snap.data()?['score'] as num?)?.toDouble() ?? 0.0;
 
-      final prevScore = (userSnap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-      final prevAll = (alltimeSnap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-      final prevMonth = (monthSnap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-      final prevWeek = (weekSnap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-
-      if (isBetter(roundedScore, prevScore)) {
+      if (isBetter(rounded, prev)) {
         tx.set(userHighScoreRef, {
-          'score': roundedScore,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-      if (isBetter(roundedScore, prevAll)) {
-        tx.set(alltimeRef, {
-          'userName': userName,
-          'score': roundedScore,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-      if (isBetter(roundedScore, prevMonth)) {
-        tx.set(monthlyRef, {
-          'userName': userName,
-          'score': roundedScore,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-      if (isBetter(roundedScore, prevWeek)) {
-        tx.set(weeklyRef, {
-          'userName': userName,
-          'score': roundedScore,
+          'score': rounded,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
     });
 
+    // 🔹 rankings_v2（3種）
+    await _upsertRanking(
+      rankingType: rankingType,
+      quizId: quizId,
+      period: 'all',
+      year: now.year,
+      uid: user.uid,
+      userName: userName,
+      score: rounded,
+    );
+
+    await _upsertRanking(
+      rankingType: rankingType,
+      quizId: quizId,
+      period: 'monthly',
+      year: now.year,
+      month: now.month,
+      uid: user.uid,
+      userName: userName,
+      score: rounded,
+    );
+
+    await _upsertRanking(
+      rankingType: rankingType,
+      quizId: quizId,
+      period: 'weekly',
+      year: now.year,
+      week: getWeekNumber(now),
+      uid: user.uid,
+      userName: userName,
+      score: rounded,
+    );
+
+    // 🔁 制限 → 通常へ昇格
     if (isLimitedMode) {
-      final normalHighScore =
-          await getHighScore(quizTitle, isLimitedMode: false);
-      if (isBetter(roundedScore, normalHighScore)) {
-        await setHighScoreSafe(quizTitle, roundedScore, userName,
-            isLimitedMode: false,
-            roundingFactor: roundingFactor); // 再帰呼び出し時もroundingFactorを渡す
+      final normal = await getHighScore(quizId, isLimitedMode: false);
+      if (isBetter(rounded, normal)) {
+        await setHighScoreSafe(
+          quizId,
+          rounded,
+          userName,
+          isLimitedMode: false,
+          roundingFactor: roundingFactor,
+        );
       }
     }
   }
-}
-
-bool isBetter(num newScore, num prevScore) {
-  if (prevScore == 0.0) return true; // 初回登録
-  return newScore < prevScore; // タイムは小さい方
 }
 
 class CommonRankingManager {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final _firestore = FirebaseFirestore.instance;
 
-  /// period: '月間' / '全期間' / '週間'
+  /// period: "all" | "monthly" | "weekly"
   static Future<List<Map<String, dynamic>>> getRanking(
-      String quizTitle, String period,
-      {required bool isLimitedMode}) async {
-    String rankingName = isLimitedMode ? 'rankings_g' : 'rankings_t';
-    try {
-      CollectionReference col;
+    String quizId,
+    String period, {
+    required bool isLimitedMode,
+  }) async {
+    final now = DateTime.now();
 
-      if (period == '月間') {
-        final now = DateTime.now();
-        final monthKey = "${now.year}-${now.month}";
-        col = _firestore
-            .collection(rankingName)
-            .doc(quizTitle)
-            .collection('monthly-$monthKey');
-      } else if (period == '週間') {
-        final now = DateTime.now();
-        final weekOfYear = getWeekNumber(now);
-        final weekKey = "${now.year}-$weekOfYear";
-        col = _firestore
-            .collection(rankingName)
-            .doc(quizTitle)
-            .collection('weekly-$weekKey');
-      } else {
-        // 全期間
-        col = _firestore
-            .collection(rankingName)
-            .doc(quizTitle)
-            .collection('alltime');
-      }
+    Query q = _firestore
+        .collection('rankings_v2')
+        .where('rankingType', isEqualTo: isLimitedMode ? 'g' : 't')
+        .where('quizId', isEqualTo: quizId)
+        .where('period', isEqualTo: period)
+        .where('year', isEqualTo: now.year);
 
-      final snapshot = await col
-          .orderBy('score', descending: false)
-          .limit(50) // ← 上位50件だけ
-          .get();
-
-      final ranking = snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return {
-          'userName': data['userName'] ?? '名無し',
-          'score': (data['score'] as num?)?.toDouble() ?? 0.0,
-          'date': (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        };
-      }).toList();
-
-      return ranking;
-    } catch (e) {
-      debugPrint('ランキング取得失敗: $e');
-      return [];
+    if (period == 'monthly') {
+      q = q.where('month', isEqualTo: now.month);
     }
+    if (period == 'weekly') {
+      q = q.where('week', isEqualTo: getWeekNumber(now));
+    }
+
+    final snap = await q.orderBy('score').limit(50).get();
+
+    return snap.docs.map((d) {
+      final data = d.data() as Map<String, dynamic>;
+      return {
+        'userName': data['userName'],
+        'score': (data['score'] as num).toDouble(),
+        'date': (data['updatedAt'] as Timestamp?)?.toDate(),
+      };
+    }).toList();
   }
 
   static Future<int> getMyRank(
-    String quizTitle,
+    String quizId,
     String period,
     num myScore, {
     required bool isLimitedMode,
   }) async {
     if (myScore <= 0) return 0;
 
-    String rankingName = isLimitedMode ? 'rankings_g' : 'rankings_t';
-    CollectionReference col;
-
     final now = DateTime.now();
 
-    if (period == '月間') {
-      final monthKey = "${now.year}-${now.month}";
-      col = FirebaseFirestore.instance
-          .collection(rankingName)
-          .doc(quizTitle)
-          .collection('monthly-$monthKey');
-    } else if (period == '週間') {
-      final weekKey = "${now.year}-${getWeekNumber(now)}";
-      col = FirebaseFirestore.instance
-          .collection(rankingName)
-          .doc(quizTitle)
-          .collection('weekly-$weekKey');
-    } else {
-      col = FirebaseFirestore.instance
-          .collection(rankingName)
-          .doc(quizTitle)
-          .collection('alltime');
+    Query q = _firestore
+        .collection('rankings_v2')
+        .where('rankingType', isEqualTo: isLimitedMode ? 'g' : 't')
+        .where('quizId', isEqualTo: quizId)
+        .where('period', isEqualTo: period)
+        .where('year', isEqualTo: now.year);
+
+    if (period == 'monthly') {
+      q = q.where('month', isEqualTo: now.month);
+    }
+    if (period == 'weekly') {
+      q = q.where('week', isEqualTo: getWeekNumber(now));
     }
 
-    // 自分より良いスコアの人数を数える
-    final snap = await col.where('score', isLessThan: myScore).count().get();
+    final snap = await q.where('score', isLessThan: myScore).count().get();
 
     return (snap.count ?? 0) + 1;
   }

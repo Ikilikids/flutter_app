@@ -175,7 +175,6 @@ class _GamescreenState extends State<Gamescreen> {
       // 平均タイム
       finalScore = (results.reduce((a, b) => a + b) / results.length).round();
     }
-    print(finalScore);
 
     Navigator.pushReplacement(
       context,

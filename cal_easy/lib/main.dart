@@ -49,7 +49,7 @@ final _appConfig = AppConfig(
     {
       "sort": "56",
       "label": "2桁の足し算・引き算",
-      "method": "20問の正解タイムで競う",
+      "method": "10問の正解タイムで競う",
       "description": "2桁の足し算・引き算、計算力を鍛えよう!!",
       "normalColor": "6",
       "limitColor": "5"

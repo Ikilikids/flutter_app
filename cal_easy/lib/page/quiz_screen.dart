@@ -37,6 +37,7 @@ class QuizScreenState extends State<Quizscreen> {
   bool isGameOver = false;
   Timer? _timer;
   double elapsedTime = 0.0;
+  int count = 20;
 
   late SoundManager soundManager;
   final GlobalKey<LatexInputScreenState> _latexInputKey =
@@ -56,6 +57,7 @@ class QuizScreenState extends State<Quizscreen> {
       _initialized = true;
       soundManager = Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
+      count = quizinfo[0] == "56" ? 10 : 20;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {
@@ -131,7 +133,7 @@ class QuizScreenState extends State<Quizscreen> {
 
       soundManager.playSound('maru.mp3');
 
-      if (correctCount == 20) {
+      if (correctCount == count) {
         setState(() {
           isGameOver = true;
         });
@@ -232,6 +234,7 @@ class QuizScreenState extends State<Quizscreen> {
                           Expanded(
                             flex: 3,
                             child: timewidget(
+                              quizinfo[0],
                               elapsedTime,
                               correctCount,
                               context,
