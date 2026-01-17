@@ -1,7 +1,4 @@
-import 'package:common/assistance/quiz_state_provider.dart';
-import 'package:common/assistance/sound_manager.dart';
-import 'package:common/config/app_config.dart';
-import 'package:common/widgets/app_ad_scaffold.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -54,7 +51,7 @@ class _CommonCountdownScreenState extends State<CommonCountdownScreen> {
   @override
   Widget build(BuildContext context) {
     final quizState = context.watch<QuizStateProvider>();
-    Color color = quizState.quizinfo[3];
+    Color color = getQuizColor2(quizState.quizinfo[3], context, 1, 0.35, 0.95);
 
     return PopScope(
       canPop: false,

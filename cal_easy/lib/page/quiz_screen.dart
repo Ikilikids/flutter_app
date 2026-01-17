@@ -131,7 +131,7 @@ class QuizScreenState extends State<Quizscreen> {
 
       soundManager.playSound('maru.mp3');
 
-      if (correctCount == 1) {
+      if (correctCount == 20) {
         setState(() {
           isGameOver = true;
         });
@@ -207,7 +207,6 @@ class QuizScreenState extends State<Quizscreen> {
           if (didPop) return;
           showMenuDialog(
             context,
-            quizinfo,
             () => setState(() {
               isGameOver = true;
             }),
@@ -242,7 +241,6 @@ class QuizScreenState extends State<Quizscreen> {
                             flex: 2,
                             child: menuButton(
                               context,
-                              quizinfo,
                               () => setState(() {
                                 isGameOver = true;
                               }),

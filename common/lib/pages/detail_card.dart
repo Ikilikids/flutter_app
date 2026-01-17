@@ -122,7 +122,10 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
   @override
   Widget build(BuildContext context) {
     final quizState = Provider.of<QuizStateProvider>(context, listen: false);
-    final cardDescription = _appConfig.cardDescription;
+
+    final title = _appConfig.title;
+    final fix = _appConfig.fix;
+    final unit = _appConfig.unit;
 
     if (!_isDependenciesInitialized) {
       return const Center(child: CircularProgressIndicator());
@@ -163,18 +166,20 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
                     final playCount =
                         widget.isLimitedMode ? (_playCounts[subTitle] ?? 0) : 0;
                     final rewardGranted = _rewardGranted[subTitle] ?? false;
-
+                    final cardDescription = item['method']!;
                     return _CommonSubjectCard(
-                      item: item,
-                      score: score,
-                      playCount: playCount,
-                      rewardGranted: rewardGranted,
-                      isLimitedMode: widget.isLimitedMode,
-                      isNavigating: _isNavigating,
-                      onPlay: () => _handlePlay(quizState, item),
-                      onWatchAd: () => _handleWatchAd(subTitle),
-                      cardDescription: cardDescription,
-                    );
+                        item: item,
+                        score: score,
+                        playCount: playCount,
+                        rewardGranted: rewardGranted,
+                        isLimitedMode: widget.isLimitedMode,
+                        isNavigating: _isNavigating,
+                        onPlay: () => _handlePlay(quizState, item),
+                        onWatchAd: () => _handleWatchAd(subTitle),
+                        cardDescription: cardDescription,
+                        title: title,
+                        fix: fix,
+                        unit: unit);
                   }),
                   const Expanded(flex: 1, child: SizedBox()),
                 ],
@@ -215,19 +220,13 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
 
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
-    print(item['color']!);
+
     quizState.setValues(
       quizinfo: [
         item['sort']!,
         item['description']!,
         item['label']!,
-        getQuizColor2(
-          item['color']!,
-          context,
-          1,
-          0.35,
-          0.95,
-        ),
+        item['color']!,
         widget.isLimitedMode,
       ],
     );
@@ -270,7 +269,7 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
 
 class _CommonSubjectCard extends StatelessWidget {
   final Map<String, String> item;
-  final double score;
+  final num score;
   final int playCount;
   final bool rewardGranted;
   final bool isLimitedMode;
@@ -278,6 +277,9 @@ class _CommonSubjectCard extends StatelessWidget {
   final VoidCallback onPlay;
   final VoidCallback onWatchAd;
   final String cardDescription;
+  final String title;
+  final int fix;
+  final String unit;
 
   const _CommonSubjectCard({
     required this.item,
@@ -289,6 +291,9 @@ class _CommonSubjectCard extends StatelessWidget {
     required this.onPlay,
     required this.onWatchAd,
     required this.cardDescription,
+    required this.title,
+    required this.fix,
+    required this.unit,
   });
 
   @override
@@ -297,6 +302,9 @@ class _CommonSubjectCard extends StatelessWidget {
     final subTitle = item['label']!;
     final color = item['color']!;
 
+    final circleColor = (title == "とことん四則演算")
+        ? item['sort']!
+        : (isLimitedMode ? item['limitColor']! : item['normalColor']!);
     return Expanded(
       flex: 1,
       child: Padding(
@@ -321,7 +329,7 @@ class _CommonSubjectCard extends StatelessWidget {
                 child: Row(
                   children: [
                     _buildCircleIcon(
-                      item['sort']!.split(
+                      circleColor.split(
                           ''), // "12" -> ["1", "2"], "1234" -> ["1","2","3","4"]
                       context,
                       isLimitedMode,
@@ -334,7 +342,7 @@ class _CommonSubjectCard extends StatelessWidget {
                 flex: 2,
                 child: Row(
                   children: [
-                    _buildScoreDisplay(color, context),
+                    _buildScoreDisplay(color, context, fix, unit),
                     _buildPlayButton(context, color),
                   ],
                 ),
@@ -383,7 +391,7 @@ class _CommonSubjectCard extends StatelessWidget {
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  cardDescription,
+                  "-${cardDescription}-",
                   style: TextStyle(fontSize: 100, color: textColor2(context)),
                 ),
               ),
@@ -416,7 +424,8 @@ class _CommonSubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreDisplay(String color, BuildContext context) {
+  Widget _buildScoreDisplay(
+      String color, BuildContext context, int fix, String unit) {
     return Expanded(
       child: FittedBox(
         child: Row(
@@ -434,7 +443,7 @@ class _CommonSubjectCard extends StatelessWidget {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  score == 0.0 ? "--" : score.toStringAsFixed(2),
+                  score == 0.0 ? "--" : score.toStringAsFixed(fix),
                   style: TextStyle(
                     fontSize: 100,
                     fontWeight: FontWeight.bold,
@@ -443,7 +452,7 @@ class _CommonSubjectCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "秒",
+                  unit,
                   style: TextStyle(
                     fontSize: 50,
                     fontWeight: FontWeight.bold,

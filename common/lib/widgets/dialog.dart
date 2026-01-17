@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 Future<void> showMenuDialog(
   BuildContext context,
-  List<dynamic> quizinfo,
   VoidCallback onSetGameOver,
   bool isLimitedMode,
 ) async {
@@ -99,7 +98,6 @@ class _MenuButton extends StatelessWidget {
 
 Widget menuButton(
   BuildContext context,
-  List<dynamic> quizinfo,
   VoidCallback onSetGameOver,
   bool isLimitedMode,
 ) {
@@ -109,7 +107,7 @@ Widget menuButton(
       fit: BoxFit.contain,
       child: ElevatedButton(
         onPressed: () async {
-          await showMenuDialog(context, quizinfo, onSetGameOver, isLimitedMode);
+          await showMenuDialog(context, onSetGameOver, isLimitedMode);
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: bgColor1(context), // 0〜255 の範囲、128は約50%,
@@ -126,5 +124,77 @@ Widget menuButton(
         ),
       ),
     ),
+  );
+}
+
+Future<void> showFlyingDialog(
+  BuildContext context,
+  VoidCallback onSetGameOver,
+  bool isLimitedMode,
+) async {
+  await showGeneralDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (BuildContext buildContext, Animation<double> animation,
+        Animation<double> secondaryAnimation) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          Navigator.of(buildContext).pop();
+        },
+        child: AlertDialog(
+          title: const Text("おてつき！"),
+          content: isLimitedMode
+              ? const Text("また次回挑戦!!")
+              : const Text("もう一度挑戦しますか？"),
+          actions: [
+            TextButton(
+              child: const Text("ホームへ"),
+              onPressed: () {
+                onSetGameOver();
+                Navigator.of(buildContext).pop();
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AdInterstitialNavigator(
+                        nextScreen:
+                            CommonDetailCard(isLimitedMode: isLimitedMode)),
+                  ),
+                );
+              },
+            ),
+            ElevatedButton(
+              onPressed: isLimitedMode
+                  ? null
+                  : () {
+                      onSetGameOver();
+                      Navigator.of(buildContext).pop();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => AdInterstitialNavigator(
+                            nextScreen: CommonCountdownScreen(),
+                          ),
+                        ),
+                      );
+                    },
+              child: const Text("🔥もう一度 ▸"),
+            ),
+          ],
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return ScaleTransition(
+        scale: CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOut,
+        ),
+        child: child,
+      );
+    },
   );
 }

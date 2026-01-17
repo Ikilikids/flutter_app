@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:common/config/app_config.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MathBackground extends StatelessWidget {
   final Widget child;
@@ -8,11 +10,13 @@ class MathBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _appconfig = Provider.of<AppConfig>(context);
+    final symbols = _appconfig.symbols;
     return Stack(
       children: [
         Positioned.fill(
           child: CustomPaint(
-            painter: _MathPainter(),
+            painter: _MathPainter(symbols: symbols),
           ),
         ),
         child,
@@ -22,6 +26,10 @@ class MathBackground extends StatelessWidget {
 }
 
 class _MathPainter extends CustomPainter {
+  final List<String> symbols;
+
+  _MathPainter({required this.symbols});
+
   @override
   void paint(Canvas canvas, Size size) {
     const textStyle = TextStyle(
@@ -31,7 +39,6 @@ class _MathPainter extends CustomPainter {
 
     // シードを外すとホットリロードのたびに位置が変わります
     final random = math.Random(42);
-    final symbols = ['+', '−', '×', '÷'];
 
     for (int i = 0; i < 60; i++) {
       // 60個くらいが程よいかもしれません

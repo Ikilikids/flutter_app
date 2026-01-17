@@ -9,7 +9,7 @@ class LatexQuizFormatter {
 
     // Replace the last '？' with '◯' for the display question.
     // This is a simple assumption, but should cover the cases.
-    String latexQuestion = question.replaceFirst(RegExp(r'？$'), '◯');
+    String latexQuestion = question.replaceFirst(RegExp(r'？$'), '\\large{◯}');
 
     // Split the answer into individual characters for digit-by-digit validation.
     // The required format is List<List<String>>.
@@ -22,7 +22,7 @@ class LatexQuizFormatter {
 
     return {
       'alist': answerList,
-      'latex': latexQuestion,
+      'latex': '\\LARGE{◯}',
     };
   }
 }

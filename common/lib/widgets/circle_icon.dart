@@ -28,7 +28,7 @@ Widget buildCircleWidget(
           child: FittedBox(
             fit: BoxFit.contain,
             child: Icon(
-              isLimitedMode ? Icons.all_inclusive : Icons.timer,
+              isLimitedMode ? Icons.timer : Icons.all_inclusive,
               color: bgColor1(context),
             ),
           ),

@@ -39,7 +39,7 @@ class CommonHighScoreManager {
   /// ハイスコアとランキング（全期間・月間・週間）を同時に更新
   /// ハイスコア更新
   static Future<void> setHighScoreSafe(
-      String quizTitle, double score, String userName,
+      String quizTitle, num score, String userName,
       {required bool isLimitedMode, required int roundingFactor}) async {
     if (score <= 0) {
       // タイムアタックで0秒は無意味 → 保存しない
@@ -136,7 +136,7 @@ class CommonHighScoreManager {
   }
 }
 
-bool isBetter(double newScore, double prevScore) {
+bool isBetter(num newScore, num prevScore) {
   if (prevScore == 0.0) return true; // 初回登録
   return newScore < prevScore; // タイムは小さい方
 }
@@ -199,7 +199,7 @@ class CommonRankingManager {
   static Future<int> getMyRank(
     String quizTitle,
     String period,
-    double myScore, {
+    num myScore, {
     required bool isLimitedMode,
   }) async {
     if (myScore <= 0) return 0;

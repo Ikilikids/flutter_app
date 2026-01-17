@@ -16,22 +16,23 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'assistance/quiz_logic.dart';
 import 'firebase_options.dart';
-import 'page/quiz_screen.dart';
+import 'page/game_screen.dart';
 
 final bool isWeb = kIsWeb;
 
 final _appConfig = AppConfig(
   title: "とことん反射神経",
-  cardDescription: "-20問の正解タイムで競う-",
   icon: Icons.flash_on,
-  symbols: ["!!", "◯", "△", "♪"],
+  symbols: ["!!", "◯", "*", "♪"],
   isRotation: true,
+  fix: 0,
+  unit: "ミリ秒",
   sortData: [
     {
       "sort": "color",
       "label": "色で反応",
+      "method": "3回のうち一番遅いタイムで競う",
       "description": "画面の色が変わったらタップ！",
       "normalColor": "2",
       "limitColor": "1"
@@ -39,6 +40,7 @@ final _appConfig = AppConfig(
     {
       "sort": "number",
       "label": "数字で反応",
+      "method": "3回の平均タイムで競う",
       "description": "表示された数字のボタンをタップ！",
       "normalColor": "3",
       "limitColor": "4"
@@ -46,13 +48,13 @@ final _appConfig = AppConfig(
     {
       "sort": "grid",
       "label": "マス目で反応",
+      "method": "3回の平均タイムで競う",
       "description": "光ったマスをタップ！",
       "normalColor": "6",
       "limitColor": "5"
     }
   ],
-  mainGame: (BuildContext context, List<dynamic> quizinfo) => Quizscreen(
-    quizDirectives: prepareQuizDirectives(quizinfo[0]),
+  mainGame: (BuildContext context, List<dynamic> quizinfo) => Gamescreen(
     quizinfo: quizinfo,
   ),
 );
@@ -60,6 +62,18 @@ final _appConfig = AppConfig(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Firebase 初期化
+  /*await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // 🔹 匿名サインイン
+  final userCred = await FirebaseAuth.instance.signInAnonymously();
+  final uid = userCred.user?.uid;
+  print('Signed in anonymously: $uid');
+
+  // 🔹 ここでスコア更新
+  await multiplyAllScores();*/
   // SharedPreferencesからテーマモードを先行読み込み
   final prefs = await SharedPreferences.getInstance();
   final savedThemeMode = prefs.getString('themeMode') ?? 'light';

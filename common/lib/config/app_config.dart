@@ -5,20 +5,22 @@ typedef GamePageBuilder = Widget Function(
 
 class AppConfig {
   final String title;
-  final String cardDescription;
   final IconData icon;
   final List<String> symbols;
   final bool isRotation;
   final List<Map<String, String>> sortData;
   final GamePageBuilder mainGame;
+  final int fix;
+  final String unit;
 
   const AppConfig({
     required this.title,
-    required this.cardDescription,
     required this.icon,
     required this.symbols,
     required this.isRotation,
     required this.sortData,
     required this.mainGame, // ← 追加
+    required this.fix,
+    required this.unit,
   });
 }

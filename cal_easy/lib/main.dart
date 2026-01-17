@@ -24,14 +24,16 @@ final bool isWeb = kIsWeb;
 
 final _appConfig = AppConfig(
   title: "とことん四則演算",
-  cardDescription: "-20問の正解タイムで競う-",
   icon: Icons.calculate,
   symbols: ["+", "-", "×", "÷"],
   isRotation: false,
+  fix: 2,
+  unit: "秒",
   sortData: [
     {
       "sort": "12",
       "label": "足し算・引き算",
+      "method": "20問の正解タイムで競う",
       "description": "足し算・引き算、気軽にプレイ!!",
       "normalColor": "2",
       "limitColor": "1"
@@ -39,6 +41,7 @@ final _appConfig = AppConfig(
     {
       "sort": "1234",
       "label": "四則演算",
+      "method": "20問の正解タイムで競う",
       "description": "足し算・引き算・掛け算・割り算、素早く判断!!",
       "normalColor": "3",
       "limitColor": "4"
@@ -46,6 +49,7 @@ final _appConfig = AppConfig(
     {
       "sort": "56",
       "label": "2桁の足し算・引き算",
+      "method": "20問の正解タイムで競う",
       "description": "2桁の足し算・引き算、計算力を鍛えよう!!",
       "normalColor": "6",
       "limitColor": "5"

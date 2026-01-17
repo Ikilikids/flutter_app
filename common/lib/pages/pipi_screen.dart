@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class PipiScreen extends StatefulWidget {
-  final double totalScore;
+  final num totalScore;
 
   const PipiScreen({
     super.key,

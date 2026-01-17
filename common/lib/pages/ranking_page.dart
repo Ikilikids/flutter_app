@@ -91,7 +91,8 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   @override
   Widget build(BuildContext context) {
     final appConfig = Provider.of<AppConfig>(context, listen: false);
-
+    final fix = appConfig.fix;
+    final unit = appConfig.unit;
     if (!_areTabsInitialized) {
       quizTabs = appConfig.sortData.map((s) => s['label']!).toList();
       selectedSbject = quizTabs.first;
@@ -311,14 +312,14 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                           textBaseline: TextBaseline.alphabetic,
                                           children: [
                                             Text(
-                                              entry.score.toStringAsFixed(2),
+                                              entry.score.toStringAsFixed(fix),
                                               style: TextStyle(
                                                   fontSize: 100,
                                                   fontWeight: FontWeight.bold,
                                                   color: tabcolor),
                                             ),
                                             Text(
-                                              '秒',
+                                              unit,
                                               style: TextStyle(
                                                   fontSize: 50,
                                                   fontWeight: FontWeight.bold,

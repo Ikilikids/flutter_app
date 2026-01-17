@@ -695,9 +695,9 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
                           Expanded(
                             child: Row(
                               children: [
-                                Expanded(child: _getButtonList("-")),
+                                Expanded(child: SizedBox()),
                                 Expanded(child: _getButtonList("0")),
-                                Expanded(child: _getButtonList("+")),
+                                Expanded(child: SizedBox()),
                               ],
                             ),
                           ),

@@ -7,8 +7,8 @@ import 'package:provider/provider.dart';
 typedef DetailCardBuilder = Widget Function({required bool isLimitedMode});
 
 class CommonEndScreen extends StatefulWidget {
-  final double totalScore;
-  final double highScore;
+  final num totalScore;
+  final num highScore;
   final int rankAll;
   final int rankMonthly;
   final int rankWeekly;
@@ -33,11 +33,13 @@ class CommonEndScreen extends StatefulWidget {
 class _CommonEndScreenState extends State<CommonEndScreen> {
   int step = 0; // 0:正解数 1:最高記録 2:ランキング
   late SoundManager soundManager; // main.dart にある SoundManager を使用
+  late AppConfig _appConfig;
 
   @override
   void initState() {
     super.initState();
     soundManager = Provider.of<SoundManager>(context, listen: false);
+    _appConfig = Provider.of<AppConfig>(context, listen: false);
     _startSequence();
   }
 
@@ -61,7 +63,9 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
   @override
   Widget build(BuildContext context) {
     print('EndScreen build with quizinfo: ${widget.quizinfo}');
-    final quizColor = widget.quizinfo[3];
+    Color quizColor = getQuizColor2(widget.quizinfo[3], context, 1, 0.35, 0.95);
+    String unit = _appConfig.unit;
+    int fix = _appConfig.fix;
 
     return PopScope(
       canPop: false,
@@ -84,14 +88,17 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                     score: step >= 1 ? widget.totalScore : null,
                     borderColor: quizColor,
                     isLimitedMode: widget.isLimitedMode,
+                    fix: fix,
+                    unit: unit,
                   ),
                 ),
                 Expanded(
                   flex: 1,
                   child: _HighScoreSection(
-                    score: step >= 2 ? widget.highScore : null,
-                    isLimitedMode: widget.isLimitedMode,
-                  ),
+                      score: step >= 2 ? widget.highScore : null,
+                      isLimitedMode: widget.isLimitedMode,
+                      fix: fix,
+                      unit: unit),
                 ),
                 Expanded(
                   flex: 2,
@@ -170,15 +177,18 @@ class _QuizNameSection extends StatelessWidget {
 }
 
 class _ScoreSection extends StatelessWidget {
-  final double? score;
+  final num? score;
   final Color borderColor;
-
   final bool isLimitedMode;
+  final int fix;
+  final String unit;
 
   const _ScoreSection({
     required this.score,
     required this.borderColor,
     required this.isLimitedMode,
+    required this.fix,
+    required this.unit,
   });
 
   @override
@@ -227,7 +237,7 @@ class _ScoreSection extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        score == null ? " " : score!.toStringAsFixed(2),
+                        score == null ? " " : score!.toStringAsFixed(fix),
                         style: TextStyle(
                           fontSize: 1000,
                           fontWeight: FontWeight.w600,
@@ -236,7 +246,7 @@ class _ScoreSection extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '秒',
+                        '$unit',
                         style: TextStyle(
                           fontSize: 400,
                           fontWeight: FontWeight.w600,
@@ -256,13 +266,15 @@ class _ScoreSection extends StatelessWidget {
 }
 
 class _HighScoreSection extends StatelessWidget {
-  final double? score;
-
+  final num? score;
   final bool isLimitedMode;
-
+  final int fix;
+  final String unit;
   const _HighScoreSection({
     required this.score,
     required this.isLimitedMode,
+    required this.fix,
+    required this.unit,
   });
 
   @override
@@ -277,10 +289,10 @@ class _HighScoreSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   score == null
-                      ? "最高記録：  秒"
+                      ? "最高記録：  $unit"
                       : score == 0.0
-                          ? "最高記録：--秒"
-                          : '最高記録：${score!.toStringAsFixed(2)}秒',
+                          ? "最高記録：--$unit"
+                          : '最高記録：${score!.toStringAsFixed(fix)}$unit',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: textColor1(context),
