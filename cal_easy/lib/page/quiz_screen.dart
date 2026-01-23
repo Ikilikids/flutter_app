@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:cal_easy/assistance/latex_formatter.dart';
 import 'package:common/common.dart';
-import 'package:common/widgets/dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +12,7 @@ import '../page/latex.dart';
 
 class Quizscreen extends StatefulWidget {
   final List<String> quizDirectives;
-  final List<dynamic> quizinfo;
+  final QuizData quizinfo;
 
   const Quizscreen({
     super.key,
@@ -26,7 +25,7 @@ class Quizscreen extends StatefulWidget {
 }
 
 class QuizScreenState extends State<Quizscreen> {
-  late List quizinfo;
+  late QuizData quizinfo;
   DateTime? startTime;
   Map<String, dynamic> P = {};
   String? selectedAnswer;
@@ -57,7 +56,7 @@ class QuizScreenState extends State<Quizscreen> {
       _initialized = true;
       soundManager = Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
-      count = quizinfo[0] == "56" ? 10 : 20;
+      count = quizinfo.sort == "56" ? 10 : 20;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {
@@ -212,7 +211,7 @@ class QuizScreenState extends State<Quizscreen> {
             () => setState(() {
               isGameOver = true;
             }),
-            quizinfo[4],
+            quizinfo.islimited,
           );
         },
         child: AppAdScaffold(
@@ -234,7 +233,7 @@ class QuizScreenState extends State<Quizscreen> {
                           Expanded(
                             flex: 3,
                             child: timewidget(
-                              quizinfo[0],
+                              quizinfo.sort,
                               elapsedTime,
                               correctCount,
                               context,
@@ -247,12 +246,12 @@ class QuizScreenState extends State<Quizscreen> {
                               () => setState(() {
                                 isGameOver = true;
                               }),
-                              quizinfo[4],
+                              quizinfo.islimited,
                             ),
                           ),
                           Expanded(
                               flex: 3,
-                              child: pointwidget(correctCount, context)),
+                              child: pointwidget(context, correctCount)),
                         ],
                       ),
                     ),

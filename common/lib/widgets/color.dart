@@ -18,20 +18,20 @@ Color getQuizColor2(
   final isDark = Theme.of(context).brightness == Brightness.dark;
   value = isDark ? value * 0.8 : value;
 
-  if (title.contains('4')) {
+  if (title.contains('1') || title.contains('1A')) {
     return getColorByIndex(5.2, alpha, saturation, value);
-  } else if (title.contains('2')) {
+  } else if (title.contains('2') || title.contains('2B')) {
     return getColorByIndex(2, alpha, saturation, value);
-  } else if (title.contains('1')) {
+  } else if (title.contains('3') || title.contains('3C')) {
     return getColorByIndex(4.6, alpha, saturation, value);
-  } else if (title.contains('5')) {
+  } else if (title.contains('6') || title.contains('A')) {
     return getColorByIndex(3.8, alpha, saturation, value);
-  } else if (title.contains('3')) {
+  } else if (title.contains('5') || title.contains('B')) {
     return getColorByIndex(0.7, alpha, saturation * 0.9, value * 0.9);
-  } else if (title.contains('6')) {
+  } else if (title.contains('4') || title.contains('C')) {
     return getColorByIndex(2.9, alpha, saturation, value);
   } else {
-    return getColorByIndex(5.2, alpha, 0, value - 0.3);
+    return textColor1(context);
   }
 }
 

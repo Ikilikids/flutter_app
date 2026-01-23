@@ -9,9 +9,12 @@ int getWeekNumber(DateTime date) {
   return ((date.difference(firstMonday).inDays) / 7).ceil();
 }
 
-bool isBetter(num newScore, num prevScore) {
+bool isBetter(num newScore, num prevScore, bool isDescending) {
   if (prevScore == 0) return true;
-  return newScore < prevScore; // タイム系
+  print(isDescending);
+  return isDescending
+      ? newScore > prevScore // タイム系（小さい方が良い）
+      : newScore < prevScore; // スコア系（大きい方が良い）
 }
 
 class CommonHighScoreManager {
@@ -19,13 +22,13 @@ class CommonHighScoreManager {
 
   /// ユーザーの自己ベスト（users配下はそのまま）
   static Future<double> getHighScore(
-    String quizId, {
-    required bool isLimitedMode,
-  }) async {
+    String quizId,
+    String rankingType,
+  ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return 0;
 
-    final jName = isLimitedMode ? 'highscores_g' : 'highscores_t';
+    final jName = 'highscores_${rankingType}';
 
     final doc = await _firestore
         .collection('users')
@@ -49,6 +52,8 @@ class CommonHighScoreManager {
     required String uid,
     required String userName,
     required double score,
+    required bool isDescending,
+    required bool isbattle,
   }) async {
     final query = await _firestore
         .collection('rankings_v2')
@@ -77,7 +82,12 @@ class CommonHighScoreManager {
     } else {
       final doc = query.docs.first;
       final prev = (doc['score'] as num).toDouble();
-      if (isBetter(score, prev)) {
+      if (!isbattle) {
+        await doc.reference.update({
+          'score': score + prev,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else if (isBetter(score, prev, isDescending)) {
         await doc.reference.update({
           'score': score,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -89,21 +99,23 @@ class CommonHighScoreManager {
   /// ハイスコア & ランキング更新（完全v2）
   static Future<void> setHighScoreSafe(
     String quizId,
+    String rankingId,
     num score,
-    String userName, {
+    String userName,
+    String rankingType, {
     required bool isLimitedMode,
     required int roundingFactor,
+    required bool isDescending,
+    required bool isbattle,
   }) async {
     if (score <= 0) return;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-
     final now = DateTime.now();
     final rounded = (score * roundingFactor).roundToDouble() / roundingFactor;
 
-    final rankingType = isLimitedMode ? 'g' : 't';
-    final jName = isLimitedMode ? 'highscores_g' : 'highscores_t';
+    final jName = 'highscores_${rankingType}';
 
     // 🔹 自己ベスト保存
     final userHighScoreRef = _firestore
@@ -115,8 +127,12 @@ class CommonHighScoreManager {
     await _firestore.runTransaction((tx) async {
       final snap = await tx.get(userHighScoreRef);
       final prev = (snap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-
-      if (isBetter(rounded, prev)) {
+      if (!isbattle) {
+        tx.set(userHighScoreRef, {
+          'score': rounded + prev,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else if (isBetter(rounded, prev, isDescending)) {
         tx.set(userHighScoreRef, {
           'score': rounded,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -127,46 +143,56 @@ class CommonHighScoreManager {
     // 🔹 rankings_v2（3種）
     await _upsertRanking(
       rankingType: rankingType,
-      quizId: quizId,
+      quizId: rankingId,
       period: 'all',
       year: now.year,
       uid: user.uid,
       userName: userName,
       score: rounded,
+      isDescending: isDescending,
+      isbattle: isbattle,
     );
 
     await _upsertRanking(
       rankingType: rankingType,
-      quizId: quizId,
+      quizId: rankingId,
       period: 'monthly',
       year: now.year,
       month: now.month,
       uid: user.uid,
       userName: userName,
       score: rounded,
+      isDescending: isDescending,
+      isbattle: isbattle,
     );
 
     await _upsertRanking(
       rankingType: rankingType,
-      quizId: quizId,
+      quizId: rankingId,
       period: 'weekly',
       year: now.year,
       week: getWeekNumber(now),
       uid: user.uid,
       userName: userName,
       score: rounded,
+      isDescending: isDescending,
+      isbattle: isbattle,
     );
 
     // 🔁 制限 → 通常へ昇格
     if (isLimitedMode) {
-      final normal = await getHighScore(quizId, isLimitedMode: false);
-      if (isBetter(rounded, normal)) {
+      final normal = await getHighScore(quizId, "t");
+      if (isBetter(rounded, normal, isDescending)) {
         await setHighScoreSafe(
           quizId,
+          rankingId,
           rounded,
           userName,
+          "t",
           isLimitedMode: false,
           roundingFactor: roundingFactor,
+          isDescending: isDescending,
+          isbattle: isbattle,
         );
       }
     }
@@ -180,13 +206,14 @@ class CommonRankingManager {
   static Future<List<Map<String, dynamic>>> getRanking(
     String quizId,
     String period, {
-    required bool isLimitedMode,
+    required String rankingtype,
+    required bool isDescending,
   }) async {
     final now = DateTime.now();
 
     Query q = _firestore
         .collection('rankings_v2')
-        .where('rankingType', isEqualTo: isLimitedMode ? 'g' : 't')
+        .where('rankingType', isEqualTo: rankingtype)
         .where('quizId', isEqualTo: quizId)
         .where('period', isEqualTo: period)
         .where('year', isEqualTo: now.year);
@@ -198,7 +225,8 @@ class CommonRankingManager {
       q = q.where('week', isEqualTo: getWeekNumber(now));
     }
 
-    final snap = await q.orderBy('score').limit(50).get();
+    final snap =
+        await q.orderBy('score', descending: isDescending).limit(50).get();
 
     return snap.docs.map((d) {
       final data = d.data() as Map<String, dynamic>;
@@ -213,8 +241,9 @@ class CommonRankingManager {
   static Future<int> getMyRank(
     String quizId,
     String period,
-    num myScore, {
-    required bool isLimitedMode,
+    num myScore,
+    String quiztype, {
+    required bool isDescending,
   }) async {
     if (myScore <= 0) return 0;
 
@@ -222,20 +251,28 @@ class CommonRankingManager {
 
     Query q = _firestore
         .collection('rankings_v2')
-        .where('rankingType', isEqualTo: isLimitedMode ? 'g' : 't')
+        .where('rankingType', isEqualTo: quiztype)
         .where('quizId', isEqualTo: quizId)
         .where('period', isEqualTo: period)
         .where('year', isEqualTo: now.year);
 
-    if (period == 'monthly') {
-      q = q.where('month', isEqualTo: now.month);
-    }
-    if (period == 'weekly') {
-      q = q.where('week', isEqualTo: getWeekNumber(now));
-    }
+    if (period == 'monthly') q = q.where('month', isEqualTo: now.month);
+    if (period == 'weekly') q = q.where('week', isEqualTo: getWeekNumber(now));
 
-    final snap = await q.where('score', isLessThan: myScore).count().get();
+    try {
+      final snap = isDescending
+          ? await q.where('score', isGreaterThan: myScore).count().get()
+          : await q.where('score', isLessThan: myScore).count().get();
 
-    return (snap.count ?? 0) + 1;
+      print(
+          "Query executed. Count of entries matching condition: ${snap.count ?? 0}");
+      final rank = (snap.count ?? 0) + 1;
+      print("Calculated rank: $rank");
+      return rank;
+    } catch (e, st) {
+      print("Error during Firestore query: $e");
+      print(st);
+      return 0;
+    }
   }
 }

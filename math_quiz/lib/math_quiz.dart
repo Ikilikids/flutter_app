@@ -1,0 +1,24 @@
+library;
+
+export "assistance/convertsankaku.dart";
+export "assistance/latex_to_latex2.dart";
+export "assistance/latex_to_latex_sub.dart";
+export "assistance/makingdata.dart";
+export "assistance/makingdata_ch.dart";
+export "assistance/parser.dart";
+export "assistance/rank.dart";
+export "assistance/score_range.dart";
+export "figure/graph_labels.dart";
+export "figure/point_line_d.dart";
+export "figure/sekibun_menseiki.dart";
+export "figure/triangle.dart";
+export "figure/tyebamene.dart";
+export "firebase_options.dart";
+export "main.dart";
+export "page/commmon_quiz.dart";
+export "page/common_widget.dart";
+export "page/end_screen_r.dart";
+export "page/latex.dart";
+export "page/optionscreen.dart";
+export "page/quiz_screen_j.dart";
+export "page/time_circle_painter.dart";

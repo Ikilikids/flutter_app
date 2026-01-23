@@ -3,6 +3,7 @@ library common;
 // assistance
 export 'assistance/ad_manager.dart';
 export 'assistance/firebase_score.dart';
+export 'assistance/firebase_utils.dart';
 export 'assistance/quiz_state_provider.dart';
 export 'assistance/sound_manager.dart';
 export 'assistance/theme_notifier.dart';
@@ -25,4 +26,6 @@ export 'pages/settings_page.dart';
 export 'widgets/app_ad_scaffold.dart';
 export 'widgets/circle_icon.dart';
 export 'widgets/color.dart';
+export 'widgets/common_widget.dart';
+export 'widgets/dialog.dart';
 export 'widgets/math_background.dart';

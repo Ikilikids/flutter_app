@@ -1,185 +1,94 @@
-import 'package:common/assistance/ad_manager.dart';
-import 'package:common/assistance/firebase_utils.dart';
-import 'package:common/assistance/quiz_state_provider.dart';
-import 'package:common/assistance/sound_manager.dart';
-import 'package:common/assistance/theme_notifier.dart';
-import 'package:common/assistance/user_provider.dart';
-import 'package:common/config/app_config.dart';
-import 'package:common/pages/first_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 import 'page/game_screen.dart';
-
-final bool isWeb = kIsWeb;
 
 final _appConfig = AppConfig(
   title: "とことん反射神経",
   icon: Icons.flash_on,
   symbols: ["!!", "◯", "*", "♪"],
   isRotation: true,
-  fix: 0,
-  unit: "ミリ秒",
-  sortData: [
-    {
-      "sort": "color",
-      "label": "色で反応",
-      "method": "3回のうち一番遅いタイムで競う",
-      "description": "画面の色が変わったらタップ！",
-      "normalColor": "2",
-      "limitColor": "1"
-    },
-    {
-      "sort": "number",
-      "label": "数字で反応",
-      "method": "3回の平均タイムで競う",
-      "description": "表示された数字のボタンをタップ！",
-      "normalColor": "3",
-      "limitColor": "4"
-    },
-    {
-      "sort": "grid",
-      "label": "マス目で反応",
-      "method": "3回の平均タイムで競う",
-      "description": "光ったマスをタップ！",
-      "normalColor": "6",
-      "limitColor": "5"
-    }
+  data: [
+    GameData(
+      fix: 0,
+      unit: "ミリ秒",
+      islimited: false,
+      isbattle: true,
+      ranking: "t",
+      detail: [
+        GameDetail(
+          sort: "color",
+          label: "色で反応",
+          method: "3回のうち一番遅いタイムで競う",
+          description: "画面の色が変わったらタップ！",
+          color: "2",
+          circleColor: "2",
+        ),
+        GameDetail(
+          sort: "number",
+          label: "数字で反応",
+          method: "3回の平均タイムで競う",
+          description: "表示された数字のボタンをタップ！",
+          color: "5",
+          circleColor: "5",
+        ),
+        GameDetail(
+          sort: "grid",
+          label: "マス目で反応",
+          method: "3回の平均タイムで競う",
+          description: "光ったマスをタップ！",
+          color: "4",
+          circleColor: "4",
+        ),
+      ],
+    ),
+    GameData(
+      fix: 0,
+      unit: "ミリ秒",
+      islimited: true,
+      isbattle: true,
+      ranking: "g",
+      detail: [
+        GameDetail(
+          sort: "color",
+          label: "色で反応",
+          method: "3回のうち一番遅いタイムで競う",
+          description: "画面の色が変わったらタップ！",
+          color: "3",
+          circleColor: "3",
+        ),
+        GameDetail(
+          sort: "number",
+          label: "数字で反応",
+          method: "3回の平均タイムで競う",
+          description: "表示された数字のボタンをタップ！",
+          color: "1",
+          circleColor: "1",
+        ),
+        GameDetail(
+          sort: "grid",
+          label: "マス目で反応",
+          method: "3回の平均タイムで競う",
+          description: "光ったマスをタップ！",
+          color: "6",
+          circleColor: "6",
+        ),
+      ],
+    ),
   ],
-  mainGame: (BuildContext context, List<dynamic> quizinfo) => Gamescreen(
+  mainGame: (BuildContext context, QuizData quizinfo) => Gamescreen(
     quizinfo: quizinfo,
   ),
 );
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase 初期化
-  /*await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // 🔹 匿名サインイン
-  final userCred = await FirebaseAuth.instance.signInAnonymously();
-  final uid = userCred.user?.uid;
-  print('Signed in anonymously: $uid');
-
-  // 🔹 ここでスコア更新
-  await multiplyAllScores();*/
-  // SharedPreferencesからテーマモードを先行読み込み
-  final prefs = await SharedPreferences.getInstance();
-  final savedThemeMode = prefs.getString('themeMode') ?? 'light';
-  final initialThemeMode =
-      savedThemeMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
-
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
   runApp(
-    MultiProvider(
-      providers: [
-        Provider.value(value: _appConfig),
-        Provider(create: (_) => SoundManager()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(
-            create: (_) => ThemeNotifier(initialThemeMode: initialThemeMode)),
-        ChangeNotifierProvider(create: (_) => QuizStateProvider()),
-      ],
-      child: MyApp(initialThemeMode: initialThemeMode), // 読み込んだテーマを渡す
+    Bootstrap(
+      appConfig: _appConfig,
+      firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     ),
   );
-}
-
-/// ===========================
-/// MyApp
-/// ===========================
-class MyApp extends StatefulWidget {
-  final ThemeMode initialThemeMode; // 追加
-  const MyApp({super.key, required this.initialThemeMode}); // 変更
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  late SoundManager soundManager;
-  late UserProvider userProvider;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    soundManager = Provider.of<SoundManager>(context, listen: false);
-    userProvider = Provider.of<UserProvider>(context, listen: false);
-
-    // 👇 起動後に全部やる
-    Future.microtask(() async {
-      // Firebase
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      FlutterError.onError =
-          FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-      // Auth
-      final userCred = await FirebaseAuth.instance.signInAnonymously();
-      final uid = userCred.user?.uid;
-      if (uid != null) await createUserRecord(uid);
-      userProvider.setUid(uid);
-      await userProvider.load();
-
-      // クイズ & サウンド
-      await soundManager.loadSounds();
-
-      // 広告
-      await AdManager.initialize();
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      // 必要なら停止処理だけ
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    soundManager.dispose(); // ← ここだけでOK
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeNotifier>(
-      builder: (context, themeNotifier, _) {
-        return MaterialApp(
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [Locale('ja', 'JP')],
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
-          themeMode: themeNotifier.themeMode,
-          home: const CommonFirstPage(),
-        );
-      },
-    );
-  }
 }

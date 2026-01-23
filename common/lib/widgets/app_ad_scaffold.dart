@@ -13,7 +13,7 @@ class AppAdScaffold extends StatelessWidget {
     super.key,
     this.appBar,
     required this.body,
-    this.adHeight = 60, // 広告枠の高さ
+    this.adHeight = 60,
     this.color,
     this.advisible = true,
   });
@@ -21,22 +21,24 @@ class AppAdScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // ★これ
       appBar: appBar,
+
       body: MathBackground(
-        child: Column(
-          children: [
-            Expanded(child: body),
-            if (advisible)
-              Container(
+        child: body,
+      ),
+
+      // ★ ここが重要
+      bottomNavigationBar: advisible
+          ? SafeArea(
+              child: Container(
                 color: color,
                 height: adHeight,
                 width: double.infinity,
+                alignment: Alignment.center,
                 child: const BannerAdWidget(),
               ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 }

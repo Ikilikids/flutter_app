@@ -27,6 +27,7 @@ class SoundManager {
     };
     for (var file in soundFiles) {
       final data = await rootBundle.load('assets/sounds/$file');
+
       final id = await _soundpool.load(data);
       _soundIds[file] = id;
     }

@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:common/assistance/sound_manager.dart';
-import 'package:common/pages/pipi_screen.dart';
-import 'package:common/widgets/app_ad_scaffold.dart';
-import 'package:common/widgets/dialog.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +10,7 @@ import 'games/grid_game.dart';
 import 'games/number_game.dart';
 
 class Gamescreen extends StatefulWidget {
-  final List<dynamic> quizinfo;
+  final QuizData quizinfo;
   const Gamescreen({super.key, required this.quizinfo});
 
   @override
@@ -50,11 +47,7 @@ class _GamescreenState extends State<Gamescreen> {
     super.initState();
     soundManager = Provider.of<SoundManager>(context, listen: false);
     // quizinfo[0] に sort キーが入っている
-    if (widget.quizinfo.isNotEmpty && widget.quizinfo[0] is String) {
-      mode = widget.quizinfo[0];
-    } else {
-      mode = "color"; // fallback
-    }
+    mode = widget.quizinfo.sort;
 
     startTrial();
   }
@@ -117,7 +110,7 @@ class _GamescreenState extends State<Gamescreen> {
 
       _delayTimer?.cancel();
       soundManager.playSound('peke.mp3');
-      showFlyingDialog(context, () {}, widget.quizinfo[4]);
+      showFlyingDialog(context, () {}, widget.quizinfo.islimited);
       return;
     }
 
@@ -142,7 +135,7 @@ class _GamescreenState extends State<Gamescreen> {
     } else {
       // 間違ったボタンやマスを押した場合（お手つき）
 
-      showFlyingDialog(context, () {}, widget.quizinfo[4]);
+      showFlyingDialog(context, () {}, widget.quizinfo.islimited);
       soundManager.playSound('peke.mp3');
     }
   }
@@ -231,7 +224,7 @@ class _GamescreenState extends State<Gamescreen> {
         menuButton(
           context,
           () => setState(() {}),
-          widget.quizinfo[4],
+          widget.quizinfo.islimited,
         ),
       ]),
     );

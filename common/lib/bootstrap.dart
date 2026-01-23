@@ -9,60 +9,126 @@ import 'package:common/pages/app.dart';
 import 'package:common/pages/first_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// FirebaseOptions は各プロジェクトから渡してもらう必要がある
-Future<void> runCommonApp({
-  required AppConfig appConfig,
-  required Widget destinationPage,
-  required FirebaseOptions firebaseOptions,
-}) async {
-  WidgetsFlutterBinding.ensureInitialized();
+class Bootstrap extends StatefulWidget {
+  final AppConfig appConfig;
+  final FirebaseOptions firebaseOptions;
 
-  // --- 初期化処理 ---
-  // Firebase
-  await Firebase.initializeApp(
-    options: firebaseOptions,
-  );
-  final userCred = await FirebaseAuth.instance.signInAnonymously();
-  final uid = userCred.user?.uid;
-  if (uid != null) await createUserRecord(uid);
+  const Bootstrap({
+    super.key,
+    required this.appConfig,
+    required this.firebaseOptions,
+  });
 
-  // その他
-  await AdManager.initialize();
-  final soundManager = SoundManager();
-  await soundManager.loadSounds();
-  final prefs = await SharedPreferences.getInstance();
-  final savedThemeMode = prefs.getString('themeMode') ?? 'light';
-  final initialThemeMode =
-      savedThemeMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
-  // --- 初期化処理ここまで ---
+  @override
+  State<Bootstrap> createState() => _BootstrapState();
+}
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+class _BootstrapState extends State<Bootstrap> {
+  final _soundManager = SoundManager();
+  final _userProvider = UserProvider();
+  late final ThemeNotifier _themeNotifier;
+  bool _isThemeLoaded = false;
 
-  runApp(
-    MultiProvider(
-      providers: [
-        Provider.value(value: appConfig),
-        Provider(create: (_) => soundManager, dispose: (_, sm) => sm.dispose()),
-        ChangeNotifierProvider(
-          create: (_) => UserProvider()..uid = uid,
+  @override
+  void initState() {
+    super.initState();
+    print('🟢 Bootstrap initState');
+
+    _themeNotifier = ThemeNotifier(initialThemeMode: ThemeMode.system);
+    _preloadThemeAndInit();
+  }
+
+  Future<void> _preloadThemeAndInit() async {
+    print('① Theme load start');
+    // 1. Load theme synchronously (await) to prevent flash
+    final prefs = await SharedPreferences.getInstance();
+    final savedThemeMode = prefs.getString('themeMode') ?? 'light';
+    final mode = savedThemeMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
+
+    _themeNotifier.setTheme(mode);
+
+    if (mounted) {
+      setState(() {
+        _isThemeLoaded = true;
+      });
+    }
+    print('② Theme loaded: $mode');
+
+    // 2. Initialize others in background
+    _initBackground();
+  }
+
+  Future<void> _initBackground() async {
+    print('③ Background init start');
+
+    // Firebase
+    Firebase.initializeApp(
+      options: widget.firebaseOptions,
+    ).then((_) async {
+      print('④ Firebase initialized');
+      final userCred = await FirebaseAuth.instance.signInAnonymously();
+      final uid = userCred.user?.uid;
+
+      if (uid != null) {
+        _userProvider.uid = uid;
+        createUserRecord(uid);
+      }
+    });
+
+    // Sounds
+    if (!kIsWeb) {
+      _soundManager.loadSounds();
+    }
+
+    // Ads
+    if (!kIsWeb) {
+      AdManager.initialize();
+    }
+  }
+
+  @override
+  void dispose() {
+    _soundManager.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // If theme is not loaded yet, show a plain screen matching system brightness.
+    // No spinner, just a solid color to minimize flash.
+    if (!_isThemeLoaded) {
+      final brightness =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      final bgColor =
+          brightness == Brightness.dark ? Colors.black : Colors.white;
+
+      return MaterialApp(
+        home: Scaffold(
+          backgroundColor: bgColor,
+          body: const SizedBox.shrink(),
         ),
-        ChangeNotifierProvider(
-            create: (_) => ThemeNotifier(initialThemeMode: initialThemeMode)),
+      );
+    }
+
+    print('🟢 build app (Theme ready)');
+
+    return MultiProvider(
+      providers: [
+        Provider.value(value: widget.appConfig),
+        Provider.value(value: _soundManager),
+        ChangeNotifierProvider.value(value: _userProvider),
+        ChangeNotifierProvider.value(value: _themeNotifier),
         ChangeNotifierProvider(create: (_) => QuizStateProvider()),
+        ChangeNotifierProvider(create: (_) => MidStateProvider()),
       ],
-      child: CommonApp(
+      child: const CommonApp(
         home: CommonFirstPage(),
       ),
-    ),
-  );
+    );
+  }
 }

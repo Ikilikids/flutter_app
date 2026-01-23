@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:common/assistance/firebase_score.dart';
+import 'package:common/common.dart';
 
 Future<void> multiplyAllScores() async {
   final firestore = FirebaseFirestore.instance;

@@ -34,7 +34,7 @@ class OriginCentral {
       return candidates[random.nextInt(candidates.length)];
     }
 
-    if (mainsort == "1") {
+    if (mainsort == "3") {
       // plus
       int a, b;
       a = ran(1, 9);
@@ -48,21 +48,21 @@ class OriginCentral {
       a = ran(b, 19);
       ss1 = (a - b).toString();
       q1 = "$a - $b = ？";
-    } else if (mainsort == "3") {
+    } else if (mainsort == "5") {
       // times
       int a, b;
       a = ran(1, 9);
       b = ran(1, 9);
       ss1 = (a * b).toString();
       q1 = "$a × $b = ？";
-    } else if (mainsort == "4") {
+    } else if (mainsort == "1") {
       // div
       int a, b;
       b = ran(1, 9);
       a = b * ran(1, 9);
       ss1 = (a ~/ b).toString();
       q1 = "$a ÷ $b = ？";
-    } else if (mainsort == "5") {
+    } else if (mainsort == "6") {
       // plus2
       int a, b, f;
       f = ran(22, 99);
@@ -72,7 +72,7 @@ class OriginCentral {
       } while ((a % 10 == 0 || b % 10 == 0));
       ss1 = f.toString();
       q1 = "$a + $b = ？";
-    } else if (mainsort == "6") {
+    } else if (mainsort == "4") {
       // minus2
       int a, b, f;
       do {

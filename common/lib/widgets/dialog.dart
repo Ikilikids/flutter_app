@@ -49,10 +49,8 @@ Future<void> showMenuDialog(
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => AdInterstitialNavigator(
-                        nextScreen: CommonDetailCard(
-                      isLimitedMode: isLimitedMode,
-                    )),
+                    builder: (_) =>
+                        AdInterstitialNavigator(nextScreen: CommonDetailCard()),
                   ),
                 );
               },
@@ -160,9 +158,8 @@ Future<void> showFlyingDialog(
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => AdInterstitialNavigator(
-                        nextScreen:
-                            CommonDetailCard(isLimitedMode: isLimitedMode)),
+                    builder: (_) =>
+                        AdInterstitialNavigator(nextScreen: CommonDetailCard()),
                   ),
                 );
               },

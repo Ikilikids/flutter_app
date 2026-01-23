@@ -199,7 +199,22 @@ class _SettingsPageState extends State<SettingsPage> {
     if (newName.isEmpty || newName == currentUserName) return;
 
     final appConfig = Provider.of<AppConfig>(context, listen: false);
-
+    final labels = appConfig.title == "とことん高校数学"
+        ? [
+            "全合計",
+            "数Ⅰ・数A",
+            "数Ⅱ・数B",
+            "数Ⅲ・数C",
+          ]
+        : appConfig.data
+            // dataの各要素のdetailリストを展開
+            .expand((gameData) => gameData.detail)
+            // detailのlabelだけを取り出す
+            .map((detail) => detail.label)
+            // Setで重複を排除
+            .toSet()
+            // 必要ならListに変換
+            .toList();
     // 1. 名前変更だけ先に反映
     await FirebaseFirestore.instance.collection("users").doc(uid).set({
       "userName": newName,
@@ -214,8 +229,7 @@ class _SettingsPageState extends State<SettingsPage> {
     });
 
     // 2. 別処理としてランキング更新をバックグラウンドに投げる
-    Future(
-        () => _updateRankingsAfterNameChange(uid, newName, appConfig.sortData));
+    Future(() => _updateRankingsAfterNameChange(uid, newName, labels));
 
     // 完了メッセージだけ表示
     if (mounted) {
@@ -238,19 +252,20 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 Future<void> _updateRankingsAfterNameChange(
-    String uid, String newName, List<Map<String, String>> sortData) async {
+    String uid, String newName, List<String> labels) async {
+  print(labels);
   final firestore = FirebaseFirestore.instance;
-  final quizTabs = sortData.map((s) => s['label']!).toList();
+  final quizTabs = labels;
   final periods = ['all', 'monthly', 'weekly'];
 
   for (var quizId in quizTabs) {
+    print(quizId);
     for (var period in periods) {
       Query q = firestore
           .collection("rankings_v2")
           .where("quizId", isEqualTo: quizId)
           .where("uid", isEqualTo: uid)
           .where("period", isEqualTo: period);
-
       // monthly / weekly の場合は year/month/week も追加条件
       final now = DateTime.now();
       if (period == 'monthly') {

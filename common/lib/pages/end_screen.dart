@@ -4,16 +4,12 @@ import 'package:provider/provider.dart';
 
 // These typedefs are local to this file for now.
 
-typedef DetailCardBuilder = Widget Function({required bool isLimitedMode});
-
 class CommonEndScreen extends StatefulWidget {
   final num totalScore;
   final num highScore;
   final int rankAll;
   final int rankMonthly;
   final int rankWeekly;
-  final List<dynamic> quizinfo; // quizinfo は List<dynamic> と仮定
-  final bool isLimitedMode;
 
   const CommonEndScreen({
     super.key,
@@ -22,8 +18,6 @@ class CommonEndScreen extends StatefulWidget {
     required this.rankAll,
     required this.rankMonthly,
     required this.rankWeekly,
-    required this.quizinfo,
-    required this.isLimitedMode,
   });
 
   @override
@@ -33,13 +27,13 @@ class CommonEndScreen extends StatefulWidget {
 class _CommonEndScreenState extends State<CommonEndScreen> {
   int step = 0; // 0:正解数 1:最高記録 2:ランキング
   late SoundManager soundManager; // main.dart にある SoundManager を使用
-  late AppConfig _appConfig;
+  late QuizStateProvider _quizinfo;
 
   @override
   void initState() {
     super.initState();
     soundManager = Provider.of<SoundManager>(context, listen: false);
-    _appConfig = Provider.of<AppConfig>(context, listen: false);
+    _quizinfo = Provider.of<QuizStateProvider>(context, listen: false);
     _startSequence();
   }
 
@@ -62,10 +56,10 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('EndScreen build with quizinfo: ${widget.quizinfo}');
-    Color quizColor = getQuizColor2(widget.quizinfo[3], context, 1, 0.35, 0.95);
-    String unit = _appConfig.unit;
-    int fix = _appConfig.fix;
+    Color quizColor = getQuizColor2(_quizinfo.color, context, 1, 0.35, 0.95);
+    String unit = _quizinfo.unit;
+    int fix = _quizinfo.fix;
+    print(widget.highScore);
 
     return PopScope(
       canPop: false,
@@ -78,7 +72,7 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                 Expanded(
                   flex: 2,
                   child: _QuizNameSection(
-                    quizName: widget.quizinfo[2].toString(),
+                    quizName: _quizinfo.label,
                     backgroundColor: quizColor,
                   ),
                 ),
@@ -87,7 +81,6 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                   child: _ScoreSection(
                     score: step >= 1 ? widget.totalScore : null,
                     borderColor: quizColor,
-                    isLimitedMode: widget.isLimitedMode,
                     fix: fix,
                     unit: unit,
                   ),
@@ -96,7 +89,6 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                   flex: 1,
                   child: _HighScoreSection(
                       score: step >= 2 ? widget.highScore : null,
-                      isLimitedMode: widget.isLimitedMode,
                       fix: fix,
                       unit: unit),
                 ),
@@ -112,7 +104,7 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                   flex: 2,
                   child: _ActionSection(
                     backgroundColor: quizColor,
-                    isLimitedMode: widget.isLimitedMode,
+                    isLimitedMode: _quizinfo.isLimited,
                   ),
                 ),
               ],
@@ -179,14 +171,12 @@ class _QuizNameSection extends StatelessWidget {
 class _ScoreSection extends StatelessWidget {
   final num? score;
   final Color borderColor;
-  final bool isLimitedMode;
   final int fix;
   final String unit;
 
   const _ScoreSection({
     required this.score,
     required this.borderColor,
-    required this.isLimitedMode,
     required this.fix,
     required this.unit,
   });
@@ -211,7 +201,7 @@ class _ScoreSection extends StatelessWidget {
                 ),
                 child: FittedBox(
                   child: Text(
-                    'タイム',
+                    unit == "秒" ? 'タイム' : '正解数',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: textColor1(context),
@@ -267,12 +257,10 @@ class _ScoreSection extends StatelessWidget {
 
 class _HighScoreSection extends StatelessWidget {
   final num? score;
-  final bool isLimitedMode;
   final int fix;
   final String unit;
   const _HighScoreSection({
     required this.score,
-    required this.isLimitedMode,
     required this.fix,
     required this.unit,
   });
@@ -397,7 +385,7 @@ class _ActionSection extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => AdInterstitialNavigator(
-                    nextScreen: CommonDetailCard(isLimitedMode: isLimitedMode),
+                    nextScreen: CommonDetailCard(),
                   ),
                 ),
               );
