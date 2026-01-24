@@ -5,10 +5,11 @@
         android:label="とことん四則演算"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:extractNativeLibs="true">
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-1440692612851416~6587993377"/> <!-- テスト用App ID -->
+            android:value="ca-app-pub-1440692612851416~2296501943"/> <!-- テスト用App ID -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

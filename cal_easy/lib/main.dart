@@ -10,6 +10,9 @@ final _appConfig = AppConfig(
   icon: Icons.calculate,
   symbols: ["+", "-", "×", "÷"],
   isRotation: false,
+  BannerId: "ca-app-pub-1440692612851416/5101110710",
+  InterId: "ca-app-pub-1440692612851416/6696946185",
+  RewardId: "ca-app-pub-1440692612851416/5939549664",
   data: [
     GameData(
       unit: "秒",

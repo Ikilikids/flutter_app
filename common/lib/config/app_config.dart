@@ -21,6 +21,9 @@ class AppConfig {
   final GamePageBuilder mainGame;
   final LoadBuilder? loadGame;
   final EndBuilder? endBuilder;
+  final String? BannerId;
+  final String? InterId;
+  final String? RewardId;
 
   const AppConfig(
       {required this.title,
@@ -30,7 +33,10 @@ class AppConfig {
       required this.data,
       required this.mainGame, // ← 追加
       this.loadGame,
-      this.endBuilder});
+      this.endBuilder,
+      this.BannerId,
+      this.InterId,
+      this.RewardId});
 }
 
 class GameData {

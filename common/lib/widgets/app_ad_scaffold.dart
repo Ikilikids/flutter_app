@@ -22,7 +22,7 @@ class AppAdScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar,
-
+      resizeToAvoidBottomInset: false, // ← ここ追加
       body: MathBackground(
         child: body,
       ),

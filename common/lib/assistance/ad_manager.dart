@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../config/app_config.dart';
 
 /// 広告関連の初期化を行うクラス
 class AdManager {
@@ -46,8 +49,13 @@ class _NativeBannerAdWidgetState extends State<_NativeBannerAdWidget> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final adUnitId = context.read<AppConfig>().BannerId ??
+          'ca-app-pub-3940256099942544/6300978111'; // ← テスト広告ID
+
+      print('Loading Banner Ad: $adUnitId'); // ← ここで print
+
       _bannerAd = BannerAd(
-        adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ← テスト広告ID
+        adUnitId: adUnitId,
         request: const AdRequest(),
         size: AdSize.banner,
         listener: BannerAdListener(
@@ -85,6 +93,14 @@ class InterstitialAdHelper {
   static InterstitialAd? _interstitialAd;
   static bool _isLoading = false;
 
+  /// AppConfig を static に保持
+  static AppConfig? _config;
+
+  /// AppConfig をセット（必須）
+  static void configure(AppConfig config) {
+    _config = config;
+  }
+
   /// 初期化して広告をロード
   static void init() {
     if (!kIsWeb) _loadAd();
@@ -92,20 +108,23 @@ class InterstitialAdHelper {
 
   /// 広告ロード
   static Future<void> _loadAd() async {
-    // 既に広告がある or 読み込み中なら何もしない
     if (_interstitialAd != null || _isLoading) return;
+    if (_config == null) return; // config 未設定ならロードしない
 
     _isLoading = true;
 
+    final adUnitId =
+        _config!.InterId ?? 'ca-app-pub-3940256099942544/1033173712';
+    print('Loading Interstitial Ad: $adUnitId');
+
     await InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1033173712',
+      adUnitId: adUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
           _isLoading = false;
 
-          // 広告が閉じられたら dispose & null に
           _interstitialAd?.fullScreenContentCallback =
               FullScreenContentCallback(
             onAdDismissedFullScreenContent: (ad) {
@@ -126,55 +145,37 @@ class InterstitialAdHelper {
     );
   }
 
+  /// 広告表示して遷移
   static Future<void> showAdThenNavigate(
       BuildContext context, Widget nextScreen) async {
-    if (kIsWeb) {
+    if (kIsWeb || _interstitialAd == null) {
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pushReplacement(
-          MaterialPageRoute(builder: (_) => nextScreen),
-        );
+        Navigator.of(context, rootNavigator: true)
+            .pushReplacement(MaterialPageRoute(builder: (_) => nextScreen));
       }
+      _loadAd();
       return;
-    }
-
-    const timeout = Duration(seconds: 3);
-    final stopwatch = Stopwatch()..start();
-
-    while (_interstitialAd == null && stopwatch.elapsed < timeout) {
-      if (!_isLoading) _loadAd();
-      await Future.delayed(const Duration(milliseconds: 100));
     }
 
     final ad = _interstitialAd;
     _interstitialAd = null;
 
-    if (ad == null) {
-      // 広告が間に合わなかったので即遷移
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pushReplacement(
-          MaterialPageRoute(builder: (_) => nextScreen),
-        );
-      }
-      return;
-    }
-
-    ad.fullScreenContentCallback = FullScreenContentCallback(
+    ad!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         if (context.mounted) {
-          Navigator.of(context, rootNavigator: true).pushReplacement(
-            MaterialPageRoute(builder: (_) => nextScreen),
-          );
+          Navigator.of(context, rootNavigator: true)
+              .pushReplacement(MaterialPageRoute(builder: (_) => nextScreen));
         }
         _loadAd();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
         if (context.mounted) {
-          Navigator.of(context, rootNavigator: true).pushReplacement(
-            MaterialPageRoute(builder: (_) => nextScreen),
-          );
+          Navigator.of(context, rootNavigator: true)
+              .pushReplacement(MaterialPageRoute(builder: (_) => nextScreen));
         }
+        _loadAd();
       },
     );
 
@@ -237,47 +238,60 @@ class _AdInterstitialNavigatorState extends State<AdInterstitialNavigator> {
   }
 }
 
+/// ===========================
+/// リワード広告（Widget 側変更不要）
+/// ===========================
 class RewardedAdManager {
   static RewardedAd? _rewardedAd;
   static bool _isAdReady = false;
   static bool get isAdReady => _isAdReady;
-  static bool _isLoading = false; // 追加
+  static bool _isLoading = false;
 
-  static const String _adUnitId =
-      'ca-app-pub-3940256099942544/5224354917'; // テスト用
+  /// AppConfig を static に保持
+  static AppConfig? _config;
 
+  /// AppConfig をセット（必須）
+  static void configure(AppConfig config) {
+    _config = config;
+  }
+
+  /// 広告ロード
   static void loadAd() {
-    if (_rewardedAd != null || _isLoading) return; // 変更
+    if (_rewardedAd != null || _isLoading) return;
+    if (_config == null) return;
 
-    _isLoading = true; // 追加
+    _isLoading = true;
+
+    final adUnitId = _config!.RewardId ??
+        'ca-app-pub-3940256099942544/5224354917'; // テストID fallback
+    print('Loading Rewarded Ad: $adUnitId');
     RewardedAd.load(
-      adUnitId: _adUnitId,
+      adUnitId: adUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           _rewardedAd = ad;
           _isAdReady = true;
-          _isLoading = false; // 追加
+          _isLoading = false;
           debugPrint('Rewarded Ad loaded.');
         },
         onAdFailedToLoad: (LoadAdError error) {
           debugPrint('Rewarded Ad failed to load: $error');
           _rewardedAd = null;
           _isAdReady = false;
-          _isLoading = false; // 追加
+          _isLoading = false;
         },
       ),
     );
   }
 
+  /// 広告表示
   static void showAd(
       {required VoidCallback onReward, VoidCallback? onAdDismissed}) {
     if (!_isAdReady || _rewardedAd == null) {
       debugPrint('Tried to show a rewarded ad that was not ready.');
       loadAd(); // 念のため再ロード
-      if (onAdDismissed != null) {
-        onAdDismissed(); // 広告が表示できなかった場合もdismiss扱い
-      }
+      if (onAdDismissed != null) onAdDismissed();
       return;
     }
 
@@ -290,20 +304,16 @@ class RewardedAdManager {
         ad.dispose();
         _rewardedAd = null;
         _isAdReady = false;
-        loadAd(); // 次の広告をロード
-        if (onAdDismissed != null) {
-          onAdDismissed();
-        }
+        loadAd(); // 次の広告をプリロード
+        if (onAdDismissed != null) onAdDismissed();
       },
       onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
         debugPrint('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         _rewardedAd = null;
         _isAdReady = false;
-        loadAd(); // 次の広告をロード
-        if (onAdDismissed != null) {
-          onAdDismissed(); // 表示失敗もdismiss扱い
-        }
+        loadAd(); // 次の広告をプリロード
+        if (onAdDismissed != null) onAdDismissed();
       },
     );
 

@@ -22,6 +22,8 @@ final _appConfig = AppConfig(
   icon: Icons.calculate,
   symbols: ["π", "√", "α", "β", "∫", "Σ", "∽", "!"],
   isRotation: false,
+  BannerId: "ca-app-pub-1440692612851416/6568630311",
+  InterId: "ca-app-pub-1440692612851416/7404533363",
   data: [
     GameData(
       unit: "問",

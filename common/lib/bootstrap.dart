@@ -88,6 +88,14 @@ class _BootstrapState extends State<Bootstrap> {
     // Ads
     if (!kIsWeb) {
       AdManager.initialize();
+
+      // Interstitial 設定 + 初期ロード
+      InterstitialAdHelper.configure(widget.appConfig);
+      InterstitialAdHelper.init();
+
+      // Rewarded 設定 + 初期ロード
+      RewardedAdManager.configure(widget.appConfig);
+      RewardedAdManager.loadAd();
     }
   }
 
