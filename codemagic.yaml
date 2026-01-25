@@ -1,0 +1,22 @@
+workflows:
+  app1_android:
+    name: App1 Android
+    working_directory: math_quiz
+    environment:
+      flutter: stable
+    scripts:
+      - flutter pub get
+      - flutter build appbundle
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+
+  app2_android:
+    name: App2 Android
+    working_directory: cal_easy
+    environment:
+      flutter: stable
+    scripts:
+      - flutter pub get
+      - flutter build appbundle
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
