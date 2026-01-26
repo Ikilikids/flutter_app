@@ -1,6 +1,7 @@
+import 'package:common/assistance/locale_notifier.dart';
 import 'package:common/assistance/theme_notifier.dart';
+import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 class CommonApp extends StatelessWidget {
@@ -13,15 +14,12 @@ class CommonApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeNotifier>(
-      builder: (context, themeNotifier, _) {
+    return Consumer2<ThemeNotifier, LocaleNotifier>(
+      builder: (context, themeNotifier, localeNotifier, _) {
         return MaterialApp(
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [Locale('ja', 'JP')],
+          locale: localeNotifier.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: themeNotifier.themeMode,

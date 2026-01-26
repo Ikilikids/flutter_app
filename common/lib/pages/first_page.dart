@@ -1,3 +1,4 @@
+import 'package:common/assistance/l10n_helper.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -79,7 +80,6 @@ class _CommonFirstPageState extends State<CommonFirstPage>
   Widget build(BuildContext context) {
     final appConfig = Provider.of<AppConfig>(context, listen: false);
     final icon = appConfig.icon;
-    final title = appConfig.title;
 
     return AppAdScaffold(
         advisible: false,
@@ -118,7 +118,7 @@ class _CommonFirstPageState extends State<CommonFirstPage>
                         child: FittedBox(
                           fit: BoxFit.contain,
                           child: Text(
-                            title,
+                            l10n(context, appConfig.title),
                             style: TextStyle(
                               fontSize: 120, // 初期サイズを指定
                               fontWeight: FontWeight.w900,
@@ -149,7 +149,7 @@ class _CommonFirstPageState extends State<CommonFirstPage>
                             child: FittedBox(
                               fit: BoxFit.contain,
                               child: Text(
-                                "タップしてスタート",
+                                l10n(context, 'tapToStart'),
                                 style: TextStyle(
                                   fontSize: 120, // 初期サイズを指定
                                   color:

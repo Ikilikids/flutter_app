@@ -1,18 +1,12 @@
-import 'package:common/assistance/ad_manager.dart';
-import 'package:common/assistance/firebase_utils.dart';
-import 'package:common/assistance/quiz_state_provider.dart';
-import 'package:common/assistance/sound_manager.dart';
-import 'package:common/assistance/theme_notifier.dart';
-import 'package:common/assistance/user_provider.dart';
-import 'package:common/config/app_config.dart';
-import 'package:common/pages/app.dart';
-import 'package:common/pages/first_page.dart';
+import 'package:common/common.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'assistance/string_notifier.dart';
 
 class Bootstrap extends StatefulWidget {
   final AppConfig appConfig;
@@ -32,6 +26,7 @@ class _BootstrapState extends State<Bootstrap> {
   final _soundManager = SoundManager();
   final _userProvider = UserProvider();
   late final ThemeNotifier _themeNotifier;
+  late final LocaleNotifier _localeNotifier;
   bool _isThemeLoaded = false;
 
   @override
@@ -40,6 +35,7 @@ class _BootstrapState extends State<Bootstrap> {
     print('🟢 Bootstrap initState');
 
     _themeNotifier = ThemeNotifier(initialThemeMode: ThemeMode.system);
+    _localeNotifier = LocaleNotifier();
     _preloadThemeAndInit();
   }
 
@@ -131,8 +127,10 @@ class _BootstrapState extends State<Bootstrap> {
         Provider.value(value: _soundManager),
         ChangeNotifierProvider.value(value: _userProvider),
         ChangeNotifierProvider.value(value: _themeNotifier),
+        ChangeNotifierProvider.value(value: _localeNotifier),
         ChangeNotifierProvider(create: (_) => QuizStateProvider()),
         ChangeNotifierProvider(create: (_) => MidStateProvider()),
+        ChangeNotifierProvider(create: (_) => NumberChoiceNotifier()),
       ],
       child: const CommonApp(
         home: CommonFirstPage(),

@@ -19,6 +19,7 @@ class _PipiScreenState extends State<PipiScreen> {
   int _rankWeekly = 0;
   late final QuizData _quizinfo;
   late final AppConfig appConfig;
+  late final String userName;
   late bool isLimitedMode;
 
   @override
@@ -27,6 +28,7 @@ class _PipiScreenState extends State<PipiScreen> {
     _quizinfo = context.read<QuizStateProvider>().quizinfo;
     appConfig = context.read<AppConfig>();
     isLimitedMode = _quizinfo.islimited;
+
     _loadDataWithDelay();
   }
 
@@ -38,13 +40,14 @@ class _PipiScreenState extends State<PipiScreen> {
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text(
-                  "終了",
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                  l10n(context, 'finishingText'),
+                  style: const TextStyle(
+                      fontSize: 32, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 20),
-                CircularProgressIndicator(),
+                const SizedBox(height: 20),
+                const CircularProgressIndicator(),
               ],
             ),
           ),
@@ -56,6 +59,9 @@ class _PipiScreenState extends State<PipiScreen> {
     final maxDuration = const Duration(seconds: 5);
     final EndBuilder = appConfig.endBuilder;
     final startTime = DateTime.now();
+    final userProvider = context.read<UserProvider>();
+    await userProvider.load(); // ← Firestore 読みに行く
+    userName = userProvider.userName;
 
     try {
       await _loadData();
@@ -92,13 +98,14 @@ class _PipiScreenState extends State<PipiScreen> {
   }
 
   Future<void> _loadData() async {
-    final quizId = _quizinfo.label;
+    // Translate keys to Japanese for DB storage
+    final quizId = JapaneseTranslator.translateKeyToJapanese(_quizinfo.label);
     final rankingId = appConfig.title == "とことん高校数学" && !_quizinfo.isbattle
         ? convertLabel(_quizinfo.sort)
-        : _quizinfo.label;
+        : quizId; // Use the already translated quizId
+
     print(rankingId);
-    final userProvider = context.read<UserProvider>();
-    final userName = userProvider.userName;
+    print(userName);
     // 🔹 ハイスコア & ランキング更新（v2共通マネージャ）
     await CommonHighScoreManager.setHighScoreSafe(
       quizId,
@@ -113,8 +120,8 @@ class _PipiScreenState extends State<PipiScreen> {
     );
     if (!_quizinfo.isbattle) {
       await CommonHighScoreManager.setHighScoreSafe(
-        "全合計",
-        "全合計",
+        JapaneseTranslator.translateKeyToJapanese('allScores'),
+        JapaneseTranslator.translateKeyToJapanese('allScores'),
         widget.totalScore,
         userName,
         _quizinfo.ranking,

@@ -1,3 +1,4 @@
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 
 class ColorGame extends StatelessWidget {
@@ -27,7 +28,9 @@ class ColorGame extends StatelessWidget {
           height: double.infinity,
           child: Center(
             child: Text(
-              isWaiting ? "色が変化したらタップ！" : "タップ！",
+              isWaiting
+                  ? l10n(context, 'colorReactDesc')
+                  : l10n(context, 'colorGameTapNow'),
               style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

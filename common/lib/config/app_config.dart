@@ -11,6 +11,7 @@ typedef EndBuilder = Widget Function(
   dynamic originalData, // ← 型は実際の型に合わせて
   QuizData quizinfo,
 );
+typedef SettingWidgetsBuilder = List<Widget> Function(BuildContext);
 
 class AppConfig {
   final String title;
@@ -21,6 +22,7 @@ class AppConfig {
   final GamePageBuilder mainGame;
   final LoadBuilder? loadGame;
   final EndBuilder? endBuilder;
+  final SettingWidgetsBuilder? settingWidgets;
   final String? BannerId;
   final String? InterId;
   final String? RewardId;
@@ -34,6 +36,7 @@ class AppConfig {
       required this.mainGame, // ← 追加
       this.loadGame,
       this.endBuilder,
+      this.settingWidgets,
       this.BannerId,
       this.InterId,
       this.RewardId});

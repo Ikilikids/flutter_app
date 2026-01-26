@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:common/assistance/firebase_score.dart';
-import 'package:common/assistance/theme_notifier.dart';
-import 'package:common/config/app_config.dart';
-import 'package:common/widgets/app_ad_scaffold.dart';
-import 'package:common/widgets/color.dart';
+import 'package:common/common.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../src/generated/l10n/app_localizations.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -17,14 +15,24 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _nameController = TextEditingController();
-  String currentUserName = "名無し";
-  bool _nameSaved = false;
+  String currentUserName = "";
+  bool _isEditingName = false;
   final FocusNode _nameFocusNode = FocusNode();
-
+  bool _isInitialized = false;
   @override
   void initState() {
     super.initState();
-    _loadUserName();
+    // initStateではl10nを呼ばない
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      currentUserName = l10n(context, 'defaultUsername');
+      _loadUserName();
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -36,145 +44,157 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context, listen: true);
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
     final isDarkMode = themeNotifier.themeMode == ThemeMode.dark;
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          return;
-        }
-
-        final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-        if (isKeyboardVisible) {
-          FocusScope.of(context).unfocus();
-        } else {
-          Navigator.of(context).pop();
-        }
-      },
-      child: AppAdScaffold(
-        advisible: false,
-        appBar: AppBar(title: const Text("⚙設定")),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const Text("現在のユーザー名: "),
-                  Text(currentUserName,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () {
-                  if (_nameSaved) {
-                    setState(() {
-                      _nameSaved = false;
-                    });
-
-                    // 次フレームで「その TextField の FocusNode」にフォーカス
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _nameFocusNode.requestFocus();
-                    });
-                  }
-                },
-                child: TextField(
-                  controller: _nameController,
-                  focusNode: _nameFocusNode, // ★ これ
-                  enabled: !_nameSaved,
-                  autofocus: false,
-                  decoration: const InputDecoration(
-                    labelText: "新しいユーザー名",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _saveUserName,
-                child: const Text("保存"),
-              ),
-              const SizedBox(height: 24),
-
-              // 🌓 ダークモード切り替え
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // ライトモード
-                  GestureDetector(
-                    onTap: () => themeNotifier.setTheme(ThemeMode.light),
-                    child: Row(
-                      children: [
-                        const Text("ライトモード"),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: textColor1(context)),
-                          ),
-                          child: !isDarkMode
-                              ? Center(
-                                  child: Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: textColor1(context),
-                                    ),
-                                  ),
-                                )
-                              : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 32),
-
-                  // ダークモード
-                  GestureDetector(
-                    onTap: () => themeNotifier.setTheme(ThemeMode.dark),
-                    child: Row(
-                      children: [
-                        const Text("ダークモード"),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: textColor1(context)),
-                          ),
-                          child: isDarkMode
-                              ? Center(
-                                  child: Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: textColor1(context),
-                                    ),
-                                  ),
-                                )
-                              : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-              const Text("お問い合わせ先 : tokoton.math@gmail.com"),
-            ],
+    final appConfig = Provider.of<AppConfig>(context, listen: false);
+    final settingWidgets = appConfig.settingWidgets;
+    return AppAdScaffold(
+      advisible: false,
+      appBar: AppBar(
+        title: Text(l10n(context, 'settingsTitle')),
+      ),
+      body: ListView(
+        children: [
+          buildSectionHeader(l10n(context, 'accountSectionTitle')),
+          _buildUserNameTile(context),
+          const Divider(height: 1),
+          buildSectionHeader(l10n(context, 'appearanceSectionTitle')),
+          SwitchListTile(
+            title: Text(l10n(context, 'darkModeLabel')),
+            secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+            value: isDarkMode,
+            onChanged: (value) {
+              themeNotifier.setTheme(value ? ThemeMode.dark : ThemeMode.light);
+            },
           ),
+          const Divider(height: 1),
+          buildSectionHeader(l10n(context, 'languageSectionTitle')),
+          _buildLanguageTile(context),
+          ...?settingWidgets?.call(context),
+          const Divider(height: 1),
+          buildSectionHeader(l10n(context, 'aboutSectionTitle')),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n(context, 'contactLabel')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
+  }
+
+  Widget _buildUserNameTile(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.account_circle),
+      title: Text(l10n(context, 'usernameLabel')),
+      subtitle: _isEditingName
+          ? TextField(
+              controller: _nameController,
+              focusNode: _nameFocusNode,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: l10n(context, 'newUsernameLabel'),
+              ),
+              onSubmitted: (_) => _saveUserName(),
+            )
+          : Text(currentUserName),
+      trailing: _isEditingName
+          ? IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: _saveUserName,
+            )
+          : IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  _isEditingName = true;
+                  _nameController.text = currentUserName;
+                });
+                _nameFocusNode.requestFocus();
+              },
+            ),
+    );
+  }
+
+  Widget _buildLanguageTile(BuildContext context) {
+    final localeNotifier = Provider.of<LocaleNotifier>(context);
+    final currentLocale =
+        localeNotifier.locale ?? Localizations.localeOf(context);
+    final languageName = _getLanguageName(currentLocale);
+
+    return ListTile(
+      leading: const Icon(Icons.language),
+      title: Text(l10n(context, 'languageLabel')),
+      subtitle: Text(languageName),
+      onTap: () => _showLanguagePicker(context),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final localeNotifier = Provider.of<LocaleNotifier>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(l10n(context, 'languageSelectionTitle')),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: AppLocalizations.supportedLocales.map((locale) {
+                return RadioListTile<Locale>(
+                  title: Text(_getLanguageName(locale)),
+                  value: locale,
+                  groupValue: localeNotifier.locale,
+                  onChanged: (newLocale) {
+                    if (newLocale != null) {
+                      localeNotifier.setLocale(newLocale);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text(l10n(context, 'cancelButton')),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _getLanguageName(Locale locale) {
+    // この部分はl10nの生成ファイルに依存するか、手動でマッピングを維持する必要があります。
+    // ここでは簡単のためにハードコードします。
+    switch (locale.languageCode) {
+      case 'en':
+        return 'English';
+      case 'ja':
+        return '日本語';
+      case 'es':
+        return 'Español';
+      case 'pt':
+        return 'Português';
+      case 'ko':
+        return '한국어';
+      default:
+        return locale.languageCode;
+    }
   }
 
   Future<void> _loadUserName() async {
@@ -196,7 +216,14 @@ class _SettingsPageState extends State<SettingsPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? "guest";
     final newName = _nameController.text.trim();
 
-    if (newName.isEmpty || newName == currentUserName) return;
+    if (newName.isEmpty || newName == currentUserName) {
+      if (mounted) {
+        setState(() {
+          _isEditingName = false;
+        });
+      }
+      return;
+    }
 
     final appConfig = Provider.of<AppConfig>(context, listen: false);
     final labels = appConfig.title == "とことん高校数学"
@@ -225,7 +252,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     setState(() {
       currentUserName = newName;
-      _nameSaved = true; // ★ フォーカス不能
+      _isEditingName = false;
+// ★ フォーカス不能
     });
 
     // 2. 別処理としてランキング更新をバックグラウンドに投げる
@@ -237,12 +265,12 @@ class _SettingsPageState extends State<SettingsPage> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text("完了"),
-          content: const Text("保存しました！"),
+          title: Text(l10n(context, 'saveUsernameSuccessTitle')),
+          content: Text(l10n(context, 'saveUsernameSuccessContent')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
+              child: Text(l10n(context, 'okButton')),
             ),
           ],
         ),
@@ -263,7 +291,8 @@ Future<void> _updateRankingsAfterNameChange(
     for (var period in periods) {
       Query q = firestore
           .collection("rankings_v2")
-          .where("quizId", isEqualTo: quizId)
+          .where("quizId",
+              isEqualTo: JapaneseTranslator.translateKeyToJapanese(quizId))
           .where("uid", isEqualTo: uid)
           .where("period", isEqualTo: period);
       // monthly / weekly の場合は year/month/week も追加条件

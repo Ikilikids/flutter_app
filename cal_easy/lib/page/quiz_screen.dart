@@ -13,11 +13,13 @@ import '../page/latex.dart';
 class Quizscreen extends StatefulWidget {
   final List<String> quizDirectives;
   final QuizData quizinfo;
+  final String latexButton;
 
   const Quizscreen({
     super.key,
     required this.quizDirectives,
     required this.quizinfo,
+    required this.latexButton,
   });
 
   @override
@@ -56,7 +58,7 @@ class QuizScreenState extends State<Quizscreen> {
       _initialized = true;
       soundManager = Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
-      count = quizinfo.sort == "56" ? 10 : 20;
+      count = quizinfo.sort == "46" ? 10 : 20;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {
@@ -206,13 +208,15 @@ class QuizScreenState extends State<Quizscreen> {
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
-          showMenuDialog(
-            context,
-            () => setState(() {
-              isGameOver = true;
-            }),
-            quizinfo.islimited,
-          );
+          isGameOver
+              ? null
+              : showMenuDialog(
+                  context,
+                  () => setState(() {
+                    isGameOver = true;
+                  }),
+                  quizinfo.islimited,
+                );
         },
         child: AppAdScaffold(
           body: Container(
@@ -247,6 +251,7 @@ class QuizScreenState extends State<Quizscreen> {
                                 isGameOver = true;
                               }),
                               quizinfo.islimited,
+                              istap: !isGameOver,
                             ),
                           ),
                           Expanded(
@@ -276,6 +281,7 @@ class QuizScreenState extends State<Quizscreen> {
                           button2: const [""],
                           ctscore: const [],
                           partpoint: (int a) {},
+                          latexButton: widget.latexButton,
                         ),
                       ),
                     ),

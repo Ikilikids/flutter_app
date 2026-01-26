@@ -38,17 +38,17 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
   }
 
   Future<void> _startSequence() async {
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 600));
     soundManager.playSound('pi.mp3'); // main.dart の soundManager を使用
     if (!mounted) return;
     setState(() => step = 1);
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 600));
     soundManager.playSound('pi.mp3'); // main.dart の soundManager を使用
     if (!mounted) return;
     setState(() => step = 2);
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 600));
     soundManager.playSound('pipi.mp3'); // main.dart の soundManager を使用
     if (!mounted) return;
     setState(() => step = 3);
@@ -105,6 +105,7 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                   child: _ActionSection(
                     backgroundColor: quizColor,
                     isLimitedMode: _quizinfo.isLimited,
+                    stepEnd: step >= 3,
                   ),
                 ),
               ],
@@ -152,7 +153,7 @@ class _QuizNameSection extends StatelessWidget {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  '★$quizName★',
+                  '★${l10n(context, quizName)}★',
                   style: const TextStyle(
                     fontSize: 100,
                     fontWeight: FontWeight.w600,
@@ -183,6 +184,11 @@ class _ScoreSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizedUnit = l10n(context, 'unitSecond');
+    final title = unit == localizedUnit
+        ? l10n(context, 'timeLabel')
+        : l10n(context, 'scoreLabel');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: SizedBox(
@@ -201,7 +207,7 @@ class _ScoreSection extends StatelessWidget {
                 ),
                 child: FittedBox(
                   child: Text(
-                    unit == "秒" ? 'タイム' : '正解数',
+                    title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: textColor1(context),
@@ -236,7 +242,7 @@ class _ScoreSection extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '$unit',
+                        l10n(context, unit),
                         style: TextStyle(
                           fontSize: 400,
                           fontWeight: FontWeight.w600,
@@ -267,6 +273,17 @@ class _HighScoreSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final prefix = l10n(context, 'highScorePrefix');
+    final localizedUnit = l10n(context, unit);
+    String text;
+    if (score == null) {
+      text = "$prefix  $localizedUnit";
+    } else if (score == 0.0) {
+      text = "$prefix--$localizedUnit";
+    } else {
+      text = '$prefix${score!.toStringAsFixed(fix)}$localizedUnit';
+    }
+
     return Row(
       children: [
         Expanded(
@@ -276,11 +293,7 @@ class _HighScoreSection extends StatelessWidget {
                 const Icon(Icons.emoji_events, color: Colors.amber),
                 const SizedBox(width: 8),
                 Text(
-                  score == null
-                      ? "最高記録：  $unit"
-                      : score == 0.0
-                          ? "最高記録：--$unit"
-                          : '最高記録：${score!.toStringAsFixed(fix)}$unit',
+                  text,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: textColor1(context),
@@ -315,7 +328,7 @@ class _RankSection extends StatelessWidget {
         children: [
           Expanded(
             child: _RankCard(
-              label: '全期間',
+              label: l10n(context, 'allPeriod'),
               value: rankAll == 0 ? "--" : rankAll?.toString() ?? ' ',
               color: Colors.orange,
               borderColor: Colors.orange,
@@ -323,7 +336,7 @@ class _RankSection extends StatelessWidget {
           ),
           Expanded(
             child: _RankCard(
-              label: '月間',
+              label: l10n(context, 'monthlyPeriod'),
               value: rankMonthly == 0 ? "--" : rankMonthly?.toString() ?? ' ',
               color: Colors.blue,
               borderColor: Colors.blue,
@@ -331,7 +344,7 @@ class _RankSection extends StatelessWidget {
           ),
           Expanded(
             child: _RankCard(
-              label: '週間',
+              label: l10n(context, 'weeklyPeriod'),
               value: rankWeekly == 0 ? "--" : rankWeekly?.toString() ?? ' ',
               color: Colors.green,
               borderColor: Colors.green,
@@ -346,10 +359,12 @@ class _RankSection extends StatelessWidget {
 class _ActionSection extends StatelessWidget {
   final Color backgroundColor;
   final bool isLimitedMode;
+  final bool stepEnd;
 
   const _ActionSection({
     required this.backgroundColor,
     required this.isLimitedMode,
+    required this.stepEnd,
   });
 
   @override
@@ -362,8 +377,8 @@ class _ActionSection extends StatelessWidget {
           _ActionItem(
             backgroundColor: backgroundColor,
             icon: Icons.refresh,
-            label: 'もう一度',
-            onTap: isLimitedMode
+            label: l10n(context, 'retryButton'),
+            onTap: isLimitedMode || !stepEnd
                 ? null
                 : () {
                     Navigator.push(
@@ -379,17 +394,19 @@ class _ActionSection extends StatelessWidget {
           _ActionItem(
             backgroundColor: backgroundColor,
             icon: Icons.home,
-            label: 'メニュー',
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AdInterstitialNavigator(
-                    nextScreen: CommonDetailCard(),
-                  ),
-                ),
-              );
-            },
+            label: l10n(context, 'menuButton'),
+            onTap: !stepEnd
+                ? null
+                : () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdInterstitialNavigator(
+                          nextScreen: CommonDetailCard(),
+                        ),
+                      ),
+                    );
+                  },
           ),
         ],
       ),
@@ -467,7 +484,7 @@ class _RankCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '位',
+                      l10n(context, 'rankUnit'),
                       style: TextStyle(
                         fontSize: 400,
                         fontWeight: FontWeight.w600,

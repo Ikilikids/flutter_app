@@ -248,12 +248,15 @@ class QuizScreenState extends State<Quizscreen> {
         canPop: false, // デフォルトの戻りはキャンセル
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
-          showMenuDialog(
-              context,
-              () => setState(() {
+          isGameOver
+              ? null
+              : showMenuDialog(
+                  context,
+                  () => setState(() {
                     isGameOver = true;
                   }),
-              false);
+                  quizinfo.islimited,
+                );
         },
         child: AppAdScaffold(
           body: Container(
@@ -299,7 +302,8 @@ class QuizScreenState extends State<Quizscreen> {
                                 () => setState(() {
                                       isGameOver = true;
                                     }),
-                                false),
+                                false,
+                                istap: !isGameOver),
                           ),
                           if (quizinfo.isbattle == true)
                             Expanded(

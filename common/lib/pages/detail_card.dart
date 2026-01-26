@@ -1,4 +1,5 @@
 import 'package:common/common.dart';
+import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,7 @@ class CommonDetailCard extends StatefulWidget {
 
 class _CommonDetailCardState extends State<CommonDetailCard> {
   late MidStateProvider _midConfig;
+  late AppConfig appConfig;
   late bool isLimitedMode;
   late String rankingtype;
   bool _isDependenciesInitialized = false;
@@ -32,6 +34,7 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
     super.didChangeDependencies();
     if (!_isDependenciesInitialized) {
       _midConfig = Provider.of<MidStateProvider>(context);
+      appConfig = Provider.of<AppConfig>(context);
       // データ内の islimited を参照して処理
       isLimitedMode = _midConfig.isLimited;
       rankingtype = _midConfig.ranking;
@@ -105,8 +108,9 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
     Map<String, double> scores = {};
 
     final futures = labels.map((label) async {
+      final quizId = JapaneseTranslator.translateKeyToJapanese(label);
       final score = await CommonHighScoreManager.getHighScore(
-        label,
+        quizId,
         rankingtype,
       );
       return MapEntry(label, score);
@@ -145,7 +149,12 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
             AppAdScaffold(
               appBar: AppBar(
                 title: Text(
-                  _midConfig.title ?? (isLimitedMode ? "1日限定モード" : "無制限モード"),
+                  l10n(
+                      context,
+                      _midConfig.title ??
+                          (isLimitedMode
+                              ? "dailyLimitedModeTitle"
+                              : "unlimitedModeTitle")),
                 ),
               ),
               body: _loading
@@ -162,18 +171,18 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
                         return SizedBox(
                           height: 200,
                           child: _CommonSubjectCard(
-                            detail: detail,
-                            score: score,
-                            playCount: playCount,
-                            rewardGranted: rewardGranted,
-                            isLimitedMode: _midConfig.isLimited,
-                            isbattle: _midConfig.isBattle,
-                            isNavigating: _isNavigating,
-                            onPlay: (qcount) => _handlePlay(detail, qcount),
-                            onWatchAd: () => _handleWatchAd(detail.label),
-                            fix: _midConfig.fix,
-                            unit: _midConfig.unit,
-                          ),
+                              detail: detail,
+                              score: score,
+                              playCount: playCount,
+                              rewardGranted: rewardGranted,
+                              isLimitedMode: _midConfig.isLimited,
+                              isbattle: _midConfig.isBattle,
+                              isNavigating: _isNavigating,
+                              onPlay: (qcount) => _handlePlay(detail, qcount),
+                              onWatchAd: () => _handleWatchAd(detail.label),
+                              fix: _midConfig.fix,
+                              unit: _midConfig.unit,
+                              title: appConfig.title),
                         );
                       }).toList(),
                     ),
@@ -261,7 +270,7 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('広告を準備中です。少し待ってからもう一度お試しください。')),
+        SnackBar(content: Text(l10n(context, 'adLoadingSnackbar'))),
       );
       RewardedAdManager.loadAd();
     }
@@ -280,6 +289,7 @@ class _CommonSubjectCard extends StatelessWidget {
   final VoidCallback onWatchAd;
   final int fix;
   final String unit;
+  final String title;
 
   const _CommonSubjectCard({
     required this.detail,
@@ -293,6 +303,7 @@ class _CommonSubjectCard extends StatelessWidget {
     required this.onWatchAd,
     required this.fix,
     required this.unit,
+    required this.title,
   });
 
   @override
@@ -319,7 +330,7 @@ class _CommonSubjectCard extends StatelessWidget {
               child: Row(
                 children: [
                   _buildCircleIcon(context),
-                  _buildCardTitle(context),
+                  _buildCardTitle(context, title),
                 ],
               ),
             ),
@@ -364,7 +375,7 @@ class _CommonSubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCardTitle(BuildContext context) {
+  Widget _buildCardTitle(BuildContext context, String title) {
     return Expanded(
       flex: 5,
       child: Padding(
@@ -377,7 +388,7 @@ class _CommonSubjectCard extends StatelessWidget {
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  detail.label,
+                  l10n(context, detail.label),
                   style: TextStyle(fontSize: 100, color: textColor1(context)),
                 ),
               ),
@@ -387,7 +398,7 @@ class _CommonSubjectCard extends StatelessWidget {
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "-${detail.method}-",
+                  "-${l10n(context, detail.method)}-",
                   style: TextStyle(fontSize: 100, color: textColor2(context)),
                 ),
               ),
@@ -406,11 +417,18 @@ class _CommonSubjectCard extends StatelessWidget {
                           getQuizColor2(detail.color, context, 1, 0.55, 0.95),
                     ),
                     const SizedBox(width: 8),
-                    Math.tex(
-                      detail.description,
-                      textStyle:
-                          TextStyle(fontSize: 100, color: textColor2(context)),
-                    ),
+                    if (title == "とことん高校数学")
+                      Math.tex(
+                        l10n(context, detail.description),
+                        textStyle: TextStyle(
+                            fontSize: 100, color: textColor2(context)),
+                      ),
+                    if (title != "とことん高校数学")
+                      Text(
+                        l10n(context, detail.description),
+                        style: TextStyle(
+                            fontSize: 100, color: textColor2(context)),
+                      ),
                   ],
                 ),
               ),
@@ -448,7 +466,7 @@ class _CommonSubjectCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  unit,
+                  l10n(context, unit),
                   style: TextStyle(
                     fontSize: 50,
                     fontWeight: FontWeight.bold,
@@ -468,20 +486,22 @@ class _CommonSubjectCard extends StatelessWidget {
     VoidCallback? onPressed;
 
     if (!isLimitedMode) {
-      buttonText = qcount != null ? "$qcount問プレイ" : "プレイ！";
+      buttonText = qcount != null
+          ? AppLocalizations.of(context)!.playButtonWithCount(qcount)
+          : l10n(context, 'playButton');
       onPressed = isNavigating ? null : () => onPlay(qcount);
     } else {
       if (rewardGranted && playCount == 1) {
-        buttonText = "プレイ！(2回目)";
+        buttonText = l10n(context, 'playButtonSecondTime');
         onPressed = isNavigating ? null : () => onPlay(qcount);
       } else {
         switch (playCount) {
           case 0:
-            buttonText = "プレイ！";
+            buttonText = l10n(context, 'playButton');
             onPressed = isNavigating ? null : () => onPlay(qcount);
             break;
           case 1:
-            buttonText = "広告を見てプレイ";
+            buttonText = l10n(context, 'watchAdToPlayButton');
             onPressed = isNavigating
                 ? null
                 : () {
@@ -489,15 +509,17 @@ class _CommonSubjectCard extends StatelessWidget {
                       context: context,
                       builder: (context) {
                         return AlertDialog(
-                          title: const Text("🎁 もう一度チャレンジ！"),
-                          content: const Text("広告を1本見ると\n今日の挑戦をもう一度できます！"),
+                          title:
+                              Text(l10n(context, 'challengeAgainDialogTitle')),
+                          content: Text(
+                              l10n(context, 'challengeAgainDialogContent')),
                           actions: [
                             TextButton(
-                              child: const Text("やめる"),
+                              child: Text(l10n(context, 'cancelButton')),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
                             ElevatedButton(
-                              child: const Text("広告を見て続ける ▶"),
+                              child: Text(l10n(context, 'watchAdButton')),
                               onPressed: () {
                                 Navigator.of(context).pop();
                                 onWatchAd();
@@ -510,7 +532,7 @@ class _CommonSubjectCard extends StatelessWidget {
                   };
             break;
           default:
-            buttonText = "本日プレイ済み";
+            buttonText = l10n(context, 'playedTodayButton');
             onPressed = null;
             break;
         }

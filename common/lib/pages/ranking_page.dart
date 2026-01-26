@@ -1,7 +1,16 @@
 import 'package:common/common.dart';
+import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+// Helper class to hold both ID (for DB) and display text (for UI)
+class QuizTabInfo {
+  final String id; // Japanese string for DB key
+  final String display; // Localized string for UI display
+
+  QuizTabInfo({required this.id, required this.display});
+}
 
 class CommonRankingPage extends StatefulWidget {
   const CommonRankingPage({super.key});
@@ -25,28 +34,33 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   late TabController periodTabController;
   late AppConfig appConfig;
   bool _isAppConfigInitialized = false;
-  String selectedPeriod = '全期間';
-  String selectedSubject = "";
+  String selectedPeriod = '';
+  String selectedSubjectId = ""; // Now holds the Japanese ID
   bool isLoading = true;
   int selectedModeIndex = 0; // 0: 無制限, 1: 限定
-  late List<String> quizTabs;
+  late List<QuizTabInfo> quizTabs; // Changed to List<QuizTabInfo>
   bool _areTabsInitialized = false;
 
-  final List<String> periodTabs = ['全期間', '月間', '週間'];
+  late final List<String> periodTabs;
   Map<String, List<RankingEntry>> rankingData = {};
 
   @override
   void initState() {
     super.initState();
-    selectedPeriod = '全期間';
+    // Initialization is now handled in build method
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (!_isAppConfigInitialized) {
       appConfig = Provider.of<AppConfig>(context, listen: false);
+      periodTabs = [
+        l10n(context, 'allPeriod'),
+        l10n(context, 'monthlyPeriod'),
+        l10n(context, 'weeklyPeriod')
+      ];
+      selectedPeriod = periodTabs.first;
       _isAppConfigInitialized = true;
     }
   }
@@ -69,27 +83,21 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   }
 
   String _periodToV2(String period) {
-    switch (period) {
-      case '全期間':
-        return 'all';
-      case '月間':
-        return 'monthly';
-      case '週間':
-        return 'weekly';
-      default:
-        return 'all';
-    }
+    if (period == l10n(context, 'allPeriod')) return 'all';
+    if (period == l10n(context, 'monthlyPeriod')) return 'monthly';
+    if (period == l10n(context, 'weeklyPeriod')) return 'weekly';
+    return 'all';
   }
 
   Future<void> fetchAllRanking() async {
     if (!mounted) return;
     setState(() => isLoading = true);
 
-    final key = selectedSubject;
+    final key = selectedSubjectId; // Use the ID for fetching
     final periodV2 = _periodToV2(selectedPeriod);
 
     final data = await CommonRankingManager.getRanking(
-      selectedSubject,
+      key, // Pass the Japanese ID
       periodV2,
       rankingtype: appConfig.data[selectedModeIndex].ranking,
       isDescending: appConfig.data[selectedModeIndex].isDescending,
@@ -100,7 +108,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     rankingData[key] = data
         .where((e) => (e['score'] ?? 0) > 0)
         .map((e) => RankingEntry(
-              e['userName'] ?? '名無し',
+              e['userName'] ?? l10n(context, 'defaultUsername'),
               (e['score'] as num).toDouble(),
               (e['date'] ?? DateTime.now()) as DateTime,
               appConfig.data[selectedModeIndex].ranking,
@@ -113,74 +121,87 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   @override
   Widget build(BuildContext context) {
     if (!_isAppConfigInitialized) {
-      return const SizedBox(); // or ローディング
+      return const SizedBox.shrink();
     }
 
     final gameData = appConfig.data[selectedModeIndex];
 
-    // Tab 初期化
     if (!_areTabsInitialized) {
-      quizTabs = appConfig.title == "とことん高校数学" && selectedModeIndex == 0
+      final isSpecialMode =
+          JapaneseTranslator.translateKeyToJapanese(appConfig.title) ==
+                  "とことん高校数学" &&
+              selectedModeIndex == 0;
+
+      quizTabs = isSpecialMode
           ? [
-              "全合計",
-              "数Ⅰ・数A",
-              "数Ⅱ・数B",
-              "数Ⅲ・数C",
+              QuizTabInfo(
+                  id: JapaneseTranslator.translateKeyToJapanese("allScores"),
+                  display: l10n(context, "allScores")),
+              QuizTabInfo(
+                  id: JapaneseTranslator.translateKeyToJapanese("mathA"),
+                  display: l10n(context, "mathA")),
+              QuizTabInfo(
+                  id: JapaneseTranslator.translateKeyToJapanese("mathB"),
+                  display: l10n(context, "mathB")),
+              QuizTabInfo(
+                  id: JapaneseTranslator.translateKeyToJapanese("mathC"),
+                  display: l10n(context, "mathC")),
             ]
-          : gameData.detail.map((d) => d.label).toList();
-      selectedSubject = quizTabs.first;
+          : gameData.detail.map((d) {
+              return QuizTabInfo(
+                id: JapaneseTranslator.translateKeyToJapanese(d.label),
+                display: l10n(context, d.label),
+              );
+            }).toList();
+
+      selectedSubjectId = quizTabs.first.id;
 
       quizTabController = TabController(length: quizTabs.length, vsync: this);
-      periodTabController =
-          TabController(length: periodTabs.length, vsync: this);
+      periodTabController = TabController(
+          length: periodTabs.length,
+          vsync: this,
+          initialIndex: periodTabs.indexOf(selectedPeriod));
 
       fetchAllRanking();
       _areTabsInitialized = true;
     }
 
-    // 選択中の科目データ
     final subjectData = gameData.detail.firstWhere(
-      (d) => d.label == selectedSubject,
+      (d) =>
+          JapaneseTranslator.translateKeyToJapanese(d.label) ==
+          selectedSubjectId,
       orElse: () {
-        // label で見つからなかった場合
         return gameData.detail.firstWhere(
-          (d) => convertLabel(d.sort) == selectedSubject,
+          (d) => convertLabel(d.sort) == selectedSubjectId,
           orElse: () => GameDetail(
-            sort: "",
-            label: "",
-            method: "",
-            description: "",
-            color: "7",
-            circleColor: "",
-          ),
+              sort: "",
+              label: "",
+              method: "",
+              description: "",
+              color: "7",
+              circleColor: ""),
         );
       },
     );
-    print(selectedSubject);
-    print(subjectData.label);
 
-    // 色
-    final colorKey = subjectData.color;
-    print(colorKey);
-    Color tabColor = getQuizColor2(colorKey, context, 1, 0.65, 1);
-
+    Color tabColor = getQuizColor2(subjectData.color, context, 1, 0.65, 1);
     final fix = gameData.fix;
     final unit = gameData.unit;
 
     return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const CommonModeSelectionPage()),
-          );
+          if (!didPop)
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const CommonModeSelectionPage()));
         },
         child: AppAdScaffold(
-          appBar: AppBar(title: const Text("👑ランキング👑")),
+          appBar: AppBar(title: Text(l10n(context, 'rankingTitle'))),
           body: SafeArea(
             child: Column(
               children: [
-                // モード切替ボタン
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -189,12 +210,11 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            if (selectedModeIndex != 0) {
+                            if (selectedModeIndex != 0)
                               setState(() {
                                 selectedModeIndex = 0;
                                 _resetTabs();
                               });
-                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: selectedModeIndex == 0
@@ -205,7 +225,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                 borderRadius: BorderRadius.circular(10)),
                             minimumSize: const Size(double.infinity, 50),
                           ),
-                          child: Text(appConfig.data[0].title ?? "無制限モード",
+                          child: Text(l10n(context, appConfig.data[0].title!),
                               style: TextStyle(fontSize: 18)),
                         ),
                       ),
@@ -213,12 +233,11 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            if (selectedModeIndex != 1) {
+                            if (selectedModeIndex != 1)
                               setState(() {
                                 selectedModeIndex = 1;
                                 _resetTabs();
                               });
-                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: selectedModeIndex == 1
@@ -229,31 +248,29 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                 borderRadius: BorderRadius.circular(10)),
                             minimumSize: const Size(double.infinity, 50),
                           ),
-                          child: Text(appConfig.data[1].title ?? "1日限定モード",
+                          child: Text(l10n(context, appConfig.data[1].title!),
                               style: TextStyle(fontSize: 18)),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // クイズタブ
                 if (_areTabsInitialized)
                   TabBar(
                     controller: quizTabController,
                     indicatorColor: tabColor,
                     labelColor: tabColor,
                     unselectedLabelColor: textColor2(context),
-                    tabs: quizTabs.map((name) => Tab(text: name)).toList(),
+                    isScrollable: true,
+                    tabs:
+                        quizTabs.map((tab) => Tab(text: tab.display)).toList(),
                     onTap: (index) {
                       setState(() {
-                        selectedSubject = quizTabs[index];
+                        selectedSubjectId = quizTabs[index].id;
                         fetchAllRanking();
                       });
                     },
                   ),
-
-                // 期間タブ
                 if (_areTabsInitialized)
                   TabBar(
                     controller: periodTabController,
@@ -268,8 +285,6 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                       });
                     },
                   ),
-
-                // ランキングリスト
                 isLoading
                     ? const Expanded(
                         child: Center(child: CircularProgressIndicator()))
@@ -277,16 +292,30 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                         child: TabBarView(
                           physics: const NeverScrollableScrollPhysics(),
                           controller: quizTabController,
-                          children: quizTabs.map((quizName) {
-                            final key = quizName;
+                          children: quizTabs.map((quizTab) {
+                            final key = quizTab.id;
                             List<RankingEntry> data = rankingData[key] ?? [];
                             if (data.isEmpty)
-                              return const Center(child: Text('データがありません'));
+                              return Center(
+                                  child:
+                                      Text(l10n(context, 'noDataAvailable')));
 
                             return ListView.builder(
                               itemCount: data.length,
                               itemBuilder: (context, index) {
                                 final entry = data[index];
+                                final localizations =
+                                    AppLocalizations.of(context)!;
+                                String rankText;
+                                if (index == 0)
+                                  rankText = localizations.rank1st;
+                                else if (index == 1)
+                                  rankText = localizations.rank2nd;
+                                else if (index == 2)
+                                  rankText = localizations.rank3rd;
+                                else
+                                  rankText = localizations.rankNth(index + 1);
+
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 6, horizontal: 10),
@@ -298,11 +327,10 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: const [
                                         BoxShadow(
-                                          color:
-                                              Color.fromARGB(52, 158, 158, 158),
-                                          blurRadius: 5,
-                                          offset: Offset(0, 3),
-                                        ),
+                                            color: Color.fromARGB(
+                                                52, 158, 158, 158),
+                                            blurRadius: 5,
+                                            offset: Offset(0, 3))
                                       ],
                                     ),
                                     child: Row(
@@ -312,13 +340,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Text(
-                                              index == 0
-                                                  ? '${index + 1}位🥇'
-                                                  : index == 1
-                                                      ? '${index + 1}位🥈'
-                                                      : index == 2
-                                                          ? '${index + 1}位🥉'
-                                                          : '${index + 1}位　 ',
+                                              rankText,
                                               style: TextStyle(
                                                   fontSize: 100,
                                                   fontWeight: FontWeight.bold,
@@ -393,7 +415,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                                           FontWeight.bold,
                                                       color: tabColor),
                                                 ),
-                                                Text(unit,
+                                                Text(l10n(context, unit),
                                                     style: TextStyle(
                                                         fontSize: 50,
                                                         fontWeight:

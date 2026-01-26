@@ -55,6 +55,7 @@ class CommonHighScoreManager {
     required bool isDescending,
     required bool isbattle,
   }) async {
+    print(userName);
     final query = await _firestore
         .collection('rankings_v2')
         .where('rankingType', isEqualTo: rankingType)

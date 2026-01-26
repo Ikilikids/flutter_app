@@ -1,0 +1,208 @@
+import 'package:common/src/generated/l10n/app_localizations.dart';
+import 'package:flutter/widgets.dart';
+
+// A helper function to lookup translations based on a string key.
+String l10n(BuildContext context, String key) {
+  final localizations = AppLocalizations.of(context);
+  if (localizations == null) {
+    return key; // Return key if localizations are not available
+  }
+
+  switch (key) {
+    case 'appTitle':
+      return localizations.appTitle;
+    case 'tapToStart':
+      return localizations.tapToStart;
+    case 'addSubtract':
+      return localizations.addSubtract;
+    case 'addSubtract2Digits':
+      return localizations.addSubtract2Digits;
+    case 'fourArithmeticOperations':
+      return localizations.fourArithmeticOperations;
+    case 'compete20Questions':
+      return localizations.compete20Questions;
+    case 'compete10Questions':
+      return localizations.compete10Questions;
+    case 'addSubtractDesc':
+      return localizations.addSubtractDesc;
+    case 'fourArithmeticOperationsDesc':
+      return localizations.fourArithmeticOperationsDesc;
+    case 'addSubtract2DigitsDesc':
+      return localizations.addSubtract2DigitsDesc;
+    case 'unlimitedModeTitle':
+      return localizations.unlimitedModeTitle;
+    case 'unlimitedModeSub1':
+      return localizations.unlimitedModeSub1;
+    case 'unlimitedModeSub2':
+      return localizations.unlimitedModeSub2;
+    case 'dailyLimitedModeTitle':
+      return localizations.dailyLimitedModeTitle;
+    case 'dailyLimitedModeSub1':
+      return localizations.dailyLimitedModeSub1;
+    case 'dailyLimitedModeSub2':
+      return localizations.dailyLimitedModeSub2;
+    case 'settingsButton':
+      return localizations.settingsButton;
+    case 'rankingButton':
+      return localizations.rankingButton;
+    case 'playableStatus':
+      return localizations.playableStatus;
+    case 'playableWithAdStatus':
+      return localizations.playableWithAdStatus;
+    case 'unitSecond':
+      return localizations.unitSecond;
+    case 'playButton':
+      return localizations.playButton;
+    case 'playButtonSecondTime':
+      return localizations.playButtonSecondTime;
+    case 'watchAdToPlayButton':
+      return localizations.watchAdToPlayButton;
+    case 'playedTodayButton':
+      return localizations.playedTodayButton;
+    case 'challengeAgainDialogTitle':
+      return localizations.challengeAgainDialogTitle;
+    case 'challengeAgainDialogContent':
+      return localizations.challengeAgainDialogContent;
+    case 'cancelButton':
+      return localizations.cancelButton;
+    case 'watchAdButton':
+      return localizations.watchAdButton;
+    case "allScores":
+      return localizations.allScores;
+    case 'settingsTitle':
+      return localizations.settingsTitle;
+    case 'currentUsernameLabel':
+      return localizations.currentUsernameLabel;
+    case 'defaultUsername':
+      return localizations.defaultUsername;
+    case 'newUsernameLabel':
+      return localizations.newUsernameLabel;
+    case 'saveButton':
+      return localizations.saveButton;
+    case 'lightModeLabel':
+      return localizations.lightModeLabel;
+    case 'darkModeLabel':
+      return localizations.darkModeLabel;
+    case 'contactLabel':
+      return localizations.contactLabel;
+    case 'saveCompleteDialogTitle':
+      return localizations.saveCompleteDialogTitle;
+    case 'saveCompleteDialogContent':
+      return localizations.saveCompleteDialogContent;
+    case 'okButton':
+      return localizations.okButton;
+    case 'rankingTitle':
+      return localizations.rankingTitle;
+    case 'allPeriod':
+      return localizations.allPeriod;
+    case 'monthlyPeriod':
+      return localizations.monthlyPeriod;
+    case 'weeklyPeriod':
+      return localizations.weeklyPeriod;
+    case 'noDataAvailable':
+      return localizations.noDataAvailable;
+    case 'rank1st':
+      return localizations.rank1st;
+    case 'rank2nd':
+      return localizations.rank2nd;
+    case 'rank3rd':
+      return localizations.rank3rd;
+    case 'mathA':
+      return localizations.mathA;
+    case 'mathB':
+      return localizations.mathB;
+    case 'mathC':
+      return localizations.mathC;
+    case 'retryButton':
+      return localizations.retryButton;
+    case 'menuButton':
+      return localizations.menuButton;
+    case 'rankUnit':
+      return localizations.rankUnit;
+    case 'highScorePrefix':
+      return localizations.highScorePrefix;
+    case 'scoreLabel':
+      return localizations.scoreLabel;
+    case 'timeLabel':
+      return localizations.timeLabel;
+
+    // Keys for Reflect App
+    case 'reflectTitle':
+      return localizations.reflectTitle;
+    case 'unitMillisecond':
+      return localizations.unitMillisecond;
+    case 'colorReact':
+      return localizations.colorReact;
+    case 'colorReactMethod':
+      return localizations.colorReactMethod;
+    case 'colorReactDesc':
+      return localizations.colorReactDesc;
+    case 'numberReact':
+      return localizations.numberReact;
+    case 'reactMethodAverage':
+      return localizations.reactMethodAverage;
+    case 'numberReactDesc':
+      return localizations.numberReactDesc;
+    case 'gridReact':
+      return localizations.gridReact;
+    case 'gridReactDesc':
+      return localizations.gridReactDesc;
+    case 'finishingText':
+      return localizations.finishingText;
+    case 'timeHeader':
+      return localizations.timeHeader;
+    case 'pointHeader':
+      return localizations.pointHeader;
+
+    // Keys for Dialogs
+    case 'dialogMenuTitle':
+      return localizations.dialogMenuTitle;
+    case 'dialogHomeButton':
+      return localizations.dialogHomeButton;
+    case 'dialogMistakeTitle':
+      return localizations.dialogMistakeTitle;
+    case 'dialogNextTime':
+      return localizations.dialogNextTime;
+    case 'dialogTryAgain':
+      return localizations.dialogTryAgain;
+    case 'dialogRetryButtonWithIcon':
+      return localizations.dialogRetryButtonWithIcon;
+    case 'colorGameTapNow':
+      return localizations.colorGameTapNow;
+
+    // settings page
+    case 'accountSectionTitle':
+      return localizations.accountSectionTitle;
+    case 'appearanceSectionTitle':
+      return localizations.appearanceSectionTitle;
+    case 'languageSectionTitle':
+      return localizations.languageSectionTitle;
+    case 'aboutSectionTitle':
+      return localizations.aboutSectionTitle;
+    case 'usernameLabel':
+      return localizations.usernameLabel;
+    case 'languageLabel':
+      return localizations.languageLabel;
+    case 'languageSelectionTitle':
+      return localizations.languageSelectionTitle;
+    case 'guestUsername':
+      return localizations.guestUsername;
+    case 'saveUsernameSuccessTitle':
+      return localizations.saveUsernameSuccessTitle;
+    case 'saveUsernameSuccessContent':
+      return localizations.saveUsernameSuccessContent;
+    case 'buttonLayout':
+      return localizations.buttonLayout;
+    case 'selectButtonLayout':
+      return localizations.selectButtonLayout;
+    case 'mobileMode':
+      return localizations.mobileMode;
+    case 'calculatorMode':
+      return localizations.calculatorMode;
+    case 'detailSetting':
+      return localizations.detailSetting;
+
+    default:
+      return key;
+  }
+}

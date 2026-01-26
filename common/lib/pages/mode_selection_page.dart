@@ -1,3 +1,4 @@
+import 'package:common/assistance/l10n_helper.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,7 +36,7 @@ class CommonModeSelectionPage extends StatelessWidget {
                   child: FittedBox(
                     alignment: const Alignment(0, 0.5),
                     child: Text(
-                      appConfig.title,
+                      l10n(context, appConfig.title),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -57,9 +58,9 @@ class CommonModeSelectionPage extends StatelessWidget {
               BigModeButton(
                 color: Colors.blue,
                 icon: appConfig.data[0].icon ?? Icons.all_inclusive,
-                title: appConfig.data[0].title ?? "無制限モード",
-                sub1: appConfig.data[0].sub1 ?? "---いつでも遊べる---",
-                sub2: appConfig.data[0].sub2 ?? "ハイスコアを目指そう！",
+                title: l10n(context, appConfig.data[0].title!),
+                sub1: l10n(context, appConfig.data[0].sub1!),
+                sub2: l10n(context, appConfig.data[0].sub2!),
                 onPressed: () => _navigate(context, 0),
               ),
 
@@ -67,9 +68,9 @@ class CommonModeSelectionPage extends StatelessWidget {
               BigModeButton(
                 color: Colors.red,
                 icon: appConfig.data[1].icon ?? Icons.timer,
-                title: appConfig.data[1].title ?? "1日限定モード",
-                sub1: appConfig.data[1].sub1 ?? "---1日1回だけ挑戦---",
-                sub2: appConfig.data[1].sub2 ?? "集中して記録を狙おう！",
+                title: l10n(context, appConfig.data[1].title!),
+                sub1: l10n(context, appConfig.data[1].sub1!),
+                sub2: l10n(context, appConfig.data[1].sub2!),
                 onPressed: () => _navigate(context, 1),
                 badge: appConfig.data[1].islimited
                     ? const LimitedModeBadge()
@@ -84,7 +85,7 @@ class CommonModeSelectionPage extends StatelessWidget {
                     _smallButton(
                       context,
                       Colors.grey,
-                      "⚙ 設定",
+                      l10n(context, 'settingsButton'),
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => SettingsPage()),
@@ -93,7 +94,7 @@ class CommonModeSelectionPage extends StatelessWidget {
                     _smallButton(
                       context,
                       Colors.orange,
-                      "👑 ランキング",
+                      l10n(context, 'rankingButton'),
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -327,9 +328,9 @@ class _LimitedModeBadgeState extends State<LimitedModeBadge>
 
     setState(() {
       if (playable) {
-        _status = "プレイ可能";
+        _status = l10n(context, 'playableStatus');
       } else if (adPlayable) {
-        _status = "広告を見てプレイ可能";
+        _status = l10n(context, 'playableWithAdStatus');
       }
     });
   }

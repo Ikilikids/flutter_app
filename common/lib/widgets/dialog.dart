@@ -4,6 +4,8 @@ import 'package:common/pages/detail_card.dart';
 import 'package:common/widgets/color.dart';
 import 'package:flutter/material.dart';
 
+import '../assistance/l10n_helper.dart';
+
 Future<void> showMenuDialog(
   BuildContext context,
   VoidCallback onSetGameOver,
@@ -12,19 +14,19 @@ Future<void> showMenuDialog(
   await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text("メニュー"),
+      title: Text(l10n(context, 'dialogMenuTitle')),
       actions: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _MenuButton(
               icon: Icons.close,
-              label: "キャンセル",
+              label: l10n(context, 'cancelButton'),
               onPressed: () => Navigator.of(context).pop(false),
             ),
             _MenuButton(
               icon: Icons.refresh,
-              label: "やり直し",
+              label: l10n(context, 'retryButton'),
               onPressed: isLimitedMode
                   ? null
                   : () {
@@ -42,7 +44,7 @@ Future<void> showMenuDialog(
             ),
             _MenuButton(
               icon: Icons.home,
-              label: "ホームへ",
+              label: l10n(context, 'dialogHomeButton'),
               onPressed: () {
                 onSetGameOver();
                 Navigator.pop(context);
@@ -95,18 +97,18 @@ class _MenuButton extends StatelessWidget {
 }
 
 Widget menuButton(
-  BuildContext context,
-  VoidCallback onSetGameOver,
-  bool isLimitedMode,
-) {
+    BuildContext context, VoidCallback onSetGameOver, bool isLimitedMode,
+    {bool istap = true}) {
   return Padding(
     padding: const EdgeInsets.only(left: 5, right: 5),
     child: FittedBox(
       fit: BoxFit.contain,
       child: ElevatedButton(
-        onPressed: () async {
-          await showMenuDialog(context, onSetGameOver, isLimitedMode);
-        },
+        onPressed: istap
+            ? () async {
+                await showMenuDialog(context, onSetGameOver, isLimitedMode);
+              }
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: bgColor1(context), // 0〜255 の範囲、128は約50%,
           elevation: 0, // 影をなくす
@@ -144,13 +146,13 @@ Future<void> showFlyingDialog(
           Navigator.of(buildContext).pop();
         },
         child: AlertDialog(
-          title: const Text("おてつき！"),
+          title: Text(l10n(context, 'dialogMistakeTitle')),
           content: isLimitedMode
-              ? const Text("また次回挑戦!!")
-              : const Text("もう一度挑戦しますか？"),
+              ? Text(l10n(context, 'dialogNextTime'))
+              : Text(l10n(context, 'dialogTryAgain')),
           actions: [
             TextButton(
-              child: const Text("ホームへ"),
+              child: Text(l10n(context, 'dialogHomeButton')),
               onPressed: () {
                 onSetGameOver();
                 Navigator.of(buildContext).pop();
@@ -178,7 +180,7 @@ Future<void> showFlyingDialog(
                         ),
                       );
                     },
-              child: const Text("🔥もう一度 ▸"),
+              child: Text(l10n(context, 'dialogRetryButtonWithIcon')),
             ),
           ],
         ),

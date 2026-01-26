@@ -4,6 +4,9 @@ library common;
 export 'assistance/ad_manager.dart';
 export 'assistance/firebase_score.dart';
 export 'assistance/firebase_utils.dart';
+export 'assistance/l10n_helper.dart'; // ADDED
+export 'assistance/locale_notifier.dart';
+export 'assistance/japanese_translator.dart'; // ADDED
 export 'assistance/quiz_state_provider.dart';
 export 'assistance/sound_manager.dart';
 export 'assistance/theme_notifier.dart';

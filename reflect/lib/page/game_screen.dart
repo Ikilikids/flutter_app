@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:common/common.dart';
+import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,12 +23,13 @@ class _GamescreenState extends State<Gamescreen> {
   late String mode;
   int trialCount = 0;
   final int maxTrials = 3;
-  List<int> results = []; // 秒単位
+  List<int> results = []; // ミリ秒単位
 
   // Game State
   bool isWaiting = true; // 準備中・遅延中
   bool isReadyToAct = false; // 反応受付中
   bool showResult = false; // 1回の試行結果表示中
+  bool isGameOver = false;
 
   DateTime? startTime;
   Timer? _delayTimer;
@@ -146,16 +148,21 @@ class _GamescreenState extends State<Gamescreen> {
       showResult = true;
       results.add(elapsed);
       trialCount++;
-    });
-
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
       if (trialCount >= maxTrials) {
-        finishGame();
-      } else {
-        startTrial();
+        isGameOver = true;
       }
     });
+    print(isGameOver);
+    if (!mounted) return;
+    if (trialCount >= maxTrials) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        finishGame();
+      });
+    } else {
+      Future.delayed(const Duration(seconds: 1), () {
+        startTrial();
+      });
+    }
   }
 
   void finishGame() {
@@ -180,6 +187,7 @@ class _GamescreenState extends State<Gamescreen> {
   }
 
   Widget _buildScoreHeader() {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
@@ -188,9 +196,9 @@ class _GamescreenState extends State<Gamescreen> {
           final isDone = index < results.length;
           String text = "";
           if (isDone) {
-            text = "${results[index]}ms";
+            text = "${results[index]}${l10n.unitMillisecond}";
           } else {
-            text = "Try ${index + 1}";
+            text = l10n.tryNumber((index + 1).toString());
           }
 
           return Container(
@@ -221,16 +229,14 @@ class _GamescreenState extends State<Gamescreen> {
             ),
           );
         }),
-        menuButton(
-          context,
-          () => setState(() {}),
-          widget.quizinfo.islimited,
-        ),
+        menuButton(context, () => setState(() {}), widget.quizinfo.islimited,
+            istap: !isGameOver),
       ]),
     );
   }
 
   Widget _buildGameArea() {
+    final l10n = AppLocalizations.of(context)!;
     if (showResult) {
       // 試行ごとの結果表示（一瞬）
       return Center(
@@ -238,12 +244,12 @@ class _GamescreenState extends State<Gamescreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Time!',
+              l10n.timeResultTitle,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 20),
             Text(
-              '${results.last} ミリ秒',
+              '${results.last} ${l10n.unitMillisecond}',
               style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
             ),
           ],
@@ -273,7 +279,7 @@ class _GamescreenState extends State<Gamescreen> {
           onGridSelected: (idx) => onAction(inputGridIndex: idx),
         );
       default:
-        return const Center(child: Text("Unknown Mode"));
+        return Center(child: Text(l10n.unknownMode));
     }
   }
 

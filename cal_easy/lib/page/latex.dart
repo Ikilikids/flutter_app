@@ -15,6 +15,7 @@ class LatexInputScreen3 extends StatefulWidget {
   final Function(int) partpoint;
   final List<int> ctscore;
   final String categoly;
+  final String latexButton;
   const LatexInputScreen3({
     super.key,
     required this.marusikaku,
@@ -26,6 +27,7 @@ class LatexInputScreen3 extends StatefulWidget {
     required this.pekepeke,
     required this.partpoint,
     required this.categoly,
+    required this.latexButton,
   });
 
   @override
@@ -611,99 +613,94 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (widget.shubetu == "s")
+                    if (widget.latexButton == "mobile")
                       Expanded(
-                        flex: 2,
-                        child: Column(
-                          children: [
-                            Expanded(flex: 1, child: _getButtonList("p")),
-                            Expanded(flex: 1, child: _getButtonList("r")),
-                            Expanded(flex: 2, child: _getButtonList("f")),
-                          ],
-                        ),
-                      ),
-                    if (widget.shubetu == "lsct")
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          children: [
-                            Expanded(flex: 1, child: _getButtonList("s")),
-                            Expanded(flex: 1, child: _getButtonList("c")),
-                            Expanded(flex: 2, child: _getButtonList("f")),
-                          ],
-                        ),
-                      ),
-                    if (widget.shubetu == "m")
-                      Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: Column(
                           children: [
                             Expanded(
-                              flex: 1,
                               child: Row(
                                 children: [
-                                  Expanded(flex: 1, child: _getButtonList("e")),
-                                  Expanded(flex: 1, child: _getButtonList("^")),
+                                  Expanded(child: _getButtonList("1")),
+                                  Expanded(child: _getButtonList("2")),
+                                  Expanded(child: _getButtonList("3")),
                                 ],
                               ),
                             ),
                             Expanded(
-                              flex: 1,
                               child: Row(
                                 children: [
-                                  Expanded(flex: 1, child: _getButtonList("p")),
-                                  Expanded(flex: 1, child: _getButtonList("r")),
+                                  Expanded(child: _getButtonList("4")),
+                                  Expanded(child: _getButtonList("5")),
+                                  Expanded(child: _getButtonList("6")),
                                 ],
                               ),
                             ),
-                            Expanded(flex: 1, child: _getButtonList("f")),
-                            Expanded(flex: 1, child: _getButtonList("i")),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(child: _getButtonList("7")),
+                                  Expanded(child: _getButtonList("8")),
+                                  Expanded(child: _getButtonList("9")),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(child: SizedBox()),
+                                  Expanded(child: _getButtonList("0")),
+                                  Expanded(child: SizedBox()),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("7")),
-                                Expanded(child: _getButtonList("8")),
-                                Expanded(child: _getButtonList("9")),
-                              ],
+                    if (widget.latexButton == "calculator")
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(child: _getButtonList("7")),
+                                  Expanded(child: _getButtonList("8")),
+                                  Expanded(child: _getButtonList("9")),
+                                ],
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("4")),
-                                Expanded(child: _getButtonList("5")),
-                                Expanded(child: _getButtonList("6")),
-                              ],
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(child: _getButtonList("4")),
+                                  Expanded(child: _getButtonList("5")),
+                                  Expanded(child: _getButtonList("6")),
+                                ],
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("1")),
-                                Expanded(child: _getButtonList("2")),
-                                Expanded(child: _getButtonList("3")),
-                              ],
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(child: _getButtonList("1")),
+                                  Expanded(child: _getButtonList("2")),
+                                  Expanded(child: _getButtonList("3")),
+                                ],
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: SizedBox()),
-                                Expanded(child: _getButtonList("0")),
-                                Expanded(child: SizedBox()),
-                              ],
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(child: SizedBox()),
+                                  Expanded(child: _getButtonList("0")),
+                                  Expanded(child: SizedBox()),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
