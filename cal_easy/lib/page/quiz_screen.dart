@@ -58,7 +58,7 @@ class QuizScreenState extends State<Quizscreen> {
       _initialized = true;
       soundManager = Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
-      count = quizinfo.sort == "46" ? 10 : 20;
+      count = quizinfo.sort == "4867" ? 10 : 20;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {

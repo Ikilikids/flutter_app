@@ -44,7 +44,7 @@ final _appConfig = AppConfig(
             circleColor: "3251",
           ),
           GameDetail(
-            sort: "46",
+            sort: "4867",
             label: "addSubtract2Digits",
             method: "compete10Questions",
             description: "addSubtract2DigitsDesc",
@@ -80,7 +80,7 @@ final _appConfig = AppConfig(
             circleColor: "3251",
           ),
           GameDetail(
-            sort: "46",
+            sort: "4867",
             label: "addSubtract2Digits",
             method: "compete10Questions",
             description: "addSubtract2DigitsDesc",

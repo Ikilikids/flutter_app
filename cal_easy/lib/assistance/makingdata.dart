@@ -64,24 +64,52 @@ class OriginCentral {
       q1 = "$a ÷ $b = ？";
     } else if (mainsort == "6") {
       // plus2
-      int a, b, f;
-      f = ran(22, 99);
-      do {
-        a = ran(11, f - 11);
-        b = f - a;
-      } while ((a % 10 == 0 || b % 10 == 0));
+      int a, b, c, d, x, y, f;
+      b = ran(2, 9);
+      d = ran(11 - b, 9);
+      a = ran(1, 7);
+      c = ran(1, 8 - a);
+      x = 10 * a + b;
+      y = 10 * c + d;
+      f = x + y;
       ss1 = f.toString();
-      q1 = "$a + $b = ？";
+      q1 = "$x + $y = ？";
+    } else if (mainsort == "8") {
+      // plus2
+      int a, b, c, d, x, y, f;
+      b = ran(1, 8);
+      d = ran(1, 9 - b);
+      a = ran(1, 8);
+      c = ran(1, 9 - a);
+      x = 10 * a + b;
+      y = 10 * c + d;
+      f = x + y;
+      ss1 = f.toString();
+      q1 = "$x + $y = ？";
     } else if (mainsort == "4") {
-      // minus2
-      int a, b, f;
-      do {
-        a = ran(22, 99);
-        b = ran(11, a - 11);
-      } while ((a % 10 == 0 || b % 10 == 0));
-      f = a - b;
+      // plus2
+      int a, b, c, d, x, y, f;
+      b = ran(1, 8);
+      d = ran(b + 1, 9);
+      a = ran(3, 9);
+      c = ran(1, a - 2);
+      x = 10 * a + b;
+      y = 10 * c + d;
+      f = x - y;
       ss1 = f.toString();
-      q1 = "$a - $b = ？";
+      q1 = "$x - $y = ？";
+    } else if (mainsort == "7") {
+      // plus2
+      int a, b, c, d, x, y, f;
+      b = ran(2, 9);
+      d = ran(1, b - 1);
+      a = ran(2, 9);
+      c = ran(1, a - 1);
+      x = 10 * a + b;
+      y = 10 * c + d;
+      f = x - y;
+      ss1 = f.toString();
+      q1 = "$x - $y = ？";
     }
 
     List<String> parts = q1.split(';');
