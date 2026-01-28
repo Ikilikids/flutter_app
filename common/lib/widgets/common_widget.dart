@@ -78,7 +78,7 @@ Widget pointwidget(BuildContext context, int totalScore, {int? remainingTime}) {
 Widget timewidget(
     String sort, double remainingTime, num totalScore, BuildContext context) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
-  int changeCount = sort == "46" ? 8 : 16;
+  int changeCount = sort == "4867" ? 8 : 16;
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 5),
     child: Column(

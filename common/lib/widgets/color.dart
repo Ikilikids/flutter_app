@@ -24,11 +24,15 @@ Color getQuizColor2(
     return getColorByIndex(2, alpha, saturation, value);
   } else if (title.contains('3') || title.contains('3C')) {
     return getColorByIndex(4.6, alpha, saturation, value);
-  } else if (title.contains('6') || title.contains('A')) {
+  } else if (title.contains('6') ||
+      title.contains('A') ||
+      title.contains('8')) {
     return getColorByIndex(3.8, alpha, saturation, value);
   } else if (title.contains('5') || title.contains('B')) {
     return getColorByIndex(0.7, alpha, saturation * 0.9, value * 0.9);
-  } else if (title.contains('4') || title.contains('C')) {
+  } else if (title.contains('4') ||
+      title.contains('C') ||
+      title.contains('7')) {
     return getColorByIndex(2.9, alpha, saturation, value);
   } else {
     return textColor1(context);
