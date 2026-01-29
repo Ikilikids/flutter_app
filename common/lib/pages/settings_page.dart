@@ -67,9 +67,11 @@ class _SettingsPageState extends State<SettingsPage> {
               themeNotifier.setTheme(value ? ThemeMode.dark : ThemeMode.light);
             },
           ),
-          const Divider(height: 1),
-          buildSectionHeader(l10n(context, 'languageSectionTitle')),
-          _buildLanguageTile(context),
+          if (appConfig.title != "とことん高校数学") ...[
+            const Divider(height: 1),
+            buildSectionHeader(l10n(context, 'languageSectionTitle')),
+            _buildLanguageTile(context),
+          ],
           ...?settingWidgets?.call(context),
           const Divider(height: 1),
           buildSectionHeader(l10n(context, 'aboutSectionTitle')),
