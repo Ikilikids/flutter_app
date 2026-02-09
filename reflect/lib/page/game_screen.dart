@@ -285,17 +285,35 @@ class _GamescreenState extends State<Gamescreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppAdScaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildScoreHeader(),
-            Expanded(
-              child: _buildGameArea(),
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          isGameOver
+              ? null
+              : showMenuDialog(
+                  context,
+                  () => setState(() {
+                    isGameOver = true;
+                  }),
+                  widget.quizinfo.islimited,
+                );
+        },
+        child: AppAdScaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: _buildScoreHeader(),
+                ),
+                Expanded(
+                  flex: 7,
+                  child: _buildGameArea(),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 }

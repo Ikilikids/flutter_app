@@ -27,16 +27,15 @@ class GridGame extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: gridSize,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
+              mainAxisSpacing: 5,
+              crossAxisSpacing: 5,
             ),
             itemCount: gridSize * gridSize,
             itemBuilder: (context, index) {
               final bool isActive = isReadyToAct && index == activeGridIndex;
               return GestureDetector(
                 onTap: () => onGridSelected(index),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
+                child: Container(
                   decoration: BoxDecoration(
                     color: isActive ? Colors.orange : Colors.grey[300],
                     borderRadius: BorderRadius.circular(12),

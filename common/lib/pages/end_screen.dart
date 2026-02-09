@@ -38,17 +38,17 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
   }
 
   Future<void> _startSequence() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 700));
     soundManager.playSound('pi.mp3'); // main.dart の soundManager を使用
     if (!mounted) return;
     setState(() => step = 1);
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 700));
     soundManager.playSound('pi.mp3'); // main.dart の soundManager を使用
     if (!mounted) return;
     setState(() => step = 2);
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 700));
     soundManager.playSound('pipi.mp3'); // main.dart の soundManager を使用
     if (!mounted) return;
     setState(() => step = 3);

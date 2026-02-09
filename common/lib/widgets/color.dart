@@ -35,7 +35,7 @@ Color getQuizColor2(
       title.contains('7')) {
     return getColorByIndex(2.9, alpha, saturation, value);
   } else {
-    return textColor1(context);
+    return textColor1(context).withAlpha(230);
   }
 }
 

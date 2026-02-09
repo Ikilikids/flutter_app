@@ -9,6 +9,9 @@ final _appConfig = AppConfig(
   icon: Icons.flash_on,
   symbols: ["!!", "◯", "*", "♪"],
   isRotation: true,
+  BannerId: "ca-app-pub-1440692612851416/6348678971",
+  InterId: "ca-app-pub-1440692612851416/5035597308",
+  RewardId: "ca-app-pub-1440692612851416/6205218489",
   data: [
     GameData(
       fix: 0,
