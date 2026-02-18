@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:cal_easy/assistance/latex_formatter.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' as qrovider;
 
 import '../assistance/makingdata.dart';
 import '../page/common_widget.dart';
@@ -13,13 +13,11 @@ import '../page/latex.dart';
 class Quizscreen extends StatefulWidget {
   final List<String> quizDirectives;
   final QuizData quizinfo;
-  final String latexButton;
 
   const Quizscreen({
     super.key,
     required this.quizDirectives,
     required this.quizinfo,
-    required this.latexButton,
   });
 
   @override
@@ -56,7 +54,7 @@ class QuizScreenState extends State<Quizscreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      soundManager = Provider.of<SoundManager>(context, listen: false);
+      soundManager = qrovider.Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
       count = quizinfo.sort == "4867" ? 10 : 20;
       startWatch();
@@ -281,7 +279,6 @@ class QuizScreenState extends State<Quizscreen> {
                           button2: const [""],
                           ctscore: const [],
                           partpoint: (int a) {},
-                          latexButton: widget.latexButton,
                         ),
                       ),
                     ),

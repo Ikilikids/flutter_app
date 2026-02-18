@@ -86,9 +86,8 @@ final _appConfig = AppConfig(
       ],
     ),
   ],
-  mainGame: (BuildContext context, QuizData quizinfo) => Gamescreen(
-    quizinfo: quizinfo,
-  ),
+  mainGame: (BuildContext context, QuizData quizinfo) =>
+      Gamescreen(quizinfo: quizinfo),
 );
 
 void main() {

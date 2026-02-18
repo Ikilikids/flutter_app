@@ -178,11 +178,7 @@ class _GamescreenState extends State<Gamescreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => PipiScreen(
-          totalScore: finalScore,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => PipiScreen(totalScore: finalScore)),
     );
   }
 
@@ -190,48 +186,56 @@ class _GamescreenState extends State<Gamescreen> {
     final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        ...List.generate(maxTrials, (index) {
-          final isCurrent = index == trialCount && !showResult;
-          final isDone = index < results.length;
-          String text = "";
-          if (isDone) {
-            text = "${results[index]}${l10n.unitMillisecond}";
-          } else {
-            text = l10n.tryNumber((index + 1).toString());
-          }
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ...List.generate(maxTrials, (index) {
+            final isCurrent = index == trialCount && !showResult;
+            final isDone = index < results.length;
+            String text = "";
+            if (isDone) {
+              text = "${results[index]}${l10n.unitMillisecond}";
+            } else {
+              text = l10n.tryNumber((index + 1).toString());
+            }
 
-          return Container(
-            width: 80,
-            height: 60,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isCurrent
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
+            return Container(
+              width: 80,
+              height: 60,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
                 color: isCurrent
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
-                width: isCurrent ? 2 : 1,
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isCurrent
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
+                  width: isCurrent ? 2 : 1,
+                ),
               ),
-            ),
-            child: Text(
-              text,
-              style: TextStyle(
-                fontWeight:
-                    isCurrent || isDone ? FontWeight.bold : FontWeight.normal,
-                color: isCurrent
-                    ? Theme.of(context).colorScheme.onPrimaryContainer
-                    : Theme.of(context).textTheme.bodyMedium?.color,
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontWeight: isCurrent || isDone
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                  color: isCurrent
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Theme.of(context).textTheme.bodyMedium?.color,
+                ),
               ),
-            ),
-          );
-        }),
-        menuButton(context, () => setState(() {}), widget.quizinfo.islimited,
-            istap: !isGameOver),
-      ]),
+            );
+          }),
+          menuButton(
+            context,
+            () => setState(() {}),
+            widget.quizinfo.islimited,
+            istap: !isGameOver,
+          ),
+        ],
+      ),
     );
   }
 
@@ -286,34 +290,29 @@ class _GamescreenState extends State<Gamescreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) return;
-          isGameOver
-              ? null
-              : showMenuDialog(
-                  context,
-                  () => setState(() {
-                    isGameOver = true;
-                  }),
-                  widget.quizinfo.islimited,
-                );
-        },
-        child: AppAdScaffold(
-          body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: _buildScoreHeader(),
-                ),
-                Expanded(
-                  flex: 7,
-                  child: _buildGameArea(),
-                ),
-              ],
-            ),
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        isGameOver
+            ? null
+            : showMenuDialog(
+                context,
+                () => setState(() {
+                  isGameOver = true;
+                }),
+                widget.quizinfo.islimited,
+              );
+      },
+      child: AppAdScaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(flex: 1, child: _buildScoreHeader()),
+              Expanded(flex: 7, child: _buildGameArea()),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

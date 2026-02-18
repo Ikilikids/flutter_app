@@ -1,18 +1,21 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
-class PipiScreen extends StatefulWidget {
+import '../providers/app_uid.dart';
+
+class PipiScreen extends ConsumerStatefulWidget {
   final num totalScore;
   final dynamic originalData;
 
   const PipiScreen({super.key, required this.totalScore, this.originalData});
 
   @override
-  State<PipiScreen> createState() => _PipiScreenState();
+  ConsumerState<PipiScreen> createState() => _PipiScreenState();
 }
 
-class _PipiScreenState extends State<PipiScreen> {
+class _PipiScreenState extends ConsumerState<PipiScreen> {
   double _highScore = 0.0;
   int _rankAll = 0;
   int _rankMonthly = 0;
@@ -59,9 +62,8 @@ class _PipiScreenState extends State<PipiScreen> {
     final maxDuration = const Duration(seconds: 5);
     final EndBuilder = appConfig.endBuilder;
     final startTime = DateTime.now();
-    final userProvider = context.read<UserProvider>();
-    await userProvider.load(); // ← Firestore 読みに行く
-    userName = userProvider.userName;
+    final uid = await ref.read(appUidProvider.future);
+    userName = await ref.read(appUidProvider.notifier).loadUsername(uid);
 
     try {
       await _loadData();
@@ -104,8 +106,6 @@ class _PipiScreenState extends State<PipiScreen> {
         ? convertLabel(_quizinfo.sort)
         : quizId; // Use the already translated quizId
 
-    print(rankingId);
-    print(userName);
     // 🔹 ハイスコア & ランキング更新（v2共通マネージャ）
     await CommonHighScoreManager.setHighScoreSafe(
       quizId,

@@ -13,11 +13,12 @@ class NtEndScreen extends StatefulWidget {
   final int correctCount;
   final List<Map<String, dynamic>> P;
   final QuizData quizinfo;
-  const NtEndScreen(
-      {super.key,
-      required this.correctCount,
-      required this.P,
-      required this.quizinfo});
+  const NtEndScreen({
+    super.key,
+    required this.correctCount,
+    required this.P,
+    required this.quizinfo,
+  });
 
   @override
   // ignore: library_private_types_in_public_api
@@ -64,9 +65,7 @@ class _NtEndScreenState extends State<NtEndScreen> {
                     backgroundColor: quizColor,
                   ),
                 ),
-                SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 20),
                 Expanded(
                   flex: 3,
                   child: _ScoreSection(
@@ -78,10 +77,7 @@ class _NtEndScreenState extends State<NtEndScreen> {
                 ),
                 SizedBox(
                   height: 420,
-                  child: _RankSection(
-                    P: widget.P,
-                    quizinfo: _quizinfo,
-                  ),
+                  child: _RankSection(P: widget.P, quizinfo: _quizinfo),
                 ),
                 Expanded(
                   flex: 2,
@@ -117,10 +113,7 @@ class _QuizNameSection extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 28,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(16),
@@ -242,17 +235,14 @@ class _RankSection extends StatelessWidget {
   final List<Map<String, dynamic>> P;
   final QuizData quizinfo;
 
-  const _RankSection({
-    required this.P,
-    required this.quizinfo,
-  });
+  const _RankSection({required this.P, required this.quizinfo});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(5),
+      padding: const EdgeInsets.all(5),
       child: Container(
-        padding: EdgeInsets.all(2),
+        padding: const EdgeInsets.all(2),
         height: 410,
         width: double.infinity,
         child: DefaultTabController(
@@ -262,35 +252,33 @@ class _RankSection extends StatelessWidget {
               TabBar(
                 isScrollable: P.length > 5,
                 labelPadding: EdgeInsets.zero,
-                tabs: List.generate(
-                  min(P.length, 10),
-                  (index) {
-                    String isCorrect = P[index]["marks"] ?? "×";
-                    return SizedBox(
-                        width: P.length > 5 ? 80 : null, // ★ ここで制御
-                        height: 40,
-                        child: Tab(
-                          height: 40,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('問題${index + 1}'),
-                              isCorrect == "◯"
-                                  ? Image.asset(
-                                      'assets/images/circle.png',
-                                      height: 20,
-                                    )
-                                  : isCorrect == "×"
-                                      ? Image.asset(
-                                          'assets/images/cross.png',
-                                          height: 20,
-                                        )
-                                      : Container(),
-                            ],
-                          ),
-                        ));
-                  },
-                ),
+                tabs: List.generate(min(P.length, 10), (index) {
+                  String isCorrect = P[index]["marks"] ?? "×";
+                  return SizedBox(
+                    width: P.length > 5 ? 80 : null, // ★ ここで制御
+                    height: 40,
+                    child: Tab(
+                      height: 40,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('問題${index + 1}'),
+                          isCorrect == "◯"
+                              ? Image.asset(
+                                  'assets/images/circle.png',
+                                  height: 20,
+                                )
+                              : isCorrect == "×"
+                              ? Image.asset(
+                                  'assets/images/cross.png',
+                                  height: 20,
+                                )
+                              : Container(),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
               ),
               Expanded(
                 child: TabBarView(
@@ -299,17 +287,23 @@ class _RankSection extends StatelessWidget {
                     (index) => Column(
                       children: [
                         SizedBox(
-                            height: 240,
-                            width: double.infinity,
-                            child: buildChildWidget(context, P[index])),
+                          height: 240,
+                          width: double.infinity,
+                          child: buildChildWidget(context, P[index]),
+                        ),
                         Container(
                           height: 120,
                           width: double.infinity,
-                          padding: EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(15),
                             color: getQuizColor2(
-                                quizinfo.color, context, 0.4, 0.2, 0.95),
+                              quizinfo.color,
+                              context,
+                              0.4,
+                              0.2,
+                              0.95,
+                            ),
                           ),
                           child: FittedBox(
                             fit: BoxFit.scaleDown, // 親に収める
@@ -317,27 +311,33 @@ class _RankSection extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(
-                                parts(P[index]["all1"], P[index]["unindex"])
-                                    .length,
+                                parts(
+                                  P[index]["all1"],
+                                  P[index]["unindex"],
+                                ).length,
                                 (index2) => Column(
                                   children: [
-                                    if (parts(P[index]["all1"],
-                                            P[index]["unindex"])[index2]
-                                        .trim()
-                                        .isNotEmpty)
+                                    if (parts(
+                                      P[index]["all1"],
+                                      P[index]["unindex"],
+                                    )[index2].trim().isNotEmpty)
                                       Math.tex(
-                                        parts(P[index]["all1"],
-                                            P[index]["unindex"])[index2],
+                                        parts(
+                                          P[index]["all1"],
+                                          P[index]["unindex"],
+                                        )[index2],
                                         textStyle: TextStyle(
-                                            fontSize: min(30, 30),
-                                            color: textColor1(context)),
+                                          fontSize: min(30, 30),
+                                          color: textColor1(context),
+                                        ),
                                       ),
                                     if (index2 <
-                                        parts(P[index]["all1"],
-                                                    P[index]["unindex"])
-                                                .length -
+                                        parts(
+                                              P[index]["all1"],
+                                              P[index]["unindex"],
+                                            ).length -
                                             1)
-                                      SizedBox(height: 10),
+                                      const SizedBox(height: 10),
                                   ],
                                 ),
                               ),
@@ -383,7 +383,7 @@ class _ActionSection extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => AdInterstitialNavigator(
+                        builder: (_) => const AdInterstitialNavigator(
                           nextScreen: CommonCountdownScreen(),
                         ),
                       ),
@@ -398,7 +398,7 @@ class _ActionSection extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AdInterstitialNavigator(
+                  builder: (_) => const AdInterstitialNavigator(
                     nextScreen: CommonDetailCard(),
                   ),
                 ),
@@ -441,11 +441,9 @@ class _ActionItem extends StatelessWidget {
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(12),
                   disabledBackgroundColor: Theme.of(context).disabledColor,
-                  disabledForegroundColor: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.color
-                      ?.withAlpha(128),
+                  disabledForegroundColor: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.color?.withAlpha(128),
                 ),
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -463,9 +461,10 @@ class _ActionItem extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 100,
-                      color: textColor1(context)),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 100,
+                    color: textColor1(context),
+                  ),
                 ),
               ),
             ),

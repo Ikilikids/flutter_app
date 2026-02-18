@@ -76,7 +76,7 @@ Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
   int sumscore = int.parse(P["usedScoreValue"]);
   return Padding(
-    padding: EdgeInsets.only(left: 10, right: 10),
+    padding: const EdgeInsets.only(left: 10, right: 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -85,8 +85,8 @@ Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Container(
-              alignment: Alignment(0, 0),
-              padding: EdgeInsets.all(2),
+              alignment: const Alignment(0, 0),
+              padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: isDark
                     ? getQuizColor2(P["fi1"], context, 0.6, 0.4, 0.65)
@@ -108,8 +108,8 @@ Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Container(
-              alignment: Alignment(0, 0),
-              padding: EdgeInsets.all(2),
+              alignment: const Alignment(0, 0),
+              padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: const Color.fromARGB(99, 111, 111, 111),
                 borderRadius: BorderRadius.circular(3),
@@ -130,8 +130,8 @@ Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Container(
-              alignment: Alignment(0, 0),
-              padding: EdgeInsets.all(2),
+              alignment: const Alignment(0, 0),
+              padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: bgColor1(context).withAlpha(128), // 0〜255 の範囲、128は約50%
                 borderRadius: BorderRadius.circular(3),
@@ -158,7 +158,7 @@ Widget increasewidget(String scoreIncrement1, String scoreIncrement2) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 1, child: SizedBox()),
+        const Expanded(flex: 1, child: SizedBox()),
         Expanded(
           flex: 1,
           child: FittedBox(
@@ -166,8 +166,8 @@ Widget increasewidget(String scoreIncrement1, String scoreIncrement2) {
             alignment: Alignment.centerLeft,
             child: Text(
               scoreIncrement2,
-              style: TextStyle(
-                color: const Color.fromARGB(255, 0, 128, 255),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 0, 128, 255),
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -181,8 +181,8 @@ Widget increasewidget(String scoreIncrement1, String scoreIncrement2) {
             alignment: Alignment.centerLeft,
             child: Text(
               scoreIncrement1,
-              style: TextStyle(
-                color: const Color.fromARGB(255, 255, 0, 0),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 255, 0, 0),
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),

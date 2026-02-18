@@ -11,10 +11,7 @@ import '../assistance/quiz_download.dart';
 class Quizscreen extends StatefulWidget {
   final QuizData quizinfo;
 
-  const Quizscreen({
-    super.key,
-    required this.quizinfo,
-  });
+  const Quizscreen({super.key, required this.quizinfo});
 
   @override
   QuizScreenState createState() => QuizScreenState();
@@ -73,17 +70,17 @@ class QuizScreenState extends State<Quizscreen> {
     ChooseQuizData chooseQuizData = ChooseQuizData(
       correctCount: correctCount,
       quizinfo: quizinfo,
-      scoreIndexMap:
-          Provider.of<QuizProvider>(context, listen: false).scoreIndexMap,
+      scoreIndexMap: Provider.of<QuizProvider>(
+        context,
+        listen: false,
+      ).scoreIndexMap,
     );
     Map<String, String> ct = chooseQuizData.chooseRandombyScoreRange(context);
 
     if (ct["lc"] == "latex") {
       OriginCentral originCentral = OriginCentral(ct: ct);
       Map<String, dynamic> variable = originCentral.makingvariable();
-      MakingDeta makingDeta = MakingDeta(
-        calculatedresult: variable,
-      );
+      MakingDeta makingDeta = MakingDeta(calculatedresult: variable);
       Map<String, dynamic> endResult = makingDeta.deta();
 
       result = '';
@@ -95,9 +92,7 @@ class QuizScreenState extends State<Quizscreen> {
         _latexInputKey.currentState?.resetLatexOutputs();
       });
     } else {
-      OriginCentral2 originCentral = OriginCentral2(
-        ct: ct,
-      );
+      OriginCentral2 originCentral = OriginCentral2(ct: ct);
       Map<String, dynamic> variable = originCentral.makingvariable();
       P = variable;
     }
@@ -120,44 +115,41 @@ class QuizScreenState extends State<Quizscreen> {
   }
 
   void judge(String seigo) async {
-    Future.delayed(
-      const Duration(milliseconds: 500),
-      () {
-        if (isGameOver) return; // ←これを追加
-        setState(() {
-          scoreIncrement1 = '';
-          scoreIncrement2 = '';
-          selectedAnswer = null;
-          isAnswerChecked = false;
-        });
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (isGameOver) return; // ←これを追加
+      setState(() {
+        scoreIncrement1 = '';
+        scoreIncrement2 = '';
+        selectedAnswer = null;
+        isAnswerChecked = false;
+      });
 
-        if (remainingTime > 0 && quizinfo.isbattle == true) {
+      if (remainingTime > 0 && quizinfo.isbattle == true) {
+        updateQuestion();
+      }
+      if (quizinfo.isbattle == false) {
+        marks[qcount] = result;
+        P["marks"] = result;
+        plist.add(P);
+        if (qcount == quizinfo.questionCount! - 1) {
+          if (!mounted) return;
+
+          soundManager.playSound('hoi.mp3');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => quizinfo.isbattle
+                  ? PipiScreen(totalScore: totalScore)
+                  : PipiScreen(totalScore: correctCount, originalData: plist),
+            ),
+          );
+          return;
+        } else {
+          qcount++;
           updateQuestion();
         }
-        if (quizinfo.isbattle == false) {
-          marks[qcount] = result;
-          P["marks"] = result;
-          plist.add(P);
-          if (qcount == quizinfo.questionCount! - 1) {
-            if (!mounted) return;
-
-            soundManager.playSound('hoi.mp3');
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => quizinfo.isbattle
-                      ? PipiScreen(totalScore: totalScore)
-                      : PipiScreen(
-                          totalScore: correctCount, originalData: plist)),
-            );
-            return;
-          } else {
-            qcount++;
-            updateQuestion();
-          }
-        }
-      },
-    );
+      }
+    });
     if (isGameOver) return;
 
     if (seigo == "peke") {
@@ -227,7 +219,8 @@ class QuizScreenState extends State<Quizscreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => PipiScreen(totalScore: totalScore)),
+            builder: (context) => PipiScreen(totalScore: totalScore),
+          ),
         );
       }
     });
@@ -245,130 +238,134 @@ class QuizScreenState extends State<Quizscreen> {
     Widget childWidget = buildChildWidget(context, P);
 
     return PopScope(
-        canPop: false, // デフォルトの戻りはキャンセル
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) return;
-          isGameOver
-              ? null
-              : showMenuDialog(
-                  context,
-                  () => setState(() {
-                    isGameOver = true;
-                  }),
-                  quizinfo.islimited,
-                );
-        },
-        child: AppAdScaffold(
-          body: Container(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 40,
-            ),
-            decoration: BoxDecoration(),
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: Row(
-                        children: [
-                          if (quizinfo.isbattle == true)
-                            Expanded(
-                              flex: 1,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: CustomPaint(
-                                    size: const Size(100, 100),
-                                    painter: TimeCirclePainter(
-                                        remainingTime: remainingTime,
-                                        isDark: isDark),
+      canPop: false, // デフォルトの戻りはキャンセル
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        isGameOver
+            ? null
+            : showMenuDialog(
+                context,
+                () => setState(() {
+                  isGameOver = true;
+                }),
+                quizinfo.islimited,
+              );
+      },
+      child: AppAdScaffold(
+        body: Container(
+          padding: const EdgeInsets.only(left: 20, right: 20, top: 40),
+          decoration: const BoxDecoration(),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: Row(
+                      children: [
+                        if (quizinfo.isbattle == true)
+                          Expanded(
+                            flex: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: CustomPaint(
+                                  size: const Size(100, 100),
+                                  painter: TimeCirclePainter(
+                                    remainingTime: remainingTime,
+                                    isDark: isDark,
                                   ),
                                 ),
                               ),
                             ),
+                          ),
+                        Expanded(flex: 2, child: quizInfo(context, P)),
+                        Expanded(
+                          flex: 1,
+                          child: menuButton(
+                            context,
+                            () => setState(() {
+                              isGameOver = true;
+                            }),
+                            false,
+                            istap: !isGameOver,
+                          ),
+                        ),
+                        if (quizinfo.isbattle == true)
                           Expanded(
                             flex: 2,
-                            child: quizInfo(context, P),
+                            child: pointwidget(
+                              context,
+                              totalScore,
+                              remainingTime: remainingTime,
+                            ),
                           ),
+                        if (quizinfo.isbattle == true)
                           Expanded(
                             flex: 1,
-                            child: menuButton(
-                                context,
-                                () => setState(() {
-                                      isGameOver = true;
-                                    }),
-                                false,
-                                istap: !isGameOver),
+                            child: increasewidget(
+                              scoreIncrement1,
+                              scoreIncrement2,
+                            ),
                           ),
-                          if (quizinfo.isbattle == true)
-                            Expanded(
-                                flex: 2,
-                                child: pointwidget(context, totalScore,
-                                    remainingTime: remainingTime)),
-                          if (quizinfo.isbattle == true)
-                            Expanded(
-                                flex: 1,
-                                child: increasewidget(
-                                    scoreIncrement1, scoreIncrement2)),
-                          if (quizinfo.isbattle == false)
-                            Expanded(
-                                flex: 4, child: marupekelist(context, marks))
-                        ],
-                      ),
+                        if (quizinfo.isbattle == false)
+                          Expanded(
+                            flex: 4,
+                            child: marupekelist(context, marks),
+                          ),
+                      ],
                     ),
+                  ),
+                  Expanded(
+                    flex: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: childWidget,
+                    ),
+                  ),
+                  if (P["lc"] == "latex")
                     Expanded(
-                      flex: 4,
+                      flex: 7,
                       child: Padding(
-                        padding: EdgeInsets.only(top: 10),
-                        child: childWidget,
+                        padding: const EdgeInsets.only(bottom: 5),
+                        child: LatexInputScreen3(
+                          key: _latexInputKey,
+                          shubetu: P['fb'],
+                          marusikaku: P['latex'],
+                          alist: P['alist'],
+                          blist: P['blist'],
+                          button2: P['button'],
+                          ctscore: P['ctscore'],
+                          categoly: P["fi1"],
+                          pekepeke: (String ddd) {
+                            judge(ddd);
+                          },
+                          partpoint: (int ctscore) {
+                            partpoints(ctscore);
+                          },
+                        ),
                       ),
                     ),
-                    if (P["lc"] == "latex")
-                      Expanded(
-                        flex: 7,
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: 5),
-                          child: LatexInputScreen3(
-                            key: _latexInputKey,
-                            shubetu: P['fb'],
-                            marusikaku: P['latex'],
-                            alist: P['alist'],
-                            blist: P['blist'],
-                            button2: P['button'],
-                            ctscore: P['ctscore'],
-                            categoly: P["fi1"],
-                            pekepeke: (String ddd) {
-                              judge(ddd);
-                            },
-                            partpoint: (int ctscore) {
-                              partpoints(ctscore);
-                            },
-                          ),
+                  if (P["lc"] == "choose")
+                    Expanded(
+                      flex: 7,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 5),
+                        child: QuizOptions(
+                          quizData: P,
+                          onCorrect: (String ddd) {
+                            judge(ddd);
+                          },
                         ),
                       ),
-                    if (P["lc"] == "choose")
-                      Expanded(
-                        flex: 7,
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: 5),
-                          child: QuizOptions(
-                            quizData: P,
-                            onCorrect: (String ddd) {
-                              judge(ddd);
-                            },
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                Center(
-                  child: isAnswerChecked
-                      ? result == "◯"
+                    ),
+                ],
+              ),
+              Center(
+                child: isAnswerChecked
+                    ? result == "◯"
                           ? Image.asset(
                               isDark
                                   ? 'assets/images/circle_dark.png'
@@ -376,18 +373,19 @@ class QuizScreenState extends State<Quizscreen> {
                               height: 300,
                             )
                           : result == '×'
-                              ? Image.asset(
-                                  isDark
-                                      ? 'assets/images/cross_dark.png'
-                                      : 'assets/images/cross.png',
-                                  height: 300,
-                                )
-                              : Container()
-                      : Container(),
-                ),
-              ],
-            ),
+                          ? Image.asset(
+                              isDark
+                                  ? 'assets/images/cross_dark.png'
+                                  : 'assets/images/cross.png',
+                              height: 300,
+                            )
+                          : Container()
+                    : Container(),
+              ),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

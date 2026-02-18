@@ -1,10 +1,9 @@
-import 'package:common/assistance/string_notifier.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-Widget buildNumberButtonTile(BuildContext context) {
-  final value = context.watch<NumberChoiceNotifier>().value;
+Widget buildNumberButtonTile(
+    BuildContext context, String currentValue, Function onChanged) {
+  final value = currentValue;
 
   String label;
   switch (value) {
@@ -20,11 +19,11 @@ Widget buildNumberButtonTile(BuildContext context) {
     leading: const Icon(Icons.onetwothree),
     title: Text(l10n(context, "buttonLayout")),
     subtitle: Text(label),
-    onTap: () => _showNumberPicker(context),
+    onTap: () => _showNumberPicker(context, onChanged),
   );
 }
 
-Future<void> _showNumberPicker(BuildContext context) async {
+Future<void> _showNumberPicker(BuildContext context, Function onChanged) async {
   final result = await showDialog<String>(
     context: context,
     builder: (context) {
@@ -63,7 +62,7 @@ Future<void> _showNumberPicker(BuildContext context) async {
   );
 
   if (result != null) {
-    context.read<NumberChoiceNotifier>().set(result);
+    onChanged(result);
   }
 }
 
@@ -127,11 +126,11 @@ final calculatorLayout = [
   0,
   null,
 ];
-Widget buildSectionHeader(String title, BuildContext context) {
+Widget buildSectionHeader(BuildContext context) {
   return Padding(
     padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
     child: Text(
-      title,
+      l10n(context, "detailSetting"),
       style: TextStyle(
         color: Theme.of(context).colorScheme.primary,
         fontWeight: FontWeight.bold,

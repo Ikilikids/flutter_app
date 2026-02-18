@@ -80,9 +80,11 @@ final _appConfig = AppConfig(
   loadGame: (BuildContext context, QuizData quizinfo) {
     final choseProvider = Provider.of<ChoseProvider>(context, listen: false);
     List<Map<String, String>> filteredMap = choseProvider.quizData
-        .where((item) => quizinfo.isbattle
-            ? quizinfo.sort.contains(item["123abc"]!)
-            : item["sub"] == quizinfo.label)
+        .where(
+          (item) => quizinfo.isbattle
+              ? quizinfo.sort.contains(item["123abc"]!)
+              : item["sub"] == quizinfo.label,
+        )
         .toList();
 
     quizinfo.chosedData = filteredMap;
@@ -90,7 +92,10 @@ final _appConfig = AppConfig(
   mainGame: (BuildContext context, QuizData quizinfo) =>
       Quizscreen(quizinfo: quizinfo),
   endBuilder: (context, totalScore, originalData, quizinfo) => NtEndScreen(
-      correctCount: totalScore.round(), P: originalData, quizinfo: quizinfo),
+    correctCount: totalScore.round(),
+    P: originalData,
+    quizinfo: quizinfo,
+  ),
 );
 
 Future<void> main() async {
@@ -110,10 +115,7 @@ Future<void> main() async {
           create: (_) => QuizProvider()..initAll(),
         ),
       ],
-      child: Bootstrap(
-        appConfig: _appConfig,
-        firebaseOptions: options,
-      ),
+      child: Bootstrap(appConfig: _appConfig, firebaseOptions: options),
     ),
   );
 }

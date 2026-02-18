@@ -1,4 +1,3 @@
-import 'package:common/assistance/l10n_helper.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

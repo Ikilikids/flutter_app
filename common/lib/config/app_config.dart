@@ -11,7 +11,8 @@ typedef EndBuilder = Widget Function(
   dynamic originalData, // ← 型は実際の型に合わせて
   QuizData quizinfo,
 );
-typedef SettingWidgetsBuilder = List<Widget> Function(BuildContext);
+typedef SettingWidgetsBuilder = List<Widget> Function(
+    BuildContext, String, Function);
 
 class AppConfig {
   final String title;

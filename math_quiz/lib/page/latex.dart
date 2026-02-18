@@ -68,7 +68,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
     "2": true,
     "3": true,
     "0": true,
-    "i": true
+    "i": true,
   };
 
   @override
@@ -157,7 +157,8 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
       latexInput = value;
     } else {
       // カーソル位置に入力値を追加
-      latexInput = latexInput.substring(0, cursorPos) +
+      latexInput =
+          latexInput.substring(0, cursorPos) +
           value +
           latexInput.substring(cursorPos);
     }
@@ -172,8 +173,9 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
     }
 
     _controller.text = latexInput; // TextControllerを更新
-    _controller.selection =
-        TextSelection.collapsed(offset: newCursorPos); // 正しいカーソル位置を設定
+    _controller.selection = TextSelection.collapsed(
+      offset: newCursorPos,
+    ); // 正しいカーソル位置を設定
 
     // 入力内容が変わったら、その内容をリアルタイムでlatexOutputsに反映
   }
@@ -390,23 +392,26 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
         latexInput =
             "${latexInput.substring(0, startOfNumber)}$sign\\frac{}{$number}}}";
         _controller.text = latexInput;
-        _controller.selection =
-            TextSelection.collapsed(offset: startOfNumber + 6 + sign.length);
+        _controller.selection = TextSelection.collapsed(
+          offset: startOfNumber + 6 + sign.length,
+        );
       } else if (number.contains("sqrt") || sign.contains("{")) {
         // ignore: prefer_interpolation_to_compose_strings
         latexInput =
             "${latexInput.substring(0, startOfNumber)}$sign\\frac{}{$number}}";
         _controller.text = latexInput;
-        _controller.selection =
-            TextSelection.collapsed(offset: startOfNumber + 6 + sign.length);
+        _controller.selection = TextSelection.collapsed(
+          offset: startOfNumber + 6 + sign.length,
+        );
       } else if (number.isNotEmpty) {
         // ignore: prefer_interpolation_to_compose_strings
         latexInput =
             "${latexInput.substring(0, startOfNumber)}$sign\\frac{}{$number}";
 
         _controller.text = latexInput;
-        _controller.selection =
-            TextSelection.collapsed(offset: startOfNumber + 6 + sign.length);
+        _controller.selection = TextSelection.collapsed(
+          offset: startOfNumber + 6 + sign.length,
+        );
       }
     }
 
@@ -442,7 +447,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
   }
 
   // 数式ボックスのウィジェットを作成
-// 編集中のLaTeX式をハイライトする
+  // 編集中のLaTeX式をハイライトする
   Widget _buildLatexBoxWithVariable(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     String abcdePart = widget.marusikaku;
@@ -451,16 +456,8 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
 
     // 記号に対応する色マップ
     Map<String, String> colorMap = isDark
-        ? {
-            '◯': 'red',
-            '□': 'blue',
-            '☆': 'orange',
-          }
-        : {
-            '◯': 'red',
-            '□': 'blue',
-            '☆': 'orange',
-          };
+        ? {'◯': 'red', '□': 'blue', '☆': 'orange'}
+        : {'◯': 'red', '□': 'blue', '☆': 'orange'};
 
     for (int j = 0; j < abcdePart.length; j++) {
       String char = abcdePart[j];
@@ -485,7 +482,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
       child: Center(
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
             color: getQuizColor2(widget.categoly, context, 0.6, 0.2, 0.95),
@@ -499,10 +496,12 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
                   if (parts[i].trim().isNotEmpty)
                     Math.tex(
                       parts[i],
-                      textStyle:
-                          TextStyle(fontSize: 30, color: textColor1(context)),
+                      textStyle: TextStyle(
+                        fontSize: 30,
+                        color: textColor1(context),
+                      ),
                     ),
-                  if (i != parts.length - 1) SizedBox(height: 8),
+                  if (i != parts.length - 1) const SizedBox(height: 8),
                 ],
               ],
             ),
@@ -534,7 +533,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
     "c": {"label": "\\cos"},
     "t": {"label": "tan"},
     "i": {"label": "\\infty"},
-    "^": {"label": "□^□"}
+    "^": {"label": "□^□"},
   };
   Widget _getButtonList(String shubetu) {
     String symbol = shubetu;
@@ -552,26 +551,34 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
     final bool isVisible = buttonVisibility[symbol] ?? true;
     final bool sc = label == "\\cos" || label == "\\sin";
     // 文字色
-    Color forecolor =
-        isVisible ? textColor1(context) : textColor1(context).withAlpha(50);
+    Color forecolor = isVisible
+        ? textColor1(context)
+        : textColor1(context).withAlpha(50);
 
     // 背景色
     Color backcolor = isVisible
         ? getQuizColor2(widget.categoly, context, 0.6, 0.2, 0.95)
-        : getQuizColor2(widget.categoly, context, 0.6, 0.2, 0.95)
-            .withAlpha(30); // 透明にしたい場合
+        : getQuizColor2(
+            widget.categoly,
+            context,
+            0.6,
+            0.2,
+            0.95,
+          ).withAlpha(30); // 透明にしたい場合
 
     return Padding(
       padding: const EdgeInsets.all(2),
       child: InkWell(
         onTap: isVisible ? () => onPressed1(symbol) : null,
-        borderRadius:
-            sc ? BorderRadius.circular(20) : BorderRadius.circular(40),
+        borderRadius: sc
+            ? BorderRadius.circular(20)
+            : BorderRadius.circular(40),
         child: Container(
           decoration: BoxDecoration(
             color: backcolor,
-            borderRadius:
-                sc ? BorderRadius.circular(20) : BorderRadius.circular(40),
+            borderRadius: sc
+                ? BorderRadius.circular(20)
+                : BorderRadius.circular(40),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(5),
@@ -579,10 +586,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
             fit: BoxFit.scaleDown,
             child: Math.tex(
               label,
-              textStyle: TextStyle(
-                fontSize: 30,
-                color: forecolor,
-              ),
+              textStyle: TextStyle(fontSize: 30, color: forecolor),
             ),
           ),
         ),
@@ -600,14 +604,11 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
         color: Colors.transparent,
         child: Column(
           children: [
-            Expanded(
-              flex: 2,
-              child: _buildLatexBoxWithVariable(context),
-            ),
+            Expanded(flex: 2, child: _buildLatexBoxWithVariable(context)),
             Expanded(
               flex: 3,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 5),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -707,7 +708,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),

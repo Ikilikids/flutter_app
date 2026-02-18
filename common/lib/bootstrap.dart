@@ -1,12 +1,9 @@
 import 'package:common/common.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import 'assistance/string_notifier.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart' as provider;
 
 class Bootstrap extends StatefulWidget {
   final AppConfig appConfig;
@@ -24,57 +21,37 @@ class Bootstrap extends StatefulWidget {
 
 class _BootstrapState extends State<Bootstrap> {
   final _soundManager = SoundManager();
-  final _userProvider = UserProvider();
-  late final ThemeNotifier _themeNotifier;
-  late final LocaleNotifier _localeNotifier;
+
   bool _isThemeLoaded = false;
 
   @override
   void initState() {
     super.initState();
     print('🟢 Bootstrap initState');
-
-    _themeNotifier = ThemeNotifier(initialThemeMode: ThemeMode.system);
-    _localeNotifier = LocaleNotifier();
     _preloadThemeAndInit();
   }
 
   Future<void> _preloadThemeAndInit() async {
-    print('① Theme load start');
-    // 1. Load theme synchronously (await) to prevent flash
-    final prefs = await SharedPreferences.getInstance();
-    final savedThemeMode = prefs.getString('themeMode') ?? 'light';
-    final mode = savedThemeMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    print('① 初期化プロセス開始');
 
-    _themeNotifier.setTheme(mode);
+    // 1. まず Firebase と 必須設定を確実に終わらせる
+    await _initBackground();
 
+    print('④ 全ての必須初期化が完了');
+
+    // 2. 終わってから初めてフラグを立てて再描画
     if (mounted) {
       setState(() {
         _isThemeLoaded = true;
       });
     }
-    print('② Theme loaded: $mode');
-
-    // 2. Initialize others in background
-    _initBackground();
   }
 
   Future<void> _initBackground() async {
     print('③ Background init start');
-
-    // Firebase
-    Firebase.initializeApp(
-      options: widget.firebaseOptions,
-    ).then((_) async {
-      print('④ Firebase initialized');
-      final userCred = await FirebaseAuth.instance.signInAnonymously();
-      final uid = userCred.user?.uid;
-
-      if (uid != null) {
-        _userProvider.uid = uid;
-        createUserRecord(uid);
-      }
-    });
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: widget.firebaseOptions);
+    }
 
     // Sounds
     if (!kIsWeb) {
@@ -93,6 +70,7 @@ class _BootstrapState extends State<Bootstrap> {
       RewardedAdManager.configure(widget.appConfig);
       RewardedAdManager.loadAd();
     }
+    print('④ Background init end');
   }
 
   @override
@@ -103,37 +81,31 @@ class _BootstrapState extends State<Bootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    // If theme is not loaded yet, show a plain screen matching system brightness.
-    // No spinner, just a solid color to minimize flash.
+    // 🔴 重要：初期化が終わるまでは絶対 ProviderScope を出さない
     if (!_isThemeLoaded) {
       final brightness =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
-      final bgColor =
-          brightness == Brightness.dark ? Colors.black : Colors.white;
-
       return MaterialApp(
         home: Scaffold(
-          backgroundColor: bgColor,
+          backgroundColor:
+              brightness == Brightness.dark ? Colors.black : Colors.white,
           body: const SizedBox.shrink(),
         ),
       );
     }
 
-    print('🟢 build app (Theme ready)');
-
-    return MultiProvider(
-      providers: [
-        Provider.value(value: widget.appConfig),
-        Provider.value(value: _soundManager),
-        ChangeNotifierProvider.value(value: _userProvider),
-        ChangeNotifierProvider.value(value: _themeNotifier),
-        ChangeNotifierProvider.value(value: _localeNotifier),
-        ChangeNotifierProvider(create: (_) => QuizStateProvider()),
-        ChangeNotifierProvider(create: (_) => MidStateProvider()),
-        ChangeNotifierProvider(create: (_) => NumberChoiceNotifier()),
-      ],
-      child: const CommonApp(
-        home: CommonFirstPage(),
+    // 初期化完了後のみ Riverpod / Provider を開始する
+    return ProviderScope(
+      child: provider.MultiProvider(
+        providers: [
+          provider.Provider.value(value: widget.appConfig),
+          provider.Provider.value(value: _soundManager),
+          provider.ChangeNotifierProvider(create: (_) => QuizStateProvider()),
+          provider.ChangeNotifierProvider(create: (_) => MidStateProvider()),
+        ],
+        child: CommonApp(
+          home: CommonFirstPage(),
+        ),
       ),
     );
   }

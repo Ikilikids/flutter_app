@@ -52,10 +52,12 @@ class ChooseQuizData {
           .where((e) => e['fi3']!.contains("対数の不等式"))
           .toList();*/
       filtered = originalCandidates
-          .where((e) =>
-              e['fi3'] == chosed["sub"] &&
-              e['fi2'] == chosed["main"] &&
-              e['fi1'] == chosed["123abc"])
+          .where(
+            (e) =>
+                e['fi3'] == chosed["sub"] &&
+                e['fi2'] == chosed["main"] &&
+                e['fi1'] == chosed["123abc"],
+          )
           .toList();
     }
 
@@ -66,10 +68,7 @@ class ChooseQuizData {
 class MakingDeta {
   Map<String, dynamic> calculatedresult;
   final VoidCallback? onError;
-  MakingDeta({
-    required this.calculatedresult,
-    this.onError,
-  });
+  MakingDeta({required this.calculatedresult, this.onError});
   Map<String, dynamic> deta() {
     Map<String, dynamic> result = {};
     int y = calculatedresult["all1"].split('[').length - 1;
@@ -106,7 +105,7 @@ class MakingDeta {
     List<String> alist3 = makinglist(origin1[3]);
     List<String> alist4 = makinglist(origin1[4]);
     result["alist"] = [alist1, alist2, alist3, alist4];
-// 🔽 all2が存在する場合のみblistをつくる
+    // 🔽 all2が存在する場合のみblistをつくる
     if (calculatedresult["all2"] != null) {
       List<String> origin2 = extractRandomAndModify(
         calculatedresult["all2"],
@@ -149,14 +148,14 @@ class MakingDeta {
     RegExp regExp = RegExp(r'\[[^\]]*\]');
     Iterable<Match> matches = regExp.allMatches(input);
 
-// マッチした部分をextractedリストに格納
+    // マッチした部分をextractedリストに格納
     List<String> extracted = matches.map((match) => match.group(0)!).toList();
 
-// []で囲まれていない部分（unextracted）を抽出
+    // []で囲まれていない部分（unextracted）を抽出
     List<String> unextracted = [];
     int lastIndex = 0;
 
-// 最初に[]で囲まれていない部分があれば'n'を追加
+    // 最初に[]で囲まれていない部分があれば'n'を追加
     if (matches.isEmpty || matches.first.start == 0) {
       unextracted.add('-space-'); // 最初に囲まれていない部分があれば'n'を追加
     }
@@ -169,7 +168,7 @@ class MakingDeta {
       lastIndex = match.end;
     }
 
-// 残りの文字列（最後の[]以降）をunextractedに追加
+    // 残りの文字列（最後の[]以降）をunextractedに追加
     if (lastIndex < input.length) {
       unextracted.add(input.substring(lastIndex));
     } else {
@@ -181,7 +180,7 @@ class MakingDeta {
     List<String> exextracted = [];
     List<String> newextracted = List.from(extracted);
 
-// ランダムに選ばれたインデックスに対して、newextracted を変更する
+    // ランダムに選ばれたインデックスに対して、newextracted を変更する
     for (int i = 0; i < indexs.length; i++) {
       if (newextracted[indexs[i]] == r"[\cos]" ||
           newextracted[indexs[i]] == r"[\sin]" ||
@@ -288,9 +287,7 @@ class MakingDeta {
 class QuizStateProvider extends ChangeNotifier {
   List<String> quizinfo = [];
 
-  void setValues({
-    required List<String> quizinfo,
-  }) {
+  void setValues({required List<String> quizinfo}) {
     this.quizinfo = quizinfo;
     notifyListeners();
   }

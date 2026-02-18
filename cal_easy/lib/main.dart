@@ -1,7 +1,5 @@
-import 'package:common/assistance/string_notifier.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import 'assistance/quiz_logic.dart';
 import 'firebase_options.dart';
@@ -92,13 +90,13 @@ final _appConfig = AppConfig(
     ],
     mainGame: (BuildContext context, QuizData quizinfo) => Quizscreen(
         quizDirectives: prepareQuizDirectives(quizinfo.sort),
-        quizinfo: quizinfo,
-        latexButton: context.watch<NumberChoiceNotifier>().value),
-    settingWidgets: (BuildContext context) => [
-          const Divider(height: 1),
-          buildSectionHeader(l10n(context, "detailSetting"), context),
-          buildNumberButtonTile(context),
-        ]);
+        quizinfo: quizinfo),
+    settingWidgets:
+        (BuildContext context, String currentNumber, Function function) => [
+              const Divider(height: 1),
+              buildSectionHeader(context),
+              buildNumberButtonTile(context, currentNumber, function),
+            ]);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 

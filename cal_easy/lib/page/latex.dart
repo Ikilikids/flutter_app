@@ -1,9 +1,11 @@
 import 'package:common/common.dart';
+import 'package:common/providers/app_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart'; // ConsumerStatefulWidget 用
+import 'package:provider/provider.dart' as qrovider; // SoundManager 用
 
-class LatexInputScreen3 extends StatefulWidget {
+class LatexInputScreen3 extends ConsumerStatefulWidget {
   // 引数としてリストを受け取る
   final String marusikaku;
   final String shubetu;
@@ -15,7 +17,7 @@ class LatexInputScreen3 extends StatefulWidget {
   final Function(int) partpoint;
   final List<int> ctscore;
   final String categoly;
-  final String latexButton;
+
   const LatexInputScreen3({
     super.key,
     required this.marusikaku,
@@ -27,14 +29,13 @@ class LatexInputScreen3 extends StatefulWidget {
     required this.pekepeke,
     required this.partpoint,
     required this.categoly,
-    required this.latexButton,
   });
 
   @override
-  LatexInputScreenState createState() => LatexInputScreenState();
+  ConsumerState<LatexInputScreen3> createState() => LatexInputScreenState();
 }
 
-class LatexInputScreenState extends State<LatexInputScreen3> {
+class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
   late SoundManager soundManager;
   String latexInput = "";
   final TextEditingController _controller = TextEditingController();
@@ -91,7 +92,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    soundManager = Provider.of<SoundManager>(context, listen: false);
+    soundManager = qrovider.Provider.of<SoundManager>(context, listen: false);
   }
 
   void resetLatexOutputs() {
@@ -594,7 +595,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
 
   @override
   Widget build(BuildContext context) {
-    // boxCountの設定
+    final latexButton = ref.watch(appNumberProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -613,7 +614,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (widget.latexButton == "mobile")
+                    if (latexButton.value == "mobile")
                       Expanded(
                         flex: 3,
                         child: Column(
@@ -657,7 +658,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
                           ],
                         ),
                       ),
-                    if (widget.latexButton == "calculator")
+                    if (latexButton.value == "calculator")
                       Expanded(
                         flex: 3,
                         child: Column(

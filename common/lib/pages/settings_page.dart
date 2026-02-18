@@ -1,304 +1,390 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:common/common.dart';
+import 'package:common/providers/app_locale.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/app_number.dart';
+import '../providers/app_theme.dart';
 import '../src/generated/l10n/app_localizations.dart';
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends HookConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ---------- Providers ----------
+    final themeAsync = ref.watch(appThemeProvider);
+    final localeAsync = ref.watch(appLocaleProvider);
+    final numberAsync = ref.watch(appNumberProvider);
 
-class _SettingsPageState extends State<SettingsPage> {
-  final TextEditingController _nameController = TextEditingController();
-  String currentUserName = "";
-  bool _isEditingName = false;
-  final FocusNode _nameFocusNode = FocusNode();
-  bool _isInitialized = false;
-  @override
-  void initState() {
-    super.initState();
-    // initStateではl10nを呼ばない
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isInitialized) {
-      currentUserName = l10n(context, 'defaultUsername');
-      _loadUserName();
-      _isInitialized = true;
+    // ---------- Callbacks ----------
+    void onLocaleChanged(Locale newLocale) {
+      ref.read(appLocaleProvider.notifier).setLocale(newLocale);
     }
-  }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _nameFocusNode.dispose();
-    super.dispose();
-  }
+    void onThemeChanged(ThemeMode newTheme) {
+      ref.read(appThemeProvider.notifier).setTheme(newTheme);
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context);
-    final isDarkMode = themeNotifier.themeMode == ThemeMode.dark;
-    final appConfig = Provider.of<AppConfig>(context, listen: false);
-    final settingWidgets = appConfig.settingWidgets;
+    void onNumberChanged(String newNumber) {
+      ref.read(appNumberProvider.notifier).setNumber(newNumber);
+    }
+
+    final appConfig = context.read<AppConfig>();
+
+    // ---------- Hooks ----------
+    final nameController = useTextEditingController();
+    final nameFocusNode = useFocusNode();
+    final currentUserName = useState<String>(l10n(context, 'defaultUsername'));
+    final isEditingName = useState<bool>(false);
+    final isInitialized = useState<bool>(false);
+
+    // ---------- Init ----------
+    useEffect(() {
+      if (!isInitialized.value) {
+        _loadUserName(
+          controller: nameController,
+          currentUserName: currentUserName,
+        );
+        isInitialized.value = true;
+      }
+      return null;
+    }, const []);
+
+    // ---------- UI ----------
     return AppAdScaffold(
       advisible: false,
       appBar: AppBar(
         title: Text(l10n(context, 'settingsTitle')),
       ),
-      body: ListView(
-        children: [
-          buildSectionHeader(l10n(context, 'accountSectionTitle')),
-          _buildUserNameTile(context),
-          const Divider(height: 1),
-          buildSectionHeader(l10n(context, 'appearanceSectionTitle')),
-          SwitchListTile(
-            title: Text(l10n(context, 'darkModeLabel')),
-            secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-            value: isDarkMode,
-            onChanged: (value) {
-              themeNotifier.setTheme(value ? ThemeMode.dark : ThemeMode.light);
+      body: themeAsync.when(
+        data: (currentTheme) => localeAsync.when(
+          data: (currentLocale) => numberAsync.when(
+            data: (currentNumber) {
+              final isDarkMode = currentTheme == ThemeMode.dark;
+
+              return ListView(
+                children: [
+                  /// Username
+                  _sectionHeader(
+                    context,
+                    l10n(context, 'accountSectionTitle'),
+                  ),
+                  _userNameTile(
+                    context,
+                    controller: nameController,
+                    focusNode: nameFocusNode,
+                    currentUserName: currentUserName,
+                    isEditingName: isEditingName,
+                  ),
+                  const Divider(height: 1),
+
+                  /// Theme
+                  _sectionHeader(
+                      context, l10n(context, 'appearanceSectionTitle')),
+                  SwitchListTile(
+                    title: Text(l10n(context, 'darkModeLabel')),
+                    secondary:
+                        Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                    value: isDarkMode,
+                    onChanged: (newValue) {
+                      onThemeChanged(
+                          newValue ? ThemeMode.dark : ThemeMode.light);
+                    },
+                  ),
+
+                  /// Language
+                  if (appConfig.title != "とことん高校数学") ...[
+                    const Divider(height: 1),
+                    _sectionHeader(
+                        context, l10n(context, 'languageSectionTitle')),
+                    _languageTile(
+                      context: context,
+                      currentLocale: currentLocale,
+                      onSelect: onLocaleChanged,
+                    ),
+                  ],
+
+                  /// Other
+                  ...?appConfig.settingWidgets
+                      ?.call(context, currentNumber, onNumberChanged),
+
+                  const Divider(height: 1),
+
+                  /// About
+                  _sectionHeader(context, l10n(context, 'aboutSectionTitle')),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(l10n(context, 'contactLabel')),
+                  ),
+                ],
+              );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Number Error: $e')),
           ),
-          if (appConfig.title != "とことん高校数学") ...[
-            const Divider(height: 1),
-            buildSectionHeader(l10n(context, 'languageSectionTitle')),
-            _buildLanguageTile(context),
-          ],
-          ...?settingWidgets?.call(context),
-          const Divider(height: 1),
-          buildSectionHeader(l10n(context, 'aboutSectionTitle')),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: Text(l10n(context, 'contactLabel')),
-          ),
-        ],
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Locale Error: $e')),
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Theme Error: $e')),
       ),
     );
-  }
-
-  Widget buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserNameTile(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.account_circle),
-      title: Text(l10n(context, 'usernameLabel')),
-      subtitle: _isEditingName
-          ? TextField(
-              controller: _nameController,
-              focusNode: _nameFocusNode,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: l10n(context, 'newUsernameLabel'),
-              ),
-              onSubmitted: (_) => _saveUserName(),
-            )
-          : Text(currentUserName),
-      trailing: _isEditingName
-          ? IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _saveUserName,
-            )
-          : IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                setState(() {
-                  _isEditingName = true;
-                  _nameController.text = currentUserName;
-                });
-                _nameFocusNode.requestFocus();
-              },
-            ),
-    );
-  }
-
-  Widget _buildLanguageTile(BuildContext context) {
-    final localeNotifier = Provider.of<LocaleNotifier>(context);
-    final currentLocale =
-        localeNotifier.locale ?? Localizations.localeOf(context);
-    final languageName = _getLanguageName(currentLocale);
-
-    return ListTile(
-      leading: const Icon(Icons.language),
-      title: Text(l10n(context, 'languageLabel')),
-      subtitle: Text(languageName),
-      onTap: () => _showLanguagePicker(context),
-    );
-  }
-
-  void _showLanguagePicker(BuildContext context) {
-    final localeNotifier = Provider.of<LocaleNotifier>(context, listen: false);
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(l10n(context, 'languageSelectionTitle')),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: AppLocalizations.supportedLocales.map((locale) {
-                return RadioListTile<Locale>(
-                  title: Text(_getLanguageName(locale)),
-                  value: locale,
-                  groupValue: localeNotifier.locale,
-                  onChanged: (newLocale) {
-                    if (newLocale != null) {
-                      localeNotifier.setLocale(newLocale);
-                      Navigator.of(context).pop();
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text(l10n(context, 'cancelButton')),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  String _getLanguageName(Locale locale) {
-    // この部分はl10nの生成ファイルに依存するか、手動でマッピングを維持する必要があります。
-    // ここでは簡単のためにハードコードします。
-    switch (locale.languageCode) {
-      case 'en':
-        return 'English';
-      case 'ja':
-        return '日本語';
-      case 'es':
-        return 'Español';
-      case 'pt':
-        return 'Português';
-      case 'ko':
-        return '한국어';
-      default:
-        return locale.languageCode;
-    }
-  }
-
-  Future<void> _loadUserName() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? "guest";
-    final doc =
-        await FirebaseFirestore.instance.collection("users").doc(uid).get();
-
-    if (doc.exists && doc.data()?["userName"] != null) {
-      currentUserName = doc["userName"];
-    }
-
-    if (!mounted) return;
-    _nameController.text = currentUserName;
-    setState(() {});
-  }
-
-  Future<void> _saveUserName() async {
-    FocusScope.of(context).unfocus();
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? "guest";
-    final newName = _nameController.text.trim();
-
-    if (newName.isEmpty || newName == currentUserName) {
-      if (mounted) {
-        setState(() {
-          _isEditingName = false;
-        });
-      }
-      return;
-    }
-
-    final appConfig = Provider.of<AppConfig>(context, listen: false);
-    final labels = appConfig.title == "とことん高校数学"
-        ? [
-            "全合計",
-            "数Ⅰ・数A",
-            "数Ⅱ・数B",
-            "数Ⅲ・数C",
-          ]
-        : appConfig.data
-            // dataの各要素のdetailリストを展開
-            .expand((gameData) => gameData.detail)
-            // detailのlabelだけを取り出す
-            .map((detail) => detail.label)
-            // Setで重複を排除
-            .toSet()
-            // 必要ならListに変換
-            .toList();
-    // 1. 名前変更だけ先に反映
-    await FirebaseFirestore.instance.collection("users").doc(uid).set({
-      "userName": newName,
-      "updatedAt": FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    // UI 即時更新
-    if (!mounted) return;
-    setState(() {
-      currentUserName = newName;
-      _isEditingName = false;
-// ★ フォーカス不能
-    });
-
-    // 2. 別処理としてランキング更新をバックグラウンドに投げる
-    Future(() => _updateRankingsAfterNameChange(uid, newName, labels));
-
-    // 完了メッセージだけ表示
-    if (mounted) {
-      FocusManager.instance.primaryFocus?.unfocus();
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(l10n(context, 'saveUsernameSuccessTitle')),
-          content: Text(l10n(context, 'saveUsernameSuccessContent')),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n(context, 'okButton')),
-            ),
-          ],
-        ),
-      );
-    }
   }
 }
 
+/// --- ヘッダー ---
+Widget _sectionHeader(
+  BuildContext context,
+  String title,
+) {
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+    child: Text(
+      title,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.primary,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
+}
+
+/// --- ユーザーネームの編集 ---
+Widget _userNameTile(
+  BuildContext context, {
+  required TextEditingController controller,
+  required FocusNode focusNode,
+  required ValueNotifier<String> currentUserName,
+  required ValueNotifier<bool> isEditingName,
+}) {
+  return ListTile(
+    leading: const Icon(Icons.account_circle),
+    title: Text(
+      l10n(context, 'usernameLabel'),
+    ),
+    subtitle: isEditingName.value
+        ? TextField(
+            controller: controller,
+            focusNode: focusNode,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: l10n(
+                context,
+                'newUsernameLabel',
+              ),
+            ),
+            onSubmitted: (_) => _saveUserName(
+              context,
+              controller,
+              currentUserName,
+              isEditingName,
+            ),
+          )
+        : Text(
+            currentUserName.value,
+          ),
+    trailing: isEditingName.value
+        ? IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () => _saveUserName(
+              context,
+              controller,
+              currentUserName,
+              isEditingName,
+            ),
+          )
+        : IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              isEditingName.value = true;
+              controller.text = currentUserName.value;
+              focusNode.requestFocus();
+            },
+          ),
+  );
+}
+
+// --- 言語切り替え ---
+Widget _languageTile({
+  required BuildContext context,
+  required Locale currentLocale,
+  required void Function(Locale) onSelect,
+}) {
+  final languageName = _getLanguageName(currentLocale);
+
+  return ListTile(
+    leading: const Icon(Icons.language),
+    title: Text(l10n(context, 'languageLabel')),
+    subtitle: Text(languageName),
+    onTap: () {
+      showDialog(
+        context: context,
+        builder: (_) {
+          Locale tempSelected = currentLocale; // ダイアログ用の一時状態
+
+          return AlertDialog(
+            title: Text(l10n(context, 'languageSelectionTitle')),
+            content: StatefulBuilder(
+              builder: (context, setState) {
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: AppLocalizations.supportedLocales.map((locale) {
+                      return RadioListTile<Locale>(
+                        title: Text(_getLanguageName(locale)),
+                        value: locale,
+                        groupValue: tempSelected,
+                        onChanged: (newLocale) {
+                          if (newLocale != null) {
+                            setState(() {
+                              tempSelected = newLocale; // ダイアログ内で更新
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
+            actions: [
+              TextButton(
+                child: Text(l10n(context, 'okButton')),
+                onPressed: () {
+                  onSelect(tempSelected); // 親で Hook + ref 更新
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+/// --- 言語コードから表示名を取得 ---
+String _getLanguageName(Locale locale) {
+  switch (locale.languageCode) {
+    case 'en':
+      return 'English';
+    case 'ja':
+      return '日本語';
+    case 'es':
+      return 'Español';
+    case 'pt':
+      return 'Português';
+    case 'ko':
+      return '한국어';
+    default:
+      return locale.languageCode;
+  }
+}
+
+/// --- ユーザーネームの読み込みと保存 ---
+Future<void> _loadUserName({
+  required TextEditingController controller,
+  required ValueNotifier<String> currentUserName,
+}) async {
+  final uid = FirebaseAuth.instance.currentUser?.uid ?? "guest";
+
+  final doc =
+      await FirebaseFirestore.instance.collection("users").doc(uid).get();
+
+  if (doc.exists && doc.data()?["userName"] != null) {
+    currentUserName.value = doc["userName"];
+  }
+
+  controller.text = currentUserName.value;
+}
+
+Future<void> _saveUserName(
+  BuildContext context,
+  TextEditingController controller,
+  ValueNotifier<String> currentUserName,
+  ValueNotifier<bool> isEditingName,
+) async {
+  FocusScope.of(context).unfocus();
+
+  final uid = FirebaseAuth.instance.currentUser?.uid ?? "guest";
+
+  final newName = controller.text.trim();
+
+  if (newName.isEmpty || newName == currentUserName.value) {
+    isEditingName.value = false;
+    return;
+  }
+
+  final appConfig = context.read<AppConfig>();
+
+  final labels = appConfig.title == "とことん高校数学"
+      ? [
+          "全合計",
+          "数Ⅰ・数A",
+          "数Ⅱ・数B",
+          "数Ⅲ・数C",
+        ]
+      : appConfig.data
+          .expand((g) => g.detail)
+          .map((d) => d.label)
+          .toSet()
+          .toList();
+
+  await FirebaseFirestore.instance.collection("users").doc(uid).set({
+    "userName": newName,
+    "updatedAt": FieldValue.serverTimestamp(),
+  }, SetOptions(merge: true));
+
+  currentUserName.value = newName;
+  isEditingName.value = false;
+
+  Future(() => _updateRankingsAfterNameChange(uid, newName, labels));
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text(l10n(context, 'saveUsernameSuccessTitle')),
+      content: Text(l10n(context, 'saveUsernameSuccessContent')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            l10n(context, 'okButton'),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// ユーザーネーム変更後にランキングのユーザーネームも更新する
 Future<void> _updateRankingsAfterNameChange(
-    String uid, String newName, List<String> labels) async {
-  print(labels);
+  String uid,
+  String newName,
+  List<String> labels,
+) async {
   final firestore = FirebaseFirestore.instance;
-  final quizTabs = labels;
+
   final periods = ['all', 'monthly', 'weekly'];
 
-  for (var quizId in quizTabs) {
-    print(quizId);
+  for (var quizId in labels) {
     for (var period in periods) {
       Query q = firestore
           .collection("rankings_v2")
-          .where("quizId",
-              isEqualTo: JapaneseTranslator.translateKeyToJapanese(quizId))
+          .where(
+            "quizId",
+            isEqualTo: JapaneseTranslator.translateKeyToJapanese(quizId),
+          )
           .where("uid", isEqualTo: uid)
           .where("period", isEqualTo: period);
-      // monthly / weekly の場合は year/month/week も追加条件
+
       final now = DateTime.now();
+
       if (period == 'monthly') {
         q = q
             .where("year", isEqualTo: now.year)
@@ -310,6 +396,7 @@ Future<void> _updateRankingsAfterNameChange(
       }
 
       final snap = await q.get();
+
       for (var doc in snap.docs) {
         await doc.reference.update({"userName": newName});
       }
