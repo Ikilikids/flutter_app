@@ -2,25 +2,19 @@ import 'package:common/common.dart';
 import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CommonDetailCard extends StatefulWidget {
+class CommonDetailCard extends ConsumerStatefulWidget {
   const CommonDetailCard({
     super.key,
   });
 
   @override
-  State<CommonDetailCard> createState() => _CommonDetailCardState();
+  ConsumerState<CommonDetailCard> createState() => _CommonDetailCardState();
 }
 
-class _CommonDetailCardState extends State<CommonDetailCard> {
-  late MidStateProvider _midConfig;
-  late AppConfig appConfig;
-  late bool isLimitedMode;
-  late String rankingtype;
-  bool _isDependenciesInitialized = false;
-
+class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
   Map<String, double> _highScores = {};
   bool _loading = true;
 
@@ -29,26 +23,33 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
   double _opacity = 0.0;
   bool _isNavigating = false;
 
+  // This flag ensures the one-time setup logic runs only once.
+  bool _initialized = false;
+
+  // This state is used to signal the ref.listen to navigate.
+  DetailData? _RequestDetail;
+  ModeData? _RequestModeData;
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isDependenciesInitialized) {
-      _midConfig = Provider.of<MidStateProvider>(context);
-      appConfig = Provider.of<AppConfig>(context);
-      // データ内の islimited を参照して処理
-      isLimitedMode = _midConfig.isLimited;
-      rankingtype = _midConfig.ranking;
-      // 渡されたデータだけラベルを取得
-      final labels = _midConfig.detail.map((e) => e.label).toList();
+  void initState() {
+    super.initState();
+    // The initialization logic is moved here from the build method.
+    // It's safer to call this from initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializeScreen());
+  }
 
-      if (isLimitedMode) {
-        _loadPlayCounts(labels);
-        RewardedAdManager.loadAd();
-      }
+  void _initializeScreen() {
+    if (_initialized) return;
+    final mid = ref.read(appMidConfigProvider).mid;
+    final labels = mid.detail.map((e) => e.label).toList();
+    final isLimited = mid.islimited;
 
-      _loadHighScores(labels);
-      _isDependenciesInitialized = true;
+    if (isLimited) {
+      _loadPlayCounts(labels);
+      RewardedAdManager.loadAd();
     }
+    _loadHighScores(labels, mid.ranking);
+    _initialized = true;
   }
 
   Future<void> _loadPlayCounts(List<String> labels) async {
@@ -104,7 +105,7 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
     }
   }
 
-  Future<void> _loadHighScores(List<String> labels) async {
+  Future<void> _loadHighScores(List<String> labels, String rankingtype) async {
     Map<String, double> scores = {};
 
     final futures = labels.map((label) async {
@@ -131,18 +132,49 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isDependenciesInitialized) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    // THIS IS THE FIX: Listen to the provider. When it changes, and if the
+    // change was triggered by our navigation request, then navigate.
+    ref.listen<DetailConfig>(appDetailConfigProvider, (previous, next) {
+      // Check if there is a pending navigation request and if the new state
+      // matches the requested data.
+
+      if (_RequestDetail != null &&
+          _RequestModeData != null &&
+          next.detail == _RequestDetail &&
+          next.modeData == _RequestModeData) {
+        // Clear the request
+        _RequestDetail = null;
+        _RequestModeData = null;
+
+        // Navigate to the next screen. This is now guaranteed to happen
+        // *after* the state has been updated.
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CommonCountdownScreen()),
+        ).then((_) {
+          // When we return from countdown, reset the navigating state.
+          if (mounted) {
+            setState(() {
+              _isNavigating = false;
+              _opacity = 0.0;
+            });
+          }
+        });
+      }
+    });
+
+    final midConfig = ref.watch(appMidConfigProvider);
 
     return PopScope(
         canPop: false, // 通常の戻るを無効化
         onPopInvokedWithResult: (didPop, result) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const CommonModeSelectionPage()),
-            (route) => false,
-          );
+          if (!didPop) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => CommonModeSelectionPage()),
+              (route) => false,
+            );
+          }
         },
         child: Stack(
           children: [
@@ -151,8 +183,8 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
                 title: Text(
                   l10n(
                       context,
-                      _midConfig.title ??
-                          (isLimitedMode
+                      midConfig.mid.modeTitle ??
+                          (midConfig.mid.islimited
                               ? "dailyLimitedModeTitle"
                               : "unlimitedModeTitle")),
                 ),
@@ -160,10 +192,10 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
               body: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : ListView(
-                      children: _midConfig.detail.map((detail) {
+                      children: midConfig.mid.detail.map((detail) {
                         final label = detail.label;
                         final score = _highScores[label] ?? 0.0;
-                        final playCount = _midConfig.isLimited
+                        final playCount = midConfig.mid.islimited
                             ? (_playCounts[label] ?? 0)
                             : 0;
                         final rewardGranted = _rewardGranted[label] ?? false;
@@ -175,14 +207,19 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
                               score: score,
                               playCount: playCount,
                               rewardGranted: rewardGranted,
-                              isLimitedMode: _midConfig.isLimited,
-                              isbattle: _midConfig.isBattle,
+                              isLimitedMode: midConfig.mid.islimited,
+                              isbattle: midConfig.mid.isbattle,
                               isNavigating: _isNavigating,
-                              onPlay: (qcount) => _handlePlay(detail, qcount),
+                              onPlay: (qcount) => _handlePlay(
+                                    detail,
+                                    midConfig.mid.modeData,
+                                    qcount,
+                                    midConfig.mid.islimited,
+                                  ),
                               onWatchAd: () => _handleWatchAd(detail.label),
-                              fix: _midConfig.fix,
-                              unit: _midConfig.unit,
-                              title: appConfig.title),
+                              fix: midConfig.mid.fix,
+                              unit: midConfig.mid.unit,
+                              title: allData.appTitle),
                         );
                       }).toList(),
                     ),
@@ -202,17 +239,22 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
         ));
   }
 
-  void _handlePlay(GameDetail detail, int? qcount) async {
+  // THIS IS THE FIX: _handlePlay NO LONGER NAVIGATES.
+  // It only signals its intent to navigate by updating the providers.
+  void _handlePlay(
+      DetailData detail, ModeData modeData, int? qcount, bool islimited) async {
+    // 1. Handle local UI changes and business logic
     final label = detail.label;
-
-    if (isLimitedMode) {
+    if (islimited) {
       await _incrementPlayCount(label);
       if (_rewardGranted[label] == true) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('rewardGranted_$label');
-        setState(() {
-          _rewardGranted[label] = false;
-        });
+        if (mounted) {
+          setState(() {
+            _rewardGranted[label] = false;
+          });
+        }
       }
     }
 
@@ -221,37 +263,12 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
       _isNavigating = true;
     });
 
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
+    // 2. Set the navigation request flag for the listener
+    _RequestDetail = detail;
+    _RequestModeData = modeData;
 
-    Provider.of<QuizStateProvider>(context, listen: false).setValues(
-      quizinfo: QuizData(
-        unit: _midConfig.unit,
-        fix: _midConfig.fix,
-        islimited: isLimitedMode,
-        isbattle: _midConfig.isBattle,
-        sort: detail.sort,
-        label: detail.label,
-        method: detail.method,
-        description: detail.description,
-        color: detail.color,
-        circleColor: detail.circleColor,
-        isDescending: _midConfig.isDescending,
-        ranking: rankingtype,
-        questionCount: qcount, // ← null なら何も起きない
-      ),
-    );
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => CommonCountdownScreen()),
-    );
-
-    if (!mounted) return;
-    setState(() {
-      _isNavigating = false;
-      _opacity = 0.0;
-    });
+    // 3. Update the global provider. The listener will see this change and navigate.
+    ref.read(appDetailConfigProvider.notifier).selectDetail(detail, modeData);
   }
 
   void _handleWatchAd(String subTitle) {
@@ -263,9 +280,11 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
           final today =
               DateTime(now.year, now.month, now.day).toIso8601String();
           await prefs.setString('rewardGranted_$subTitle', today);
-          setState(() {
-            _rewardGranted[subTitle] = true;
-          });
+          if (mounted) {
+            setState(() {
+              _rewardGranted[subTitle] = true;
+            });
+          }
         },
       );
     } else {
@@ -278,7 +297,7 @@ class _CommonDetailCardState extends State<CommonDetailCard> {
 }
 
 class _CommonSubjectCard extends StatelessWidget {
-  final GameDetail detail;
+  final DetailData detail;
   final num score;
   final int playCount;
   final bool rewardGranted;

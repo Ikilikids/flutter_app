@@ -5,20 +5,20 @@ import 'assistance/quiz_logic.dart';
 import 'firebase_options.dart';
 import 'page/quiz_screen.dart';
 
-final _appConfig = AppConfig(
-  title: "とことん四則演算",
-  icon: Icons.calculate,
+final _appConfig = AllData(
+  appTitle: "とことん四則演算",
+  appIcon: Icons.calculate,
   symbols: ["+", "-", "×", "÷"],
   isRotation: false,
-  data: [
-    GameData(
+  mid: [
+    MidData(
       unit: "秒",
       fix: 2,
       islimited: false,
       isbattle: true,
       ranking: "t",
       detail: [
-        GameDetail(
+        DetailData(
           sort: "32",
           label: "足し算・引き算",
           method: "20問の正解タイムで競う",
@@ -26,7 +26,7 @@ final _appConfig = AppConfig(
           color: "2",
           circleColor: "32",
         ),
-        GameDetail(
+        DetailData(
           sort: "3251",
           label: "四則演算",
           method: "20問の正解タイムで競う",
@@ -34,7 +34,7 @@ final _appConfig = AppConfig(
           color: "5",
           circleColor: "3251",
         ),
-        GameDetail(
+        DetailData(
           sort: "46",
           label: "2桁の足し算・引き算",
           method: "10問の正解タイムで競う",
@@ -44,14 +44,14 @@ final _appConfig = AppConfig(
         ),
       ],
     ),
-    GameData(
+    MidData(
       unit: "秒",
       fix: 2,
       islimited: true,
       isbattle: true,
       ranking: "g",
       detail: [
-        GameDetail(
+        DetailData(
           sort: "32",
           label: "足し算・引き算",
           method: "20問の正解タイムで競う",
@@ -59,7 +59,7 @@ final _appConfig = AppConfig(
           color: "3",
           circleColor: "32",
         ),
-        GameDetail(
+        DetailData(
           sort: "3251",
           label: "四則演算",
           method: "20問の正解タイムで競う",
@@ -67,7 +67,7 @@ final _appConfig = AppConfig(
           color: "1",
           circleColor: "3251",
         ),
-        GameDetail(
+        DetailData(
           sort: "46",
           label: "2桁の足し算・引き算",
           method: "10問の正解タイムで競う",

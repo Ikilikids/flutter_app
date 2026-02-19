@@ -1,14 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:common/common.dart';
-import 'package:common/providers/app_locale.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart';
 
-import '../providers/app_number.dart';
-import '../providers/app_theme.dart';
 import '../src/generated/l10n/app_localizations.dart';
 
 class SettingsPage extends HookConsumerWidget {
@@ -33,8 +29,6 @@ class SettingsPage extends HookConsumerWidget {
     void onNumberChanged(String newNumber) {
       ref.read(appNumberProvider.notifier).setNumber(newNumber);
     }
-
-    final appConfig = context.read<AppConfig>();
 
     // ---------- Hooks ----------
     final nameController = useTextEditingController();
@@ -98,7 +92,7 @@ class SettingsPage extends HookConsumerWidget {
                   ),
 
                   /// Language
-                  if (appConfig.title != "とことん高校数学") ...[
+                  if (allData.appTitle != "とことん高校数学") ...[
                     const Divider(height: 1),
                     _sectionHeader(
                         context, l10n(context, 'languageSectionTitle')),
@@ -110,7 +104,7 @@ class SettingsPage extends HookConsumerWidget {
                   ],
 
                   /// Other
-                  ...?appConfig.settingWidgets
+                  ...?allData.settingWidgets
                       ?.call(context, currentNumber, onNumberChanged),
 
                   const Divider(height: 1),
@@ -320,16 +314,14 @@ Future<void> _saveUserName(
     return;
   }
 
-  final appConfig = context.read<AppConfig>();
-
-  final labels = appConfig.title == "とことん高校数学"
+  final labels = allData.appTitle == "とことん高校数学"
       ? [
           "全合計",
           "数Ⅰ・数A",
           "数Ⅱ・数B",
           "数Ⅲ・数C",
         ]
-      : appConfig.data
+      : allData.mid
           .expand((g) => g.detail)
           .map((d) => d.label)
           .toSet()

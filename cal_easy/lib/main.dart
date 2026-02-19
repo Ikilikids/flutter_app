@@ -6,97 +6,103 @@ import 'firebase_options.dart';
 import 'page/quiz_screen.dart';
 import 'page/setting_widgets.dart';
 
-final _appConfig = AppConfig(
-    title: "appTitle",
-    icon: Icons.calculate,
-    symbols: ["+", "-", "×", "÷"],
-    isRotation: false,
-    BannerId: "ca-app-pub-1440692612851416/5101110710",
-    InterId: "ca-app-pub-1440692612851416/6696946185",
-    RewardId: "ca-app-pub-1440692612851416/5939549664",
-    data: [
-      GameData(
+final _appConfig = AllData(
+  appData: AppData(
+      appTitle: "appTitle",
+      appIcon: Icons.calculate,
+      symbols: ["+", "-", "×", "÷"],
+      isRotation: false,
+      bannerId: "ca-app-pub-1440692612851416/5101110710",
+      interId: "ca-app-pub-1440692612851416/6696946185",
+      rewardId: "ca-app-pub-1440692612851416/5939549664",
+      mainGame: (BuildContext context, DetailConfig quizinfo) => Quizscreen(
+          quizDirectives: prepareQuizDirectives(quizinfo.detail.sort),
+          quizinfo: quizinfo),
+      settingWidgets:
+          (BuildContext context, String currentNumber, Function function) => [
+                const Divider(height: 1),
+                buildSectionHeader(context),
+                buildNumberButtonTile(context, currentNumber, function),
+              ]),
+  mid: [
+    MidData(
+      modeData: ModeData(
         unit: "unitSecond",
         fix: 2,
         islimited: false,
         isbattle: true,
         ranking: "t",
-        title: "unlimitedModeTitle",
+        modeTitle: "unlimitedModeTitle",
         sub1: "unlimitedModeSub1",
         sub2: "unlimitedModeSub2",
-        detail: [
-          GameDetail(
-            sort: "32",
-            label: "addSubtract",
-            method: "compete20Questions",
-            description: "addSubtractDesc",
-            color: "2",
-            circleColor: "32",
-          ),
-          GameDetail(
-            sort: "3251",
-            label: "fourArithmeticOperations",
-            method: "compete20Questions",
-            description: "fourArithmeticOperationsDesc",
-            color: "5",
-            circleColor: "3251",
-          ),
-          GameDetail(
-            sort: "4867",
-            label: "addSubtract2Digits",
-            method: "compete10Questions",
-            description: "addSubtract2DigitsDesc",
-            color: "4",
-            circleColor: "46",
-          ),
-        ],
       ),
-      GameData(
+      detail: [
+        DetailData(
+          sort: "32",
+          label: "addSubtract",
+          method: "compete20Questions",
+          description: "addSubtractDesc",
+          color: "2",
+          circleColor: "32",
+        ),
+        DetailData(
+          sort: "3251",
+          label: "fourArithmeticOperations",
+          method: "compete20Questions",
+          description: "fourArithmeticOperationsDesc",
+          color: "5",
+          circleColor: "3251",
+        ),
+        DetailData(
+          sort: "4867",
+          label: "addSubtract2Digits",
+          method: "compete10Questions",
+          description: "addSubtract2DigitsDesc",
+          color: "4",
+          circleColor: "46",
+        ),
+      ],
+    ),
+    MidData(
+      modeData: ModeData(
         unit: "unitSecond",
         fix: 2,
         islimited: true,
         isbattle: true,
         ranking: "g",
-        title: "dailyLimitedModeTitle",
+        modeTitle: "dailyLimitedModeTitle",
         sub1: "dailyLimitedModeSub1",
         sub2: "dailyLimitedModeSub2",
-        detail: [
-          GameDetail(
-            sort: "32",
-            label: "addSubtract",
-            method: "compete20Questions",
-            description: "addSubtractDesc",
-            color: "3",
-            circleColor: "32",
-          ),
-          GameDetail(
-            sort: "3251",
-            label: "fourArithmeticOperations",
-            method: "compete20Questions",
-            description: "fourArithmeticOperationsDesc",
-            color: "1",
-            circleColor: "3251",
-          ),
-          GameDetail(
-            sort: "4867",
-            label: "addSubtract2Digits",
-            method: "compete10Questions",
-            description: "addSubtract2DigitsDesc",
-            color: "6",
-            circleColor: "46",
-          ),
-        ],
       ),
-    ],
-    mainGame: (BuildContext context, QuizData quizinfo) => Quizscreen(
-        quizDirectives: prepareQuizDirectives(quizinfo.sort),
-        quizinfo: quizinfo),
-    settingWidgets:
-        (BuildContext context, String currentNumber, Function function) => [
-              const Divider(height: 1),
-              buildSectionHeader(context),
-              buildNumberButtonTile(context, currentNumber, function),
-            ]);
+      detail: [
+        DetailData(
+          sort: "32",
+          label: "addSubtract",
+          method: "compete20Questions",
+          description: "addSubtractDesc",
+          color: "3",
+          circleColor: "32",
+        ),
+        DetailData(
+          sort: "3251",
+          label: "fourArithmeticOperations",
+          method: "compete20Questions",
+          description: "fourArithmeticOperationsDesc",
+          color: "1",
+          circleColor: "3251",
+        ),
+        DetailData(
+          sort: "4867",
+          label: "addSubtract2Digits",
+          method: "compete10Questions",
+          description: "addSubtract2DigitsDesc",
+          color: "6",
+          circleColor: "46",
+        ),
+      ],
+    ),
+  ],
+);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 

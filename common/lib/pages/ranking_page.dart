@@ -2,7 +2,6 @@ import 'package:common/common.dart';
 import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 // Helper class to hold both ID (for DB) and display text (for UI)
 class QuizTabInfo {
@@ -32,7 +31,6 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     with TickerProviderStateMixin {
   late TabController quizTabController;
   late TabController periodTabController;
-  late AppConfig appConfig;
   bool _isAppConfigInitialized = false;
   String selectedPeriod = '';
   String selectedSubjectId = ""; // Now holds the Japanese ID
@@ -54,7 +52,6 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isAppConfigInitialized) {
-      appConfig = Provider.of<AppConfig>(context, listen: false);
       periodTabs = [
         l10n(context, 'allPeriod'),
         l10n(context, 'monthlyPeriod'),
@@ -99,8 +96,8 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     final data = await CommonRankingManager.getRanking(
       key, // Pass the Japanese ID
       periodV2,
-      rankingtype: appConfig.data[selectedModeIndex].ranking,
-      isDescending: appConfig.data[selectedModeIndex].isDescending,
+      rankingtype: allData.mid[selectedModeIndex].ranking,
+      isDescending: allData.mid[selectedModeIndex].isDescending,
     );
 
     if (!mounted) return;
@@ -111,7 +108,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
               e['userName'] ?? l10n(context, 'defaultUsername'),
               (e['score'] as num).toDouble(),
               (e['date'] ?? DateTime.now()) as DateTime,
-              appConfig.data[selectedModeIndex].ranking,
+              allData.mid[selectedModeIndex].ranking,
             ))
         .toList();
 
@@ -124,11 +121,11 @@ class _CommonRankingPageState extends State<CommonRankingPage>
       return const SizedBox.shrink();
     }
 
-    final gameData = appConfig.data[selectedModeIndex];
+    final gameData = allData.mid[selectedModeIndex];
 
     if (!_areTabsInitialized) {
       final isSpecialMode =
-          JapaneseTranslator.translateKeyToJapanese(appConfig.title) ==
+          JapaneseTranslator.translateKeyToJapanese(allData.appTitle) ==
                   "とことん高校数学" &&
               selectedModeIndex == 0;
 
@@ -173,7 +170,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
       orElse: () {
         return gameData.detail.firstWhere(
           (d) => convertLabel(d.sort) == selectedSubjectId,
-          orElse: () => GameDetail(
+          orElse: () => DetailData(
               sort: "",
               label: "",
               method: "",
@@ -192,10 +189,8 @@ class _CommonRankingPageState extends State<CommonRankingPage>
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (!didPop)
-            Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const CommonModeSelectionPage()));
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (_) => CommonModeSelectionPage()));
         },
         child: AppAdScaffold(
           appBar: AppBar(title: Text(l10n(context, 'rankingTitle'))),
@@ -225,7 +220,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                 borderRadius: BorderRadius.circular(10)),
                             minimumSize: const Size(double.infinity, 50),
                           ),
-                          child: Text(l10n(context, appConfig.data[0].title!),
+                          child: Text(l10n(context, allData.mid[0].modeTitle!),
                               style: TextStyle(fontSize: 18)),
                         ),
                       ),
@@ -248,7 +243,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                 borderRadius: BorderRadius.circular(10)),
                             minimumSize: const Size(double.infinity, 50),
                           ),
-                          child: Text(l10n(context, appConfig.data[1].title!),
+                          child: Text(l10n(context, allData.mid[1].modeTitle!),
                               style: TextStyle(fontSize: 18)),
                         ),
                       ),

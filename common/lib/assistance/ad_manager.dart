@@ -1,10 +1,8 @@
+import 'package:common/common.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../config/app_config.dart';
 
 /// 広告関連の初期化を行うクラス
 class AdManager {
@@ -49,7 +47,7 @@ class _NativeBannerAdWidgetState extends State<_NativeBannerAdWidget> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final adUnitId = context.read<AppConfig>().BannerId ??
+      final adUnitId = allData.BannerId ??
           'ca-app-pub-3940256099942544/6300978111'; // ← テスト広告ID
 
       print('Loading Banner Ad: $adUnitId'); // ← ここで print
@@ -94,10 +92,10 @@ class InterstitialAdHelper {
   static bool _isLoading = false;
 
   /// AppConfig を static に保持
-  static AppConfig? _config;
+  static AllData? _config;
 
   /// AppConfig をセット（必須）
-  static void configure(AppConfig config) {
+  static void configure(AllData config) {
     _config = config;
   }
 
@@ -248,10 +246,10 @@ class RewardedAdManager {
   static bool _isLoading = false;
 
   /// AppConfig を static に保持
-  static AppConfig? _config;
+  static AllData? _config;
 
   /// AppConfig をセット（必須）
-  static void configure(AppConfig config) {
+  static void configure(AllData config) {
     _config = config;
   }
 

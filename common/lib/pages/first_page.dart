@@ -1,6 +1,5 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CommonFirstPage extends StatefulWidget {
@@ -77,8 +76,7 @@ class _CommonFirstPageState extends State<CommonFirstPage>
 
   @override
   Widget build(BuildContext context) {
-    final appConfig = Provider.of<AppConfig>(context, listen: false);
-    final icon = appConfig.icon;
+    final icon = allData.appIcon;
 
     return AppAdScaffold(
         advisible: false,
@@ -117,7 +115,7 @@ class _CommonFirstPageState extends State<CommonFirstPage>
                         child: FittedBox(
                           fit: BoxFit.contain,
                           child: Text(
-                            l10n(context, appConfig.title),
+                            l10n(context, allData.appTitle),
                             style: TextStyle(
                               fontSize: 120, // 初期サイズを指定
                               fontWeight: FontWeight.w900,

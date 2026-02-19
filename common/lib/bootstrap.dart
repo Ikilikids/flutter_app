@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as provider;
 
 class Bootstrap extends StatefulWidget {
-  final AppConfig appConfig;
+  final AllData appConfig;
   final FirebaseOptions firebaseOptions;
 
   const Bootstrap({
@@ -28,6 +28,8 @@ class _BootstrapState extends State<Bootstrap> {
   void initState() {
     super.initState();
     print('🟢 Bootstrap initState');
+    // ★ 起動時に注入
+    allData = widget.appConfig;
     _preloadThemeAndInit();
   }
 
@@ -98,10 +100,7 @@ class _BootstrapState extends State<Bootstrap> {
     return ProviderScope(
       child: provider.MultiProvider(
         providers: [
-          provider.Provider.value(value: widget.appConfig),
           provider.Provider.value(value: _soundManager),
-          provider.ChangeNotifierProvider(create: (_) => QuizStateProvider()),
-          provider.ChangeNotifierProvider(create: (_) => MidStateProvider()),
         ],
         child: CommonApp(
           home: CommonFirstPage(),
@@ -110,3 +109,5 @@ class _BootstrapState extends State<Bootstrap> {
     );
   }
 }
+
+late AllData allData;

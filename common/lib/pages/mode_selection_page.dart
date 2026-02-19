@@ -1,14 +1,39 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CommonModeSelectionPage extends StatelessWidget {
+// 1. Converted to ConsumerStatefulWidget to manage state for navigation
+class CommonModeSelectionPage extends ConsumerStatefulWidget {
   const CommonModeSelectionPage({super.key});
 
   @override
+  ConsumerState<CommonModeSelectionPage> createState() =>
+      _CommonModeSelectionPageState();
+}
+
+class _CommonModeSelectionPageState extends ConsumerState<CommonModeSelectionPage> {
+  // 2. State variable to signal navigation intent
+  MidData? _navigationRequest;
+
+  @override
   Widget build(BuildContext context) {
-    final appConfig = context.read<AppConfig>();
+    // 3. Listener that reacts to state changes and navigates
+    ref.listen<MidConfig>(appMidConfigProvider, (previous, next) {
+      if (_navigationRequest != null &&
+          next.mid.modeTitle == _navigationRequest!.modeTitle) {
+        // Clear the request
+        _navigationRequest = null;
+
+        // Navigate only after the state has been updated
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CommonDetailCard(),
+          ),
+        );
+      }
+    });
 
     return PopScope(
       canPop: true,
@@ -35,7 +60,7 @@ class CommonModeSelectionPage extends StatelessWidget {
                   child: FittedBox(
                     alignment: const Alignment(0, 0.5),
                     child: Text(
-                      l10n(context, appConfig.title),
+                      l10n(context, allData.appTitle),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -56,24 +81,23 @@ class CommonModeSelectionPage extends StatelessWidget {
               /// ===== 無制限モード =====
               BigModeButton(
                 color: Colors.blue,
-                icon: appConfig.data[0].icon ?? Icons.all_inclusive,
-                title: l10n(context, appConfig.data[0].title!),
-                sub1: l10n(context, appConfig.data[0].sub1!),
-                sub2: l10n(context, appConfig.data[0].sub2!),
-                onPressed: () => _navigate(context, 0),
+                icon: allData.mid[0].modeIcon ?? Icons.all_inclusive,
+                title: l10n(context, allData.mid[0].modeTitle!),
+                sub1: l10n(context, allData.mid[0].sub1!),
+                sub2: l10n(context, allData.mid[0].sub2!),
+                onPressed: () => _navigate(0), // Pass index only
               ),
 
               /// ===== 1日限定モード =====
               BigModeButton(
                 color: Colors.red,
-                icon: appConfig.data[1].icon ?? Icons.timer,
-                title: l10n(context, appConfig.data[1].title!),
-                sub1: l10n(context, appConfig.data[1].sub1!),
-                sub2: l10n(context, appConfig.data[1].sub2!),
-                onPressed: () => _navigate(context, 1),
-                badge: appConfig.data[1].islimited
-                    ? const LimitedModeBadge()
-                    : null,
+                icon: allData.mid[1].modeIcon ?? Icons.timer,
+                title: l10n(context, allData.mid[1].modeTitle!),
+                sub1: l10n(context, allData.mid[1].sub1!),
+                sub2: l10n(context, allData.mid[1].sub2!),
+                onPressed: () => _navigate(1), // Pass index only
+                badge:
+                    allData.mid[1].islimited ? const LimitedModeBadge() : null,
               ),
 
               /// ===== 下段ボタン =====
@@ -111,19 +135,18 @@ class CommonModeSelectionPage extends StatelessWidget {
     );
   }
 
-  static void _navigate(BuildContext context, int listNumber) {
-    final appConfig = context.read<AppConfig>();
-    final midConfig = appConfig.data[listNumber];
-    Provider.of<MidStateProvider>(context, listen: false)
-        .setValues(midinfo: midConfig);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CommonDetailCard(),
-      ),
-    );
+  // 4. _navigate now only updates state and signals intent. No longer navigates.
+  void _navigate(int listNumber) {
+    final midConfig = allData.mid[listNumber];
+
+    // Set the intent flag
+    _navigationRequest = midConfig;
+
+    // Update the provider. The listener will handle the rest.
+    ref.read(appMidConfigProvider.notifier).selectMid(midConfig);
   }
 
+  // _smallButton is kept as a static method for simplicity
   static Widget _smallButton(
     BuildContext context,
     Color color,
@@ -155,6 +178,7 @@ class CommonModeSelectionPage extends StatelessWidget {
   }
 }
 
+// ... The rest of the file (BigModeButton, LimitedModeBadge, etc.) remains unchanged ...
 class BigModeButton extends StatelessWidget {
   const BigModeButton({
     super.key,
@@ -286,7 +310,7 @@ class _LimitedModeBadgeState extends State<LimitedModeBadge>
   }
 
   Future<void> _loadStatus() async {
-    final sortData = context.read<AppConfig>().data;
+    final sortData = allData.mid;
     final prefs = await SharedPreferences.getInstance();
 
     final today = DateTime.now();

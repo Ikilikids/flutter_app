@@ -1,94 +1,117 @@
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 
 typedef GamePageBuilder = Widget Function(
-    BuildContext context, QuizData quizinfo);
+    BuildContext context, DetailConfig quizinfo);
 
-typedef LoadBuilder = void Function(BuildContext context, QuizData quizinfo);
+typedef LoadBuilder = void Function(
+    BuildContext context, DetailConfig quizinfo);
 
 typedef EndBuilder = Widget Function(
   BuildContext context,
   num totalScore,
   dynamic originalData, // ← 型は実際の型に合わせて
-  QuizData quizinfo,
+  DetailConfig quizinfo,
 );
 typedef SettingWidgetsBuilder = List<Widget> Function(
     BuildContext, String, Function);
 
-class AppConfig {
-  final String title;
-  final IconData icon;
+class AllData {
+  final AppData appData;
+  final List<MidData> mid;
+
+  const AllData({
+    required this.appData,
+    required this.mid,
+  });
+
+  get appTitle => appData.appTitle;
+  get appIcon => appData.appIcon;
+  get symbols => appData.symbols;
+  get isRotation => appData.isRotation;
+  get mainGame => appData.mainGame;
+  get loadGame => appData.loadGame;
+  get endBuilder => appData.endBuilder;
+  get settingWidgets => appData.settingWidgets;
+  get BannerId => appData.bannerId;
+  get InterId => appData.interId;
+  get RewardId => appData.rewardId;
+}
+
+class AppData {
+  final String appTitle;
+  final IconData appIcon;
   final List<String> symbols;
   final bool isRotation;
-  final List<GameData> data;
   final GamePageBuilder mainGame;
   final LoadBuilder? loadGame;
   final EndBuilder? endBuilder;
   final SettingWidgetsBuilder? settingWidgets;
-  final String? BannerId;
-  final String? InterId;
-  final String? RewardId;
+  final String? bannerId;
+  final String? interId;
+  final String? rewardId;
 
-  const AppConfig(
-      {required this.title,
-      required this.icon,
+  const AppData(
+      {required this.appTitle,
+      required this.appIcon,
       required this.symbols,
       required this.isRotation,
-      required this.data,
       required this.mainGame, // ← 追加
       this.loadGame,
       this.endBuilder,
       this.settingWidgets,
-      this.BannerId,
-      this.InterId,
-      this.RewardId});
+      this.bannerId,
+      this.interId,
+      this.rewardId});
 }
 
-class GameData {
+class MidData {
+  final ModeData modeData;
+  final List<DetailData> detail;
+
+  MidData({
+    required this.modeData,
+    required this.detail,
+  });
+  get unit => modeData.unit;
+  get fix => modeData.fix;
+  get islimited => modeData.islimited;
+  get isbattle => modeData.isbattle;
+  get modeIcon => modeData.modeIcon;
+  get modeTitle => modeData.modeTitle;
+  get sub1 => modeData.sub1;
+  get sub2 => modeData.sub2;
+  get isDescending => modeData.isDescending;
+  get ranking => modeData.ranking;
+}
+
+class ModeData {
   final String unit;
   final int fix;
   final bool islimited;
   final bool isbattle;
-  final List<GameDetail> detail;
-  final IconData? icon;
-  final String? title;
+  final IconData? modeIcon;
+  final String? modeTitle;
   final String? sub1;
   final String? sub2;
   final bool isDescending; // ← final にする
   final String ranking;
 
-  GameData({
+  ModeData({
     required this.unit,
     required this.fix,
     required this.islimited,
     required this.isbattle,
-    required this.detail,
-    this.icon,
-    this.title,
+    this.modeIcon,
+    this.modeTitle,
     this.sub1,
     this.sub2,
     this.isDescending = false,
     required this.ranking,
   });
-
-  factory GameData.fromMap(Map<String, dynamic> map) {
-    return GameData(
-      unit: map['unit'],
-      fix: map['fix'],
-      islimited: map['islimited'],
-      isbattle: map['isbattle'],
-      icon: map['icon'],
-      title: map['title'],
-      sub1: map['sub1'],
-      sub2: map['sub2'],
-      isDescending: map['isDescending'] ?? false,
-      ranking: map['ranking'],
-      detail:
-          (map['detail'] as List).map((e) => GameDetail.fromMap(e)).toList(),
-    );
-  }
 }
 
-class GameDetail {
+class DetailData {
   final String sort;
   final String label;
   final String method;
@@ -96,57 +119,12 @@ class GameDetail {
   final String color;
   final String circleColor;
 
-  GameDetail({
+  DetailData({
     required this.sort,
     required this.label,
     required this.method,
     required this.description,
     required this.color,
     required this.circleColor,
-  });
-
-  factory GameDetail.fromMap(Map<String, dynamic> map) {
-    return GameDetail(
-      sort: map['sort'],
-      label: map['label'],
-      method: map['method'],
-      description: map['description'],
-      color: map['color'],
-      circleColor: map['circleColor'],
-    );
-  }
-}
-
-class QuizData {
-  final String unit;
-  final fix;
-  final bool islimited;
-  final bool isbattle;
-  final String sort;
-  final String label;
-  final String method;
-  final String description;
-  final String color;
-  final String circleColor;
-  List<Map<String, String>>? chosedData;
-  final bool isDescending;
-  final String ranking;
-  final int? questionCount; // ← 追加
-
-  QuizData({
-    required this.unit,
-    required this.fix,
-    required this.islimited,
-    required this.isbattle,
-    required this.sort,
-    required this.label,
-    required this.method,
-    required this.description,
-    required this.color,
-    required this.circleColor,
-    this.chosedData,
-    required this.isDescending,
-    required this.ranking,
-    this.questionCount,
   });
 }

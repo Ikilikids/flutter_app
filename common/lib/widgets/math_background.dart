@@ -1,8 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:common/config/app_config.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class MathBackground extends StatelessWidget {
   final Widget child;
@@ -10,8 +9,7 @@ class MathBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appconfig = Provider.of<AppConfig>(context);
-    final symbols = _appconfig.symbols;
+    final symbols = allData.symbols;
     return Stack(
       children: [
         Positioned.fill(

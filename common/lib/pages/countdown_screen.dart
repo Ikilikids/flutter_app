@@ -1,20 +1,20 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:provider/provider.dart';
 
-class CommonCountdownScreen extends StatefulWidget {
+class CommonCountdownScreen extends ConsumerStatefulWidget {
   const CommonCountdownScreen({super.key});
 
   @override
-  State<CommonCountdownScreen> createState() => _CommonCountdownScreenState();
+  ConsumerState<CommonCountdownScreen> createState() =>
+      _CommonCountdownScreenState();
 }
 
-class _CommonCountdownScreenState extends State<CommonCountdownScreen> {
+class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
   int _countdown = 3;
   late SoundManager soundManager;
   bool _initialized = false;
-  late AppConfig _appConfig;
-  late QuizStateProvider quizinfo;
 
   @override
   void didChangeDependencies() {
@@ -22,8 +22,6 @@ class _CommonCountdownScreenState extends State<CommonCountdownScreen> {
     if (!_initialized) {
       soundManager = context.read<SoundManager>();
 
-      _appConfig = Provider.of<AppConfig>(context);
-      quizinfo = Provider.of<QuizStateProvider>(context);
       _initialized = true;
       _startCountdown();
     }
@@ -34,9 +32,10 @@ class _CommonCountdownScreenState extends State<CommonCountdownScreen> {
   void _startCountdown() {
     if (!mounted) return;
 
-    final gameBuilder = _appConfig.mainGame;
-    final quizData = context.read<QuizStateProvider>().quizinfo;
-    final loadBuilder = _appConfig.loadGame;
+    final gameBuilder = allData.mainGame;
+    final quizData = ref.read(appDetailConfigProvider);
+    print(quizData.modeData.islimited);
+    final loadBuilder = allData.loadGame;
 
     // ★ 1回だけ実行
     if (!_isLoadGameCalled) {
@@ -62,7 +61,8 @@ class _CommonCountdownScreenState extends State<CommonCountdownScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Color color = getQuizColor2(quizinfo.color, context, 1, 0.35, 0.95);
+    final quizinfo = ref.watch(appDetailConfigProvider);
+    Color color = getQuizColor2(quizinfo.detail.color, context, 1, 0.35, 0.95);
 
     return PopScope(
       canPop: false,

@@ -1,9 +1,6 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
-
-import '../providers/app_uid.dart';
 
 class PipiScreen extends ConsumerStatefulWidget {
   final num totalScore;
@@ -20,17 +17,11 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
   int _rankAll = 0;
   int _rankMonthly = 0;
   int _rankWeekly = 0;
-  late final QuizData _quizinfo;
-  late final AppConfig appConfig;
   late final String userName;
-  late bool isLimitedMode;
 
   @override
   void initState() {
     super.initState();
-    _quizinfo = context.read<QuizStateProvider>().quizinfo;
-    appConfig = context.read<AppConfig>();
-    isLimitedMode = _quizinfo.islimited;
 
     _loadDataWithDelay();
   }
@@ -58,9 +49,10 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
   }
 
   Future<void> _loadDataWithDelay() async {
+    final _quizinfo = ref.read(appDetailConfigProvider);
     final minDuration = const Duration(seconds: 2);
     final maxDuration = const Duration(seconds: 5);
-    final EndBuilder = appConfig.endBuilder;
+    final EndBuilder = allData.endBuilder;
     final startTime = DateTime.now();
     final uid = await ref.read(appUidProvider.future);
     userName = await ref.read(appUidProvider.notifier).loadUsername(uid);
@@ -78,7 +70,7 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
 
     Navigator.pushReplacement(
       context,
-      _quizinfo.isbattle
+      _quizinfo.modeData.isbattle
           ? MaterialPageRoute(
               builder: (_) => CommonEndScreen(
                 totalScore: widget.totalScore,
@@ -100,11 +92,14 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
   }
 
   Future<void> _loadData() async {
+    final _quizinfo = ref.read(appDetailConfigProvider);
     // Translate keys to Japanese for DB storage
-    final quizId = JapaneseTranslator.translateKeyToJapanese(_quizinfo.label);
-    final rankingId = appConfig.title == "とことん高校数学" && !_quizinfo.isbattle
-        ? convertLabel(_quizinfo.sort)
-        : quizId; // Use the already translated quizId
+    final quizId =
+        JapaneseTranslator.translateKeyToJapanese(_quizinfo.detail.label);
+    final rankingId =
+        allData.appTitle == "とことん高校数学" && !_quizinfo.modeData.isbattle
+            ? convertLabel(_quizinfo.detail.sort)
+            : quizId; // Use the already translated quizId
 
     // 🔹 ハイスコア & ランキング更新（v2共通マネージャ）
     await CommonHighScoreManager.setHighScoreSafe(
@@ -112,52 +107,52 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
       rankingId,
       widget.totalScore,
       userName,
-      _quizinfo.ranking,
-      isLimitedMode: isLimitedMode,
+      _quizinfo.modeData.ranking,
+      isLimitedMode: _quizinfo.modeData.islimited,
       roundingFactor: 100,
-      isbattle: _quizinfo.isbattle,
-      isDescending: _quizinfo.isDescending,
+      isbattle: _quizinfo.modeData.isbattle,
+      isDescending: _quizinfo.modeData.isDescending,
     );
-    if (!_quizinfo.isbattle) {
+    if (!_quizinfo.modeData.isbattle) {
       await CommonHighScoreManager.setHighScoreSafe(
         JapaneseTranslator.translateKeyToJapanese('allScores'),
         JapaneseTranslator.translateKeyToJapanese('allScores'),
         widget.totalScore,
         userName,
-        _quizinfo.ranking,
-        isLimitedMode: isLimitedMode,
+        _quizinfo.modeData.ranking,
+        isLimitedMode: _quizinfo.modeData.islimited,
         roundingFactor: 100,
-        isbattle: _quizinfo.isbattle,
-        isDescending: _quizinfo.isDescending,
+        isbattle: _quizinfo.modeData.isbattle,
+        isDescending: _quizinfo.modeData.isDescending,
       );
     }
-    if (_quizinfo.isbattle) {
+    if (_quizinfo.modeData.isbattle) {
       // 🔹 ハイスコア取得
       _highScore = await CommonHighScoreManager.getHighScore(
         quizId,
-        _quizinfo.ranking,
+        _quizinfo.modeData.ranking,
       );
 
       _rankAll = await CommonRankingManager.getMyRank(
         rankingId,
         "all",
         _highScore,
-        _quizinfo.ranking,
-        isDescending: _quizinfo.isDescending,
+        _quizinfo.modeData.ranking,
+        isDescending: _quizinfo.modeData.isDescending,
       );
       _rankMonthly = await CommonRankingManager.getMyRank(
         rankingId,
         "monthly",
         _highScore,
-        _quizinfo.ranking,
-        isDescending: _quizinfo.isDescending,
+        _quizinfo.modeData.ranking,
+        isDescending: _quizinfo.modeData.isDescending,
       );
       _rankWeekly = await CommonRankingManager.getMyRank(
         rankingId,
         "weekly",
         _highScore,
-        _quizinfo.ranking,
-        isDescending: _quizinfo.isDescending,
+        _quizinfo.modeData.ranking,
+        isDescending: _quizinfo.modeData.isDescending,
       );
     }
 

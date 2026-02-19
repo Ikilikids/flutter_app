@@ -4,26 +4,26 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'page/game_screen.dart';
 
-final _appConfig = AppConfig(
-  title: "reflectTitle",
-  icon: Icons.flash_on,
+final _appConfig = AllData(
+  appTitle: "reflectTitle",
+  appIcon: Icons.flash_on,
   symbols: ["!!", "◯", "*", "♪"],
   isRotation: true,
   BannerId: "ca-app-pub-1440692612851416/6348678971",
   InterId: "ca-app-pub-1440692612851416/5035597308",
   RewardId: "ca-app-pub-1440692612851416/6205218489",
-  data: [
-    GameData(
+  mid: [
+    MidData(
       fix: 0,
       unit: "unitMillisecond",
       islimited: false,
       isbattle: true,
       ranking: "t",
-      title: "unlimitedModeTitle",
+      modeTitle: "unlimitedModeTitle",
       sub1: "unlimitedModeSub1",
       sub2: "unlimitedModeSub2",
       detail: [
-        GameDetail(
+        DetailData(
           sort: "color",
           label: "colorReact",
           method: "colorReactMethod",
@@ -31,7 +31,7 @@ final _appConfig = AppConfig(
           color: "2",
           circleColor: "2",
         ),
-        GameDetail(
+        DetailData(
           sort: "number",
           label: "numberReact",
           method: "reactMethodAverage",
@@ -39,7 +39,7 @@ final _appConfig = AppConfig(
           color: "5",
           circleColor: "5",
         ),
-        GameDetail(
+        DetailData(
           sort: "grid",
           label: "gridReact",
           method: "reactMethodAverage",
@@ -49,17 +49,17 @@ final _appConfig = AppConfig(
         ),
       ],
     ),
-    GameData(
+    MidData(
       fix: 0,
       unit: "unitMillisecond",
       islimited: true,
       isbattle: true,
       ranking: "g",
-      title: "dailyLimitedModeTitle",
+      modeTitle: "dailyLimitedModeTitle",
       sub1: "dailyLimitedModeSub1",
       sub2: "dailyLimitedModeSub2",
       detail: [
-        GameDetail(
+        DetailData(
           sort: "color",
           label: "colorReact",
           method: "colorReactMethod",
@@ -67,7 +67,7 @@ final _appConfig = AppConfig(
           color: "3",
           circleColor: "3",
         ),
-        GameDetail(
+        DetailData(
           sort: "number",
           label: "numberReact",
           method: "reactMethodAverage",
@@ -75,7 +75,7 @@ final _appConfig = AppConfig(
           color: "1",
           circleColor: "1",
         ),
-        GameDetail(
+        DetailData(
           sort: "grid",
           label: "gridReact",
           method: "reactMethodAverage",

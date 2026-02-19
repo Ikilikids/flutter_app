@@ -1,10 +1,11 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as provider;
 
 // These typedefs are local to this file for now.
 
-class CommonEndScreen extends StatefulWidget {
+class CommonEndScreen extends ConsumerStatefulWidget {
   final num totalScore;
   final num highScore;
   final int rankAll;
@@ -21,19 +22,18 @@ class CommonEndScreen extends StatefulWidget {
   });
 
   @override
-  State<CommonEndScreen> createState() => _CommonEndScreenState();
+  ConsumerState<CommonEndScreen> createState() => _CommonEndScreenState();
 }
 
-class _CommonEndScreenState extends State<CommonEndScreen> {
+class _CommonEndScreenState extends ConsumerState<CommonEndScreen> {
   int step = 0; // 0:正解数 1:最高記録 2:ランキング
   late SoundManager soundManager; // main.dart にある SoundManager を使用
-  late QuizStateProvider _quizinfo;
 
   @override
   void initState() {
     super.initState();
-    soundManager = Provider.of<SoundManager>(context, listen: false);
-    _quizinfo = Provider.of<QuizStateProvider>(context, listen: false);
+    soundManager = provider.Provider.of<SoundManager>(context, listen: false);
+
     _startSequence();
   }
 
@@ -56,9 +56,11 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Color quizColor = getQuizColor2(_quizinfo.color, context, 1, 0.35, 0.95);
-    String unit = _quizinfo.unit;
-    int fix = _quizinfo.fix;
+    final _quizinfo = ref.watch(appDetailConfigProvider);
+    Color quizColor =
+        getQuizColor2(_quizinfo.detail.color, context, 1, 0.35, 0.95);
+    String unit = _quizinfo.modeData.unit;
+    int fix = _quizinfo.modeData.fix;
     print(widget.highScore);
 
     return PopScope(
@@ -72,7 +74,7 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                 Expanded(
                   flex: 2,
                   child: _QuizNameSection(
-                    quizName: _quizinfo.label,
+                    quizName: _quizinfo.detail.label,
                     backgroundColor: quizColor,
                   ),
                 ),
@@ -104,7 +106,7 @@ class _CommonEndScreenState extends State<CommonEndScreen> {
                   flex: 2,
                   child: _ActionSection(
                     backgroundColor: quizColor,
-                    isLimitedMode: _quizinfo.isLimited,
+                    isLimitedMode: _quizinfo.modeData.islimited,
                     stepEnd: step >= 3,
                   ),
                 ),
