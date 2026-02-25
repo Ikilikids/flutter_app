@@ -1,10 +1,8 @@
-import 'package:common/providers/app_locale.dart';
 import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/app_theme.dart';
-import '../providers/app_uid.dart';
+import '../common.dart';
 
 class CommonApp extends ConsumerWidget {
   final Widget home;
@@ -22,9 +20,14 @@ class CommonApp extends ConsumerWidget {
     final bool isReady =
         themeAsync.hasValue && localeAsync.hasValue && uidAsync.hasValue;
 
+    // appTitle が特定文字列なら日本語固定
+    final isJapaneseTitle = allData.appData.appTitle == "とことん高校数学";
+    final localeToUse =
+        isJapaneseTitle ? const Locale('ja') : localeAsync.valueOrNull;
+
     // 外枠（MaterialApp）は常に返す
     return MaterialApp(
-      locale: localeAsync.valueOrNull, // まだ無ければnull（システム既定）
+      locale: localeToUse,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData.light(),

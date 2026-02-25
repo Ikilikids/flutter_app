@@ -1,10 +1,5 @@
-import 'package:common/assistance/ad_manager.dart';
-import 'package:common/pages/countdown_screen.dart';
-import 'package:common/pages/detail_card.dart';
-import 'package:common/widgets/color.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-
-import '../assistance/l10n_helper.dart';
 
 Future<void> showMenuDialog(
   BuildContext context,
@@ -32,13 +27,9 @@ Future<void> showMenuDialog(
                   : () {
                       onSetGameOver(); // ← 呼び出し元のisGameOverを変更できる
                       Navigator.pop(context);
-                      Navigator.push(
+                      InterstitialAdHelper.navigate(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => AdInterstitialNavigator(
-                            nextScreen: CommonCountdownScreen(),
-                          ),
-                        ),
+                        CommonCountdownScreen(),
                       );
                     },
             ),
@@ -48,13 +39,7 @@ Future<void> showMenuDialog(
               onPressed: () {
                 onSetGameOver();
                 Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        AdInterstitialNavigator(nextScreen: CommonDetailCard()),
-                  ),
-                );
+                InterstitialAdHelper.navigate(context, null);
               },
             ),
           ],
@@ -157,13 +142,7 @@ Future<void> showFlyingDialog(
                 onSetGameOver();
                 Navigator.of(buildContext).pop();
                 Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        AdInterstitialNavigator(nextScreen: CommonDetailCard()),
-                  ),
-                );
+                InterstitialAdHelper.navigate(context, null);
               },
             ),
             ElevatedButton(
@@ -172,13 +151,8 @@ Future<void> showFlyingDialog(
                   : () {
                       onSetGameOver();
                       Navigator.of(buildContext).pop();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => AdInterstitialNavigator(
-                            nextScreen: CommonCountdownScreen(),
-                          ),
-                        ),
-                      );
+                      InterstitialAdHelper.navigate(
+                          context, CommonCountdownScreen());
                     },
               child: Text(l10n(context, 'dialogRetryButtonWithIcon')),
             ),

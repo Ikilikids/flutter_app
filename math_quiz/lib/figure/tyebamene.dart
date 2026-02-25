@@ -2,14 +2,15 @@ import 'dart:math';
 
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:math_quiz/math_quiz.dart';
 
-class CevaDemo extends StatelessWidget {
-  final Map<String, dynamic> deta;
+class Cyeba extends StatelessWidget {
+  final CyebaMakingData origin;
   final double height;
   final double width;
-  const CevaDemo(
+  const Cyeba(
       {super.key,
-      required this.deta,
+      required this.origin,
       required this.width,
       required this.height});
 
@@ -21,7 +22,7 @@ class CevaDemo extends StatelessWidget {
       body: Center(
         child: CustomPaint(
           size: Size(size, size),
-          painter: CevaPainter(deta: deta, context: context),
+          painter: CevaPainter(origin: origin, context: context),
         ),
       ),
     );
@@ -29,15 +30,29 @@ class CevaDemo extends StatelessWidget {
 }
 
 class CevaPainter extends CustomPainter {
-  final Map<String, dynamic> deta;
+  final CyebaMakingData origin;
   final BuildContext context; // ← 追加
   const CevaPainter({
-    required this.deta,
+    required this.origin,
     required this.context,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    int zbd = origin.data.zbd;
+    int zdc = origin.data.zdc;
+    int zce = origin.data.zce;
+    int zea = origin.data.zea;
+    int zaf = origin.data.zaf;
+    int zfb = origin.data.zfb;
+    int zap = origin.data.zap;
+    int zpd = origin.data.zpd;
+    int zbp = origin.data.zbp;
+    int zpe = origin.data.zpe;
+    int zpf = origin.data.zpf;
+    int zcp = origin.data.zcp;
+    String tf = origin.data.tf;
+
     final pA = Offset(size.width * 0.5, size.height * 0.2); // 頂点 A
     final pB = Offset(size.width * 0.1, size.height * 0.9); // 頂点 B
     final pC = Offset(size.width * 0.9, size.height * 0.9); // 頂点 C
@@ -48,9 +63,9 @@ class CevaPainter extends CustomPainter {
           p.dy + (q.dy - p.dy) * t,
         );
 
-    double zd = deta["zbd"] / (deta["zbd"] + deta["zdc"]);
-    double ze = deta["zce"] / (deta["zce"] + deta["zea"]);
-    double zf = deta["zaf"] / (deta["zaf"] + deta["zfb"]);
+    double zd = zbd / (zbd + zdc);
+    double ze = zce / (zce + zea);
+    double zf = zaf / (zaf + zfb);
     final pD = onSegment(pB, pC, zd); // 点 D は BC 上
     final pE = onSegment(pC, pA, ze); // 点 E は CA 上
     final pF = onSegment(pA, pB, zf); // 点 F は AB 上
@@ -145,11 +160,11 @@ class CevaPainter extends CustomPainter {
         labelOffset: const Offset(6, 10),
         pointRadius: 4,
         strokeColor: null);
-    if (deta["tf"] != null && deta["tf"].toString().contains("c")) {
+    if (tf.contains("c")) {
       drawPoint(
         canvas,
         const Offset(-12, -10) + (pF + pA) / 2,
-        deta["zaf"].toString(),
+        zaf.toString(),
         pointColor: const Color.fromARGB(100, 255, 0, 0),
         pointRadius: 10,
         labelStyle: TextStyle(color: textColor1(context), fontSize: 15),
@@ -157,68 +172,58 @@ class CevaPainter extends CustomPainter {
       drawPoint(
         canvas,
         const Offset(-12, -10) + (pF + pB) / 2,
-        deta["zfb"].toString(),
+        zfb.toString(),
         pointColor: const Color.fromARGB(100, 255, 0, 0),
         pointRadius: 10,
         labelStyle: TextStyle(color: textColor1(context), fontSize: 15),
       );
     }
-    if (deta["tf"] != null && deta["tf"].toString().contains("b")) {
-      drawPoint(
-          canvas, const Offset(12, -10) + (pA + pE) / 2, deta["zea"].toString(),
+    if (tf.contains("b")) {
+      drawPoint(canvas, const Offset(12, -10) + (pA + pE) / 2, zea.toString(),
           pointColor: const Color.fromARGB(128, 255, 200, 0),
           pointRadius: 10,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 15));
-      drawPoint(
-          canvas, const Offset(12, -10) + (pE + pC) / 2, deta["zce"].toString(),
+      drawPoint(canvas, const Offset(12, -10) + (pE + pC) / 2, zce.toString(),
           pointColor: const Color.fromARGB(128, 255, 200, 0),
           pointRadius: 10,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 15));
     }
-    if (deta["tf"] != null && deta["tf"].toString().contains("a")) {
-      drawPoint(
-          canvas, const Offset(2, 12) + (pB + pD) / 2, deta["zbd"].toString(),
+    if (tf.contains("a")) {
+      drawPoint(canvas, const Offset(2, 12) + (pB + pD) / 2, zbd.toString(),
           pointColor: const Color.fromARGB(100, 72, 255, 0),
           pointRadius: 10,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 15));
-      drawPoint(
-          canvas, const Offset(2, 12) + (pD + pC) / 2, deta["zdc"].toString(),
+      drawPoint(canvas, const Offset(2, 12) + (pD + pC) / 2, zdc.toString(),
           pointColor: const Color.fromARGB(100, 72, 255, 0),
           pointRadius: 10,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 15));
     }
-    if (deta["tf"] != null && deta["tf"].toString().contains("f")) {
-      drawPoint(
-          canvas, const Offset(0, 0) + (pF + pP) / 2, deta["zpf"].toString(),
+    if (tf.contains("f")) {
+      drawPoint(canvas, const Offset(0, 0) + (pF + pP) / 2, zpf.toString(),
           pointColor: const Color.fromARGB(255, 0, 255, 221),
           pointRadius: 8,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 12));
-      drawPoint(
-          canvas, const Offset(0, 0) + (pC + pP) / 2, deta["zcp"].toString(),
+      drawPoint(canvas, const Offset(0, 0) + (pC + pP) / 2, zcp.toString(),
           pointColor: const Color.fromARGB(255, 0, 255, 221),
           pointRadius: 8,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 12));
     }
-    if (deta["tf"] != null && deta["tf"].toString().contains("e")) {
-      drawPoint(
-          canvas, const Offset(0, 0) + (pB + pP) / 2, deta["zbp"].toString(),
+    if (tf.contains("e")) {
+      drawPoint(canvas, const Offset(0, 0) + (pB + pP) / 2, zbp.toString(),
           pointColor: const Color.fromARGB(255, 0, 34, 255),
           pointRadius: 8,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 12));
-      drawPoint(
-          canvas, const Offset(0, 0) + (pE + pP) / 2, deta["zpe"].toString(),
+      drawPoint(canvas, const Offset(0, 0) + (pE + pP) / 2, zpe.toString(),
           pointColor: const Color.fromARGB(255, 0, 34, 255),
           pointRadius: 8,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 12));
     }
-    if (deta["tf"] != null && deta["tf"].toString().contains("d")) {
-      drawPoint(
-          canvas, const Offset(0, 0) + (pA + pP) / 2, deta["zap"].toString(),
+    if (tf.contains("d")) {
+      drawPoint(canvas, const Offset(0, 0) + (pA + pP) / 2, zap.toString(),
           pointColor: const Color.fromARGB(255, 217, 0, 255),
           pointRadius: 8,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 12));
-      drawPoint(
-          canvas, const Offset(0, 0) + (pD + pP) / 2, deta["zpd"].toString(),
+      drawPoint(canvas, const Offset(0, 0) + (pD + pP) / 2, zpd.toString(),
           pointColor: const Color.fromARGB(255, 217, 0, 255),
           pointRadius: 8,
           labelStyle: TextStyle(color: textColor1(context), fontSize: 12));

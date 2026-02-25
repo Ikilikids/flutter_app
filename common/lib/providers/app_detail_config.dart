@@ -19,7 +19,8 @@ class AppDetailConfig extends _$AppDetailConfig {
   }
 
   /// detail 選択
-  void selectDetail(DetailData detail, ModeData modeData) {
+  void selectDetail(DetailData detail, ModeData modeData, int? qcount) {
+    detail.qcount = qcount;
     state = state.copyWith(detail: detail, modeData: modeData);
   }
 }

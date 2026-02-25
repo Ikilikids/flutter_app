@@ -201,6 +201,8 @@ String l10n(BuildContext context, String key) {
       return localizations.calculatorMode;
     case 'detailSetting':
       return localizations.detailSetting;
+    case 'adLoadingSnackbar':
+      return localizations.adLoadingSnackbar;
 
     default:
       return key;

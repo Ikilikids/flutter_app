@@ -1,5 +1,4 @@
-import 'package:common/assistance/ad_manager.dart';
-import 'package:common/widgets/math_background.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 
 class AppAdScaffold extends StatelessWidget {

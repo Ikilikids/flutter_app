@@ -56,7 +56,7 @@ class QuizScreenState extends State<Quizscreen> {
       _initialized = true;
       soundManager = qrovider.Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
-      count = quizinfo.detail.sort == "4867" ? 10 : 20;
+      count = quizinfo.detail.sort == "4867" ? 10 : 1;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {
@@ -144,7 +144,7 @@ class QuizScreenState extends State<Quizscreen> {
             context,
             MaterialPageRoute(
               builder: (context) => PipiScreen(
-                totalScore: elapsedTime,
+                totalScore: 26,
               ),
             ),
           );

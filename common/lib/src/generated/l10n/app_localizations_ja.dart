@@ -316,4 +316,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get volumeLabel => '音量';
+
+  @override
+  String get loadingProblem => '問題ロード中、少々お待ちください';
 }

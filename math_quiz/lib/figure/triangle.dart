@@ -3,14 +3,15 @@ import 'dart:math';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:math_quiz/assistance/makingdata.dart';
 
 class Triangle extends StatelessWidget {
-  final Map<String, dynamic> deta;
+  final TriangleMakingData origin;
   final double height;
   final double width;
   const Triangle(
       {super.key,
-      required this.deta,
+      required this.origin,
       required this.width,
       required this.height});
 
@@ -31,23 +32,23 @@ class Triangle extends StatelessWidget {
                 flex: 1,
                 child: Builder(
                   builder: (_) {
-                    if (!deta["ff"].contains("f") &&
-                        !deta["ff"].contains("c")) {
+                    if (!origin.data.ff.contains("f") &&
+                        !origin.data.ff.contains("c")) {
                       return const SizedBox.shrink();
                     }
 
                     // a と b の比を取得（文字列 → double に変換）
-                    final int a = int.parse(deta["a"].toString());
-                    final int b = int.parse(deta["b"].toString());
+                    final int a = int.parse(origin.data.a.toString());
+                    final int b = int.parse(origin.data.b.toString());
                     int total = a + b;
                     // 比率に基づく左右スペーサー
                     final double leftFlex = b / total * 50;
                     final double rightFlex = a / total * 50;
 
                     final Widget label = Math.tex(
-                      deta["ff"].contains("f")
-                          ? '\\sin{C}=${deta["sinC"]}'
-                          : '\\cos{C}=${deta["cosC"]}',
+                      origin.data.ff.contains("f")
+                          ? '\\sin{C}=${origin.data.sinC}'
+                          : '\\cos{C}=${origin.data.cosC}',
                       textStyle:
                           TextStyle(fontSize: 14, color: textColor1(context)),
                     );
@@ -70,7 +71,7 @@ class Triangle extends StatelessWidget {
                 flex: 3,
                 child: CustomPaint(
                   painter: TrianglePainter(
-                      deta: deta,
+                      origin: origin,
                       height: size * 0.5,
                       width: size,
                       context: context),
@@ -87,22 +88,22 @@ class Triangle extends StatelessWidget {
                     Widget? rightLabel;
 
                     // sinラベル
-                    if (deta["ff"].contains("d")) {
-                      leftLabel = Math.tex('\\sin{A}=${deta["sinA"]}',
+                    if (origin.data.ff.contains("d")) {
+                      leftLabel = Math.tex('\\sin{A}=${origin.data.sinA}',
                           textStyle: TextStyle(
                               fontSize: 14, color: textColor1(context)));
-                    } else if (deta["ff"].contains("a")) {
-                      leftLabel = Math.tex('\\cos{A}=${deta["cosA"]}',
+                    } else if (origin.data.ff.contains("a")) {
+                      leftLabel = Math.tex('\\cos{A}=${origin.data.cosA}',
                           textStyle: TextStyle(
                               fontSize: 14, color: textColor1(context)));
                     }
 
-                    if (deta["ff"].contains("e")) {
-                      rightLabel = Math.tex('\\sin{B}=${deta["sinB"]}',
+                    if (origin.data.ff.contains("e")) {
+                      rightLabel = Math.tex('\\sin{B}=${origin.data.sinB}',
                           textStyle: TextStyle(
                               fontSize: 14, color: textColor1(context)));
-                    } else if (deta["ff"].contains("b")) {
-                      rightLabel = Math.tex('\\cos{B}=${deta["cosB"]}',
+                    } else if (origin.data.ff.contains("b")) {
+                      rightLabel = Math.tex('\\cos{B}=${origin.data.cosB}',
                           textStyle: TextStyle(
                               fontSize: 14, color: textColor1(context)));
                     }
@@ -128,12 +129,12 @@ class Triangle extends StatelessWidget {
 }
 
 class TrianglePainter extends CustomPainter {
-  final Map<String, dynamic> deta;
+  final TriangleMakingData origin;
   final double height;
   final double width;
   final BuildContext context; // ← 追加
   TrianglePainter({
-    required this.deta,
+    required this.origin,
     required this.height,
     required this.width,
     required this.context,
@@ -142,9 +143,9 @@ class TrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // 1. 入力データ
-    int a = int.parse(deta["a"]);
-    int b = int.parse(deta["b"]);
-    int c = int.parse(deta["c"]);
+    int a = origin.data.a;
+    int b = origin.data.b;
+    int c = origin.data.c;
 
     // 2. 仮の三角形座標を計算
 
@@ -250,6 +251,6 @@ class TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant TrianglePainter oldDelegate) {
-    return oldDelegate.deta != deta;
+    return oldDelegate.origin != origin;
   }
 }

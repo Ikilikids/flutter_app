@@ -9,19 +9,23 @@ import 'package:provider/provider.dart';
 import '../assistance/quiz_download.dart';
 
 class Quizscreen extends StatefulWidget {
-  final QuizData quizinfo;
+  final DetailConfig quizinfo;
+  final Map<int, List<PartData>> filteredMap;
 
-  const Quizscreen({super.key, required this.quizinfo});
+  const Quizscreen({
+    super.key,
+    required this.quizinfo,
+    required this.filteredMap,
+  });
 
   @override
   QuizScreenState createState() => QuizScreenState();
 }
 
 class QuizScreenState extends State<Quizscreen> {
-  late QuizData quizinfo;
-  late QuizStateProvider quizState;
+  late DetailConfig quizinfo;
   DateTime? startTime;
-  Map<String, dynamic> P = {};
+  late MakingData P;
   String? selectedAnswer;
   String result = '';
   bool isAnswerChecked = false;
@@ -34,7 +38,7 @@ class QuizScreenState extends State<Quizscreen> {
   String scoreIncrement2 = ''; // +点数表示のための変数
   int qcount = 0; // 問題数
   late List<String> marks;
-  List<Map<String, dynamic>> plist = [];
+  List<MakingData> plist = [];
   late SoundManager soundManager;
   // LateXInputScreenのキーを作成
   final GlobalKey<LatexInputScreenState> _latexInputKey =
@@ -54,12 +58,12 @@ class QuizScreenState extends State<Quizscreen> {
       soundManager = Provider.of<SoundManager>(context, listen: false);
 
       quizinfo = widget.quizinfo;
-      if (!quizinfo.isbattle && quizinfo.questionCount != null) {
-        marks = List.filled(quizinfo.questionCount!, "");
+      if (!quizinfo.modeData.isbattle && quizinfo.detail.qcount != null) {
+        marks = List.filled(quizinfo.detail.qcount!, "");
       } else {
         marks = [];
       }
-      if (quizinfo.isbattle == true) startTimer(); // タイマー開始
+      if (quizinfo.modeData.isbattle == true) startTimer(); // タイマー開始
       updateQuestion();
       _initialized = true;
     }
@@ -67,35 +71,27 @@ class QuizScreenState extends State<Quizscreen> {
 
   // 次の問題に移行する際にLatexInputScreenもリセット
   void updateQuestion() async {
+    // 素材(PartData)を1つ選ぶ（ここは今のままでOK！）
     ChooseQuizData chooseQuizData = ChooseQuizData(
       correctCount: correctCount,
       quizinfo: quizinfo,
-      scoreIndexMap: Provider.of<QuizProvider>(
-        context,
-        listen: false,
-      ).scoreIndexMap,
+      filteredMapByScore: widget.filteredMap,
     );
-    Map<String, String> ct = chooseQuizData.chooseRandombyScoreRange(context);
+    PartData ct = chooseQuizData.chooseRandombyScoreRange();
 
-    if (ct["lc"] == "latex") {
-      OriginCentral originCentral = OriginCentral(ct: ct);
-      Map<String, dynamic> variable = originCentral.makingvariable();
-      MakingDeta makingDeta = MakingDeta(calculatedresult: variable);
-      Map<String, dynamic> endResult = makingDeta.deta();
+    // ★ factoryを呼ぶだけ。これでPの中身は勝手にLatexMakingDataかOptionMakingDataになる
+    P = MakingData.fromPart(ct);
 
-      result = '';
-      isAnswerChecked = false;
-
-      variable.addAll(endResult);
-      P = variable;
+    // LaTeX特有の表示リセットだけ 'is' で判定して実行
+    if (P is LatexMakingData) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _latexInputKey.currentState?.resetLatexOutputs();
       });
-    } else {
-      OriginCentral2 originCentral = OriginCentral2(ct: ct);
-      Map<String, dynamic> variable = originCentral.makingvariable();
-      P = variable;
     }
+
+    // 2. 共通の更新処理
+    result = '';
+    isAnswerChecked = false;
     startTime = DateTime.now();
   }
 
@@ -116,7 +112,7 @@ class QuizScreenState extends State<Quizscreen> {
 
   void judge(String seigo) async {
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (isGameOver) return; // ←これを追加
+      if (isGameOver) return;
       setState(() {
         scoreIncrement1 = '';
         scoreIncrement2 = '';
@@ -124,23 +120,23 @@ class QuizScreenState extends State<Quizscreen> {
         isAnswerChecked = false;
       });
 
-      if (remainingTime > 0 && quizinfo.isbattle == true) {
+      if (remainingTime > 0 && quizinfo.modeData.isbattle == true) {
         updateQuestion();
       }
-      if (quizinfo.isbattle == false) {
+      if (quizinfo.modeData.isbattle == false) {
         marks[qcount] = result;
-        P["marks"] = result;
         plist.add(P);
-        if (qcount == quizinfo.questionCount! - 1) {
+        if (qcount == quizinfo.detail.qcount! - 1) {
           if (!mounted) return;
 
           soundManager.playSound('hoi.mp3');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => quizinfo.isbattle
+              builder: (context) => quizinfo.modeData.isbattle
                   ? PipiScreen(totalScore: totalScore)
-                  : PipiScreen(totalScore: correctCount, originalData: plist),
+                  : PipiScreen(
+                      totalScore: correctCount, originalData: [plist, marks]),
             ),
           );
           return;
@@ -161,18 +157,28 @@ class QuizScreenState extends State<Quizscreen> {
       });
       soundManager.playSound('peke.mp3');
     } else if (seigo == "maru") {
-      final List<dynamic> ctScoreList = P["ctscore"];
-      int lastScore = (ctScoreList.last as int) * 10;
-      int sumscore = ctScoreList.fold(0, (sum, e) => sum + (e as int) * 10);
+      // ★ ここから修正：モードによってスコアの計算パーツを分ける
+      int lastScore = 0;
+      int soundLevel = 1;
+
+      if (P case LatexMakingData p) {
+        final List<int> ctScoreList =
+            p.holes.map((hole) => hole.score).toList();
+        lastScore = ctScoreList.last * 10;
+        soundLevel = ctScoreList.length;
+      } else {
+        // Optionモードのときは、holesがないのでトータルスコアを基礎点にする
+        lastScore = P.totalScore * 10;
+        soundLevel = 1;
+      }
+
+      // 共通のボーナス計算
+      int sumscore = P.totalScore * 10;
       DateTime endTime = DateTime.now();
       Duration elapsed = endTime.difference(startTime!);
       int elapsedTenth = elapsed.inMilliseconds;
       double decrease = elapsedTenth * 0.002 / sumscore;
-      double timebonus = 1 - decrease;
-
-      if (timebonus < 0) {
-        timebonus = 0;
-      }
+      double timebonus = max(0.0, 1 - decrease);
 
       int bonuspoint = (sumscore * timebonus).round();
 
@@ -182,11 +188,11 @@ class QuizScreenState extends State<Quizscreen> {
         totalScore += bonuspoint + lastScore;
         scoreIncrement1 = '+$lastScore点';
         scoreIncrement2 = '+$bonuspoint点';
-
         correctCount += 1;
       });
 
-      if (ctScoreList.length > 1) {
+      // ★ 音の出し分けも soundLevel で判定
+      if (soundLevel > 1) {
         soundManager.playSound('marumaru.mp3');
       } else {
         soundManager.playSound('maru.mp3');
@@ -248,7 +254,7 @@ class QuizScreenState extends State<Quizscreen> {
                 () => setState(() {
                   isGameOver = true;
                 }),
-                quizinfo.islimited,
+                quizinfo.modeData.islimited,
               );
       },
       child: AppAdScaffold(
@@ -264,7 +270,7 @@ class QuizScreenState extends State<Quizscreen> {
                     flex: 1,
                     child: Row(
                       children: [
-                        if (quizinfo.isbattle == true)
+                        if (quizinfo.modeData.isbattle == true)
                           Expanded(
                             flex: 1,
                             child: Padding(
@@ -293,7 +299,7 @@ class QuizScreenState extends State<Quizscreen> {
                             istap: !isGameOver,
                           ),
                         ),
-                        if (quizinfo.isbattle == true)
+                        if (quizinfo.modeData.isbattle == true)
                           Expanded(
                             flex: 2,
                             child: pointwidget(
@@ -302,7 +308,7 @@ class QuizScreenState extends State<Quizscreen> {
                               remainingTime: remainingTime,
                             ),
                           ),
-                        if (quizinfo.isbattle == true)
+                        if (quizinfo.modeData.isbattle == true)
                           Expanded(
                             flex: 1,
                             child: increasewidget(
@@ -310,7 +316,7 @@ class QuizScreenState extends State<Quizscreen> {
                               scoreIncrement2,
                             ),
                           ),
-                        if (quizinfo.isbattle == false)
+                        if (quizinfo.modeData.isbattle == false)
                           Expanded(
                             flex: 4,
                             child: marupekelist(context, marks),
@@ -325,39 +331,35 @@ class QuizScreenState extends State<Quizscreen> {
                       child: childWidget,
                     ),
                   ),
-                  if (P["lc"] == "latex")
+                  if (P case LatexMakingData p)
                     Expanded(
                       flex: 7,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 5),
                         child: LatexInputScreen3(
                           key: _latexInputKey,
-                          shubetu: P['fb'],
-                          marusikaku: P['latex'],
-                          alist: P['alist'],
-                          blist: P['blist'],
-                          button2: P['button'],
-                          ctscore: P['ctscore'],
-                          categoly: P["fi1"],
-                          pekepeke: (String ddd) {
-                            judge(ddd);
-                          },
-                          partpoint: (int ctscore) {
-                            partpoints(ctscore);
-                          },
+                          shubetu: p.firstButton, // P ではなく p を使う
+                          marusikaku: p.initialLatexA, // ここで赤線が出ない！
+                          alist: p.indexDataA.map((e) => e.tokenList).toList(),
+                          blist: p.indexDataB.map((e) => e.tokenList).toList(),
+                          button2: p.indexDataA.map((e) => e.button).toList(),
+                          ctscore: p.indexDataA.map((e) => e.score).toList(),
+                          categoly: p.subject,
+                          pekepeke: (ddd) => judge(ddd),
+                          partpoint: (score) => partpoints(score),
                         ),
                       ),
                     ),
-                  if (P["lc"] == "choose")
+
+                  // ★こっちも！「もし P が OptionMakingData だったら、それを p と名付けて使う」
+                  if (P case OptionMakingData p)
                     Expanded(
                       flex: 7,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 5),
                         child: QuizOptions(
-                          quizData: P,
-                          onCorrect: (String ddd) {
-                            judge(ddd);
-                          },
+                          quizData: p, // p なので optionList にアクセス可能
+                          onCorrect: (ddd) => judge(ddd),
                         ),
                       ),
                     ),
@@ -366,20 +368,20 @@ class QuizScreenState extends State<Quizscreen> {
               Center(
                 child: isAnswerChecked
                     ? result == "◯"
-                          ? Image.asset(
-                              isDark
-                                  ? 'assets/images/circle_dark.png'
-                                  : 'assets/images/circle.png',
-                              height: 300,
-                            )
-                          : result == '×'
-                          ? Image.asset(
-                              isDark
-                                  ? 'assets/images/cross_dark.png'
-                                  : 'assets/images/cross.png',
-                              height: 300,
-                            )
-                          : Container()
+                        ? Image.asset(
+                            isDark
+                                ? 'assets/images/circle_dark.png'
+                                : 'assets/images/circle.png',
+                            height: 300,
+                          )
+                        : result == '×'
+                            ? Image.asset(
+                                isDark
+                                    ? 'assets/images/cross_dark.png'
+                                    : 'assets/images/cross.png',
+                                height: 300,
+                              )
+                            : Container()
                     : Container(),
               ),
             ],

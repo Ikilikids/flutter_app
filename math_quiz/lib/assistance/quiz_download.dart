@@ -3,129 +3,206 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class QuizProvider extends ChangeNotifier {
-  List<Map<String, String>> quizData = [];
-  Map<String, List<Map<String, String>>> scoreIndexMap = {};
-
-  QuizProvider();
+  Map<int, List<PartData>> scoreIndexMap = {};
 
   Future<void> initAll() async {
-    await loadQuiz();
-    await setQuizData();
-    await buildScoreIndex();
+    final csvString = await rootBundle.loadString("assets/csv/quizdata.csv");
+    final rows = const CsvToListConverter().convert(csvString);
+    scoreIndexMap.clear();
+
+    for (var row in rows) {
+      if (row.length < 17) continue;
+      _processRow(row);
+    }
     notifyListeners();
   }
 
-  Future<void> loadQuiz() async {
-    final csvString = await rootBundle.loadString("assets/csv/quizdata.csv");
-    final rows = const CsvToListConverter().convert(csvString);
+  void _processRow(List<dynamic> row) {
+    final mode = row[0].toString();
+    final making = [row[1].toString(), row[2].toString(), row[3].toString()];
+    final subject = row[5].toString();
+    final domain = row[6].toString();
+    final field = row[7].toString();
 
-    quizData.clear();
-    for (var row in rows) {
-      if (row.length < 17) continue;
-      quizData.add({
-        "lc": row[0].toString(),
-        "st1": row[1].toString(),
-        "st2": row[2].toString(),
-        "st3": row[3].toString(),
-        "dt": row[4].toString(),
-        "fi1": row[5].toString(),
-        "fi2": row[6].toString(),
-        "fi3": row[7].toString(),
-        "fb": row[8].toString(),
-        "b1": row[9].toString(),
-        "b2": row[10].toString(),
-        "b3": row[11].toString(),
-        "b4": row[12].toString(),
-        "scoreA": row[13].toString(),
-        "scoreB": row[14].toString(),
-        "scoreC": row[15].toString(),
-        "scoreD": row[16].toString(),
-      });
+    if (mode == "latex") {
+      // ===== LaTeXの重いロジック（bit演算）はここに隔離 =====
+      _processLatex(row, mode, making, subject, domain, field);
+    } else {
+      // ===== Optionモード：13列目(row[13])をスコアにして1つ作る =====
+      final totalScore =
+          int.parse(row[13].toString().replaceAll(RegExp(r"[ab]"), ""));
+      final p = PartData.create(
+        mode: mode,
+        making: making,
+        subject: subject,
+        domain: domain,
+        field: field,
+        totalScore: totalScore,
+      );
+      scoreIndexMap.putIfAbsent(totalScore, () => []).add(p);
     }
   }
 
-  Future<void> setQuizData() async {
-    const keys = ["A", "B", "C", "D"];
-    for (var map in quizData) {
-      List<String?> scores = [
-        map["scoreA"],
-        map["scoreB"],
-        map["scoreC"],
-        map["scoreD"]
-      ];
-      List<int> validIndices = [
-        for (int i = 0; i < 4; i++)
-          if (scores[i]?.isNotEmpty ?? false) i
-      ];
-      Set<int> aIndices = {
-        for (int i in validIndices)
-          if (scores[i]!.contains("a")) i
-      };
-      Set<int> bIndices = {
-        for (int i in validIndices)
-          if (scores[i]!.contains("b")) i
-      };
+  void _processLatex(List<dynamic> row, String mode, List<String> making,
+      String sub, String dom, String field) {
+    final controlButtons = [
+      row[9].toString(),
+      row[10].toString(),
+      row[11].toString(),
+      row[12].toString()
+    ];
+    final scoreStrings = [
+      row[13].toString(),
+      row[14].toString(),
+      row[15].toString(),
+      row[16].toString()
+    ];
 
-      int parseScore(int i) =>
-          int.parse(scores[i]!.replaceAll(RegExp(r"[ab]"), ""));
+    List<int> validIndices = [];
+    List<int> aIndices = [];
+    List<int> bIndices = [];
 
-      int n = validIndices.length;
-      for (int mask = 1; mask < (1 << n); mask++) {
-        Set<int> subset = {
-          for (int j = 0; j < n; j++)
-            if ((mask & (1 << j)) != 0) validIndices[j]
-        };
-        if (!subset.containsAll(aIndices)) continue;
-        if (bIndices.isNotEmpty) {
-          bool containsB = subset.any((i) => bIndices.contains(i));
-          if (containsB && !bIndices.every((i) => subset.contains(i))) continue;
-        }
-        int total = subset.fold(0, (summ, i) => summ + parseScore(i));
-        String keyStr = subset.map((i) => keys[i]).toList().join();
-        map["score$keyStr"] = total.toString();
+    for (int k = 0; k < scoreStrings.length; k++) {
+      if (scoreStrings[k].isNotEmpty) {
+        validIndices.add(k);
+        if (scoreStrings[k].contains('a')) aIndices.add(k);
+        if (scoreStrings[k].contains('b')) bIndices.add(k);
       }
     }
-  }
 
-  Future<void> buildScoreIndex() async {
-    scoreIndexMap.clear();
-    for (var q in quizData) {
-      for (var entry in q.entries) {
-        if (entry.key.startsWith("score")) {
-          int? score = int.tryParse(entry.value);
-          if (score != null) {
-            scoreIndexMap.putIfAbsent(score.toString(), () => []).add({
-              ...q,
-              "usedScore": entry.key,
-              "usedScoreValue": entry.value,
-            });
-          }
-        }
+    int n = validIndices.length;
+    for (int i = 1; i < (1 << n); i++) {
+      List<int> subsetIndices = [];
+      for (int j = 0; j < n; j++) {
+        if ((i & (1 << j)) != 0) subsetIndices.add(validIndices[j]);
       }
+
+      // 1. ★ グループ「a」の掟：【絶対に全員穴にすること】
+      if (aIndices.isNotEmpty) {
+        // aのインデックスが一つでも欠けていたら、そのパターンはボツ
+        bool hasAllA = aIndices.every((idx) => subsetIndices.contains(idx));
+        if (!hasAllA) continue;
+      }
+
+      // 2. ★ グループ「b」の掟：【全員一緒か、さもなくば全員ゼロか】
+      if (bIndices.isNotEmpty) {
+        bool hasAnyB = bIndices.any((idx) => subsetIndices.contains(idx));
+        bool hasAllB = bIndices.every((idx) => subsetIndices.contains(idx));
+        // 「誰か一人でもいるのに、全員揃っていない」場合はボツ
+        if (hasAnyB && !hasAllB) continue;
+      }
+
+      // 3. 全ての掟をパスしたエリートのみが PartData になれる
+      List<HoleData> holes = [];
+      int currentTotal = 0;
+      for (int idx in subsetIndices) {
+        int s = int.parse(scoreStrings[idx].replaceAll(RegExp(r"[ab]"), ""));
+        holes.add(HoleData(index: idx, button: controlButtons[idx], score: s));
+        currentTotal += s;
+      }
+
+      final p = PartData.create(
+        mode: mode,
+        making: making,
+        subject: sub,
+        domain: dom,
+        field: field,
+        totalScore: currentTotal,
+        holes: holes,
+        firstButton: row[8].toString(),
+      );
+      scoreIndexMap.putIfAbsent(currentTotal, () => []).add(p);
     }
   }
 }
 
-class ChoseProvider extends ChangeNotifier {
-  List<Map<String, String>> quizData = [];
+abstract class PartData {
+  final String mode;
+  final List<String> making;
+  final String subject;
+  final String domain;
+  final String field;
+  final int totalScore;
 
-  Future<void> initAll() async {
-    await loadQuiz();
-    notifyListeners();
-  }
+  const PartData({
+    required this.mode,
+    required this.making,
+    required this.subject,
+    required this.domain,
+    required this.field,
+    required this.totalScore,
+  });
 
-  Future<void> loadQuiz() async {
-    final csvString = await rootBundle.loadString("assets/csv/choosesort.csv");
-    final rows = const CsvToListConverter().convert(csvString);
-
-    quizData.clear();
-    for (var row in rows) {
-      if (row.length < 3) continue;
-      quizData.add({
-        "123abc": row[0].toString(),
-        "main": row[1].toString(),
-        "sub": row[2].toString(),
-      });
+  // ★ factory 窓口：Providerからの指示を適切なクラスに振り分けるだけ
+  factory PartData.create({
+    required String mode,
+    required List<String> making,
+    required String subject,
+    required String domain,
+    required String field,
+    required int totalScore,
+    List<HoleData>? holes,
+    String? firstButton,
+  }) {
+    if (mode == "latex") {
+      return LatexPartData(
+        mode: mode,
+        making: making,
+        subject: subject,
+        domain: domain,
+        field: field,
+        totalScore: totalScore,
+        holes: holes!,
+        firstButton: firstButton!,
+      );
+    } else {
+      return OptionPartData(
+        mode: mode,
+        making: making,
+        subject: subject,
+        domain: domain,
+        field: field,
+        totalScore: totalScore,
+      );
     }
   }
+}
+
+class LatexPartData extends PartData {
+  final List<HoleData> holes;
+  final String firstButton;
+
+  LatexPartData({
+    required super.mode,
+    required super.making,
+    required super.subject,
+    required super.domain,
+    required super.field,
+    required super.totalScore,
+    required this.holes,
+    required this.firstButton,
+  });
+}
+
+class OptionPartData extends PartData {
+  OptionPartData({
+    required super.mode,
+    required super.making,
+    required super.subject,
+    required super.domain,
+    required super.field,
+    required super.totalScore,
+  });
+}
+
+class HoleData {
+  final int index; // 何番目の [ ... ]
+  final String button; // 対応ボタン
+  final int score; // スコア
+
+  const HoleData({
+    required this.index,
+    required this.button,
+    required this.score,
+  });
 }

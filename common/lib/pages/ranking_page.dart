@@ -185,254 +185,234 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     final fix = gameData.fix;
     final unit = gameData.unit;
 
-    return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (!didPop)
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (_) => CommonModeSelectionPage()));
-        },
-        child: AppAdScaffold(
-          appBar: AppBar(title: Text(l10n(context, 'rankingTitle'))),
-          body: SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (selectedModeIndex != 0)
-                              setState(() {
-                                selectedModeIndex = 0;
-                                _resetTabs();
-                              });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: selectedModeIndex == 0
-                                ? Colors.blue
-                                : Colors.grey,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: Text(l10n(context, allData.mid[0].modeTitle!),
-                              style: TextStyle(fontSize: 18)),
-                        ),
+    return AppAdScaffold(
+      appBar: AppBar(title: Text(l10n(context, 'rankingTitle'))),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (selectedModeIndex != 0)
+                          setState(() {
+                            selectedModeIndex = 0;
+                            _resetTabs();
+                          });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            selectedModeIndex == 0 ? Colors.blue : Colors.grey,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        minimumSize: const Size(double.infinity, 50),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (selectedModeIndex != 1)
-                              setState(() {
-                                selectedModeIndex = 1;
-                                _resetTabs();
-                              });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: selectedModeIndex == 1
-                                ? Colors.red
-                                : Colors.grey,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: Text(l10n(context, allData.mid[1].modeTitle!),
-                              style: TextStyle(fontSize: 18)),
-                        ),
+                      child: Text(l10n(context, allData.mid[0].modeTitle!),
+                          style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (selectedModeIndex != 1)
+                          setState(() {
+                            selectedModeIndex = 1;
+                            _resetTabs();
+                          });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            selectedModeIndex == 1 ? Colors.red : Colors.grey,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        minimumSize: const Size(double.infinity, 50),
                       ),
-                    ],
+                      child: Text(l10n(context, allData.mid[1].modeTitle!),
+                          style: TextStyle(fontSize: 18)),
+                    ),
                   ),
-                ),
-                if (_areTabsInitialized)
-                  TabBar(
-                    controller: quizTabController,
-                    indicatorColor: tabColor,
-                    labelColor: tabColor,
-                    unselectedLabelColor: textColor2(context),
-                    isScrollable: true,
-                    tabs:
-                        quizTabs.map((tab) => Tab(text: tab.display)).toList(),
-                    onTap: (index) {
-                      setState(() {
-                        selectedSubjectId = quizTabs[index].id;
-                        fetchAllRanking();
-                      });
-                    },
-                  ),
-                if (_areTabsInitialized)
-                  TabBar(
-                    controller: periodTabController,
-                    indicatorColor: tabColor,
-                    labelColor: tabColor,
-                    unselectedLabelColor: textColor2(context),
-                    tabs: periodTabs.map((name) => Tab(text: name)).toList(),
-                    onTap: (index) {
-                      setState(() {
-                        selectedPeriod = periodTabs[index];
-                        fetchAllRanking();
-                      });
-                    },
-                  ),
-                isLoading
-                    ? const Expanded(
-                        child: Center(child: CircularProgressIndicator()))
-                    : Expanded(
-                        child: TabBarView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          controller: quizTabController,
-                          children: quizTabs.map((quizTab) {
-                            final key = quizTab.id;
-                            List<RankingEntry> data = rankingData[key] ?? [];
-                            if (data.isEmpty)
-                              return Center(
-                                  child:
-                                      Text(l10n(context, 'noDataAvailable')));
+                ],
+              ),
+            ),
+            if (_areTabsInitialized)
+              TabBar(
+                controller: quizTabController,
+                indicatorColor: tabColor,
+                labelColor: tabColor,
+                unselectedLabelColor: textColor2(context),
+                isScrollable: true,
+                tabs: quizTabs.map((tab) => Tab(text: tab.display)).toList(),
+                onTap: (index) {
+                  setState(() {
+                    selectedSubjectId = quizTabs[index].id;
+                    fetchAllRanking();
+                  });
+                },
+              ),
+            if (_areTabsInitialized)
+              TabBar(
+                controller: periodTabController,
+                indicatorColor: tabColor,
+                labelColor: tabColor,
+                unselectedLabelColor: textColor2(context),
+                tabs: periodTabs.map((name) => Tab(text: name)).toList(),
+                onTap: (index) {
+                  setState(() {
+                    selectedPeriod = periodTabs[index];
+                    fetchAllRanking();
+                  });
+                },
+              ),
+            isLoading
+                ? const Expanded(
+                    child: Center(child: CircularProgressIndicator()))
+                : Expanded(
+                    child: TabBarView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      controller: quizTabController,
+                      children: quizTabs.map((quizTab) {
+                        final key = quizTab.id;
+                        List<RankingEntry> data = rankingData[key] ?? [];
+                        if (data.isEmpty)
+                          return Center(
+                              child: Text(l10n(context, 'noDataAvailable')));
 
-                            return ListView.builder(
-                              itemCount: data.length,
-                              itemBuilder: (context, index) {
-                                final entry = data[index];
-                                final localizations =
-                                    AppLocalizations.of(context)!;
-                                String rankText;
-                                if (index == 0)
-                                  rankText = localizations.rank1st;
-                                else if (index == 1)
-                                  rankText = localizations.rank2nd;
-                                else if (index == 2)
-                                  rankText = localizations.rank3rd;
-                                else
-                                  rankText = localizations.rankNth(index + 1);
+                        return ListView.builder(
+                          itemCount: data.length,
+                          itemBuilder: (context, index) {
+                            final entry = data[index];
+                            final localizations = AppLocalizations.of(context)!;
+                            String rankText;
+                            if (index == 0)
+                              rankText = localizations.rank1st;
+                            else if (index == 1)
+                              rankText = localizations.rank2nd;
+                            else if (index == 2)
+                              rankText = localizations.rank3rd;
+                            else
+                              rankText = localizations.rankNth(index + 1);
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 6, horizontal: 10),
-                                  child: Container(
-                                    height: 110,
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: bgColor1(context),
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                            color: Color.fromARGB(
-                                                52, 158, 158, 158),
-                                            blurRadius: 5,
-                                            offset: Offset(0, 3))
-                                      ],
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 6, horizontal: 10),
+                              child: Container(
+                                height: 110,
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: bgColor1(context),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        color:
+                                            Color.fromARGB(52, 158, 158, 158),
+                                        blurRadius: 5,
+                                        offset: Offset(0, 3))
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 20,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          rankText,
+                                          style: TextStyle(
+                                              fontSize: 100,
+                                              fontWeight: FontWeight.bold,
+                                              color: textColor1(context)),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 20,
-                                          child: FittedBox(
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 50,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          FittedBox(
                                             fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
                                             child: Text(
-                                              rankText,
+                                              entry.userName,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20,
+                                                  color: textColor1(context)),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              DateFormat('yyyy/MM/dd HH:mm')
+                                                  .format(entry.date),
+                                              style: TextStyle(
+                                                  color: textColor2(context)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 35,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.baseline,
+                                          textBaseline: TextBaseline.alphabetic,
+                                          children: [
+                                            Text(
+                                              entry.score >= 1 &&
+                                                      entry.score <= 9
+                                                  ? "      ${entry.score.toStringAsFixed(fix)}"
+                                                  : entry.score >= 10 &&
+                                                          entry.score <= 99
+                                                      ? "   ${entry.score.toStringAsFixed(fix)}"
+                                                      : entry.score
+                                                          .toStringAsFixed(fix),
                                               style: TextStyle(
                                                   fontSize: 100,
                                                   fontWeight: FontWeight.bold,
-                                                  color: textColor1(context)),
-                                              textAlign: TextAlign.center,
+                                                  color: tabColor),
                                             ),
-                                          ),
+                                            Text(l10n(context, unit),
+                                                style: TextStyle(
+                                                    fontSize: 50,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: tabColor)),
+                                            const SizedBox(width: 10),
+                                          ],
                                         ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          flex: 50,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  entry.userName,
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 20,
-                                                      color:
-                                                          textColor1(context)),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  DateFormat('yyyy/MM/dd HH:mm')
-                                                      .format(entry.date),
-                                                  style: TextStyle(
-                                                      color:
-                                                          textColor2(context)),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          flex: 35,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.baseline,
-                                              textBaseline:
-                                                  TextBaseline.alphabetic,
-                                              children: [
-                                                Text(
-                                                  entry.score >= 1 &&
-                                                          entry.score <= 9
-                                                      ? "      ${entry.score.toStringAsFixed(fix)}"
-                                                      : entry.score >= 10 &&
-                                                              entry.score <= 99
-                                                          ? "   ${entry.score.toStringAsFixed(fix)}"
-                                                          : entry.score
-                                                              .toStringAsFixed(
-                                                                  fix),
-                                                  style: TextStyle(
-                                                      fontSize: 100,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: tabColor),
-                                                ),
-                                                Text(l10n(context, unit),
-                                                    style: TextStyle(
-                                                        fontSize: 50,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: tabColor)),
-                                                const SizedBox(width: 10),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  ],
+                                ),
+                              ),
                             );
-                          }).toList(),
-                        ),
-                      ),
-              ],
-            ),
-          ),
-        ));
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
   }
 }

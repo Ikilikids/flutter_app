@@ -323,4 +323,8 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get volumeLabel => 'Volume';
+
+  @override
+  String get loadingProblem =>
+      'Carregando problema, por favor aguarde um momento';
 }

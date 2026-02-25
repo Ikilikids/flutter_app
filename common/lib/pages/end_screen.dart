@@ -383,14 +383,8 @@ class _ActionSection extends StatelessWidget {
             onTap: isLimitedMode || !stepEnd
                 ? null
                 : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdInterstitialNavigator(
-                          nextScreen: CommonCountdownScreen(),
-                        ),
-                      ),
-                    );
+                    InterstitialAdHelper.navigate(
+                        context, CommonCountdownScreen());
                   },
           ),
           _ActionItem(
@@ -400,14 +394,7 @@ class _ActionSection extends StatelessWidget {
             onTap: !stepEnd
                 ? null
                 : () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdInterstitialNavigator(
-                          nextScreen: CommonDetailCard(),
-                        ),
-                      ),
-                    );
+                    InterstitialAdHelper.navigate(context, null);
                   },
           ),
         ],

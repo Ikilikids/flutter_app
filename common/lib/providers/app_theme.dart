@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'app_theme.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AppTheme extends _$AppTheme {
   @override
   Future<ThemeMode> build() async {

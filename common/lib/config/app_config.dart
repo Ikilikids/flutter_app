@@ -96,6 +96,7 @@ class ModeData {
   final String? sub2;
   final bool isDescending; // ← final にする
   final String ranking;
+  String badgeText = '';
 
   ModeData({
     required this.unit,
@@ -118,6 +119,9 @@ class DetailData {
   final String description;
   final String color;
   final String circleColor;
+  String buttonText = '';
+  num highScore = 0;
+  int? qcount;
 
   DetailData({
     required this.sort,

@@ -11,12 +11,14 @@ import '../math_quiz.dart';
 
 class NtEndScreen extends StatefulWidget {
   final int correctCount;
-  final List<Map<String, dynamic>> P;
-  final QuizData quizinfo;
+  final List<MakingData> P;
+  final List<String> marks;
+  final DetailConfig quizinfo;
   const NtEndScreen({
     super.key,
     required this.correctCount,
     required this.P,
+    required this.marks,
     required this.quizinfo,
   });
 
@@ -28,7 +30,7 @@ class NtEndScreen extends StatefulWidget {
 class _NtEndScreenState extends State<NtEndScreen> {
   int step = 0; // 0:正解数 1:最高記録 2:ランキング
   late SoundManager soundManager; // main.dart にある SoundManager を使用
-  late QuizData _quizinfo;
+  late DetailConfig _quizinfo;
 
   @override
   void initState() {
@@ -47,9 +49,15 @@ class _NtEndScreenState extends State<NtEndScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Color quizColor = getQuizColor2(_quizinfo.color, context, 1, 0.35, 0.95);
-    String unit = _quizinfo.unit;
-    int fix = _quizinfo.fix;
+    Color quizColor = getQuizColor2(
+      _quizinfo.detail.color,
+      context,
+      1,
+      0.35,
+      0.95,
+    );
+    String unit = _quizinfo.modeData.unit;
+    int fix = _quizinfo.modeData.fix;
     return PopScope(
       canPop: false,
       child: AppAdScaffold(
@@ -61,7 +69,7 @@ class _NtEndScreenState extends State<NtEndScreen> {
                 Expanded(
                   flex: 1,
                   child: _QuizNameSection(
-                    quizName: _quizinfo.label,
+                    quizName: _quizinfo.detail.label,
                     backgroundColor: quizColor,
                   ),
                 ),
@@ -77,7 +85,8 @@ class _NtEndScreenState extends State<NtEndScreen> {
                 ),
                 SizedBox(
                   height: 420,
-                  child: _RankSection(P: widget.P, quizinfo: _quizinfo),
+                  child: _RankSection(
+                      P: widget.P, quizinfo: _quizinfo, marks: widget.marks),
                 ),
                 Expanded(
                   flex: 2,
@@ -232,10 +241,12 @@ class _ScoreSection extends StatelessWidget {
 }
 
 class _RankSection extends StatelessWidget {
-  final List<Map<String, dynamic>> P;
-  final QuizData quizinfo;
+  final List<MakingData> P;
+  final List<String> marks;
+  final DetailConfig quizinfo;
 
-  const _RankSection({required this.P, required this.quizinfo});
+  const _RankSection(
+      {required this.P, required this.quizinfo, required this.marks});
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +264,7 @@ class _RankSection extends StatelessWidget {
                 isScrollable: P.length > 5,
                 labelPadding: EdgeInsets.zero,
                 tabs: List.generate(min(P.length, 10), (index) {
-                  String isCorrect = P[index]["marks"] ?? "×";
+                  String isCorrect = marks[index];
                   return SizedBox(
                     width: P.length > 5 ? 80 : null, // ★ ここで制御
                     height: 40,
@@ -269,11 +280,11 @@ class _RankSection extends StatelessWidget {
                                   height: 20,
                                 )
                               : isCorrect == "×"
-                              ? Image.asset(
-                                  'assets/images/cross.png',
-                                  height: 20,
-                                )
-                              : Container(),
+                                  ? Image.asset(
+                                      'assets/images/cross.png',
+                                      height: 20,
+                                    )
+                                  : Container(),
                         ],
                       ),
                     ),
@@ -284,71 +295,57 @@ class _RankSection extends StatelessWidget {
                 child: TabBarView(
                   children: List.generate(
                     min(P.length, 10),
-                    (index) => Column(
-                      children: [
-                        SizedBox(
-                          height: 240,
-                          width: double.infinity,
-                          child: buildChildWidget(context, P[index]),
-                        ),
-                        Container(
-                          height: 120,
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            color: getQuizColor2(
-                              quizinfo.color,
-                              context,
-                              0.4,
-                              0.2,
-                              0.95,
-                            ),
+                    (index) {
+                      // 各タブの index に応じて lines を作る
+                      final lines = restoreSymbols(P[index]);
+
+                      return Column(
+                        children: [
+                          SizedBox(
+                            height: 240,
+                            width: double.infinity,
+                            child: buildChildWidget(context, P[index]),
                           ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown, // 親に収める
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                parts(
-                                  P[index]["all1"],
-                                  P[index]["unindex"],
-                                ).length,
-                                (index2) => Column(
-                                  children: [
-                                    if (parts(
-                                      P[index]["all1"],
-                                      P[index]["unindex"],
-                                    )[index2].trim().isNotEmpty)
-                                      Math.tex(
-                                        parts(
-                                          P[index]["all1"],
-                                          P[index]["unindex"],
-                                        )[index2],
-                                        textStyle: TextStyle(
-                                          fontSize: min(30, 30),
-                                          color: textColor1(context),
-                                        ),
+                          Container(
+                            height: 120,
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              color: getQuizColor2(
+                                quizinfo.detail.color,
+                                context,
+                                0.4,
+                                0.2,
+                                0.95,
+                              ),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: lines.map((line) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Math.tex(
+                                      line,
+                                      textStyle: TextStyle(
+                                        fontSize: 30,
+                                        color: textColor1(context),
                                       ),
-                                    if (index2 <
-                                        parts(
-                                              P[index]["all1"],
-                                              P[index]["unindex"],
-                                            ).length -
-                                            1)
-                                      const SizedBox(height: 10),
-                                  ],
-                                ),
+                                    ),
+                                  );
+                                }).toList(),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    },
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -380,13 +377,9 @@ class _ActionSection extends StatelessWidget {
             onTap: isLimitedMode
                 ? null
                 : () {
-                    Navigator.push(
+                    InterstitialAdHelper.navigate(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdInterstitialNavigator(
-                          nextScreen: CommonCountdownScreen(),
-                        ),
-                      ),
+                      CommonCountdownScreen(),
                     );
                   },
           ),
@@ -395,14 +388,7 @@ class _ActionSection extends StatelessWidget {
             icon: Icons.home,
             label: 'メニュー',
             onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AdInterstitialNavigator(
-                    nextScreen: CommonDetailCard(),
-                  ),
-                ),
-              );
+              InterstitialAdHelper.navigate(context, null);
             },
           ),
         ],
@@ -475,46 +461,54 @@ class _ActionItem extends StatelessWidget {
   }
 }
 
-List<String> parts(String P, List<int> unindex) {
-  P = removeBracketsFromElements(P, unindex);
-  P = P
-      .replaceAll('[+]', '\\textcolor{orange}{+}')
-      .replaceAll('[-]', '\\textcolor{orange}{-}')
-      .replaceAll('[\\cos]', '\\textcolor{blue}{\\cos}')
-      .replaceAll('[\\sin]', '\\textcolor{blue}{\\sin}');
-  P = P.replaceAll('[', '\\textcolor{red}{').replaceAll(']', '}');
-  return P.split(';');
-}
+List<String> restoreSymbols(MakingData P) {
+  const colorMap = {
+    '◯': 'red',
+    '□': 'blue',
+    '☆': 'orange',
+  };
+  if (P is LatexMakingData) {
+    String base = P.initialLatexA;
+    List<IndexData> sorted = [...P.indexDataA]
+      ..sort((a, b) => a.index.compareTo(b.index));
 
-String removeBracketsFromElements(String input, List<int> unindex) {
-  // [ ] で囲まれた部分を抽出
-  RegExp elementRegex = RegExp(r'\[[^\[\]]*\]');
-  Iterable<RegExpMatch> matches = elementRegex.allMatches(input);
+    StringBuffer sb = StringBuffer();
+    int basePos = 0;
 
-  StringBuffer sb = StringBuffer();
-  int lastEnd = 0;
-  int index = 0;
+    for (final data in sorted) {
+      // 元の文字列の左から順にコピー（置換対象以外はそのまま）
+      while (basePos < base.length && !colorMap.containsKey(base[basePos])) {
+        sb.write(base[basePos]);
+        basePos++;
+      }
 
-  for (final match in matches) {
-    // [ ] で囲まれていない前の文字列をそのまま追加
-    sb.write(input.substring(lastEnd, match.start));
+      // 置換対象の位置
+      if (basePos < base.length) {
+        String originalSymbol = base[basePos]; // 元の文字
+        String replacement = data.origin; // 置換文字
 
-    String element = match.group(0)!; // 例: "[2]"
-    if (unindex.contains(index)) {
-      // 括弧を削除
-      sb.write(element.substring(1, element.length - 1));
-    } else {
-      sb.write(element); // そのまま
+        // 色は元の文字に基づく
+        String? color = colorMap[originalSymbol];
+
+        if (color != null) {
+          sb.write("\\textcolor{$color}{$replacement}");
+        } else {
+          sb.write(replacement);
+        }
+
+        basePos++;
+      }
     }
 
-    lastEnd = match.end;
-    index++;
-  }
+    // 残りの文字を追加
+    while (basePos < base.length) {
+      sb.write(base[basePos]);
+      basePos++;
+    }
 
-  // 最後に残りの文字列を追加
-  if (lastEnd < input.length) {
-    sb.write(input.substring(lastEnd));
+    // セミコロンで分割して複数行対応
+    return sb.toString().split(';');
+  } else {
+    return [];
   }
-
-  return sb.toString();
 }

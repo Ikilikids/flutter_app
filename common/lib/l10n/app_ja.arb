@@ -100,5 +100,6 @@
     "calculatorMode": "電卓モード",
     "detailSetting": "詳細設定",
     "soundSectionTitle": "サウンド",
-    "volumeLabel": "音量"
+    "volumeLabel": "音量",
+    "loadingProblem": "問題ロード中、少々お待ちください"
 }

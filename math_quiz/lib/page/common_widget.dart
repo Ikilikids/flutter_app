@@ -4,77 +4,73 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:math_quiz/math_quiz.dart';
 
 /// Pを受け取ってウィジェットを返す関数
-Widget buildChildWidget(BuildContext context, Map<String, dynamic> P) {
+Widget buildChildWidget(BuildContext context, MakingData P) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
-  // 図のとき
-  if (["sekimen", "pointlined", "cyebamene", "triangle"].contains(P["st1"])) {
+
+  if (P is SekimenMakingData ||
+      P is PointLinedMakingData ||
+      P is CyebaMakingData ||
+      P is TriangleMakingData) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final height = constraints.maxHeight;
 
-        switch (P["st1"]) {
-          case "sekimen":
-            final origin = OriginSekibunMenseki(deta: P);
-            return KaigaSekibunMenseki(
-                origin: origin, width: width, height: height);
-          case "pointlined":
-            final origin = OriginPointlined(deta: P);
-            return KaigaPointlined(
-                origin: origin, width: width, height: height);
-          case "cyebamene":
-            return CevaDemo(deta: P, width: width, height: height);
-          case "triangle":
-            return Triangle(deta: P, width: width, height: height);
-          default:
-            return const SizedBox.shrink();
+        if (P is SekimenMakingData) {
+          return Sekimen(origin: P, width: width, height: height);
         }
+        if (P is PointLinedMakingData) {
+          return PointLined(origin: P, width: width, height: height);
+        }
+        if (P is CyebaMakingData) {
+          return Cyeba(origin: P, width: width, height: height);
+        }
+        if (P is TriangleMakingData) {
+          return Triangle(origin: P, width: width, height: height);
+        }
+        return const SizedBox.shrink();
       },
     );
-  } else {
-    // else の時は今まで通り
-    return Center(
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: isDark
-              ? getQuizColor2(P["fi1"], context, 0.6, 0.4, 0.65)
-              : getQuizColor2(P["fi1"], context, 0.6, 0.4, 0.95),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var key in [
-                "question1",
-                "question2",
-                "question3",
-                "question4"
-              ])
-                if ((P[key] ?? "").isNotEmpty) ...[
-                  if (key != "question1") const SizedBox(height: 5),
-                  Math.tex(
-                    P[key]!,
-                    textStyle:
-                        TextStyle(fontSize: 30, color: textColor1(context)),
-                  ),
-                ],
+  }
+
+  // それ以外（通常Latex）
+  return Center(
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: isDark
+            ? getQuizColor2(P.subject, context, 0.6, 0.4, 0.65)
+            : getQuizColor2(P.subject, context, 0.6, 0.4, 0.95),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (int i = 0; i < P.questionList.length; i++) ...[
+              if (i != 0) const SizedBox(height: 5),
+              Math.tex(
+                P.questionList[i],
+                textStyle: TextStyle(
+                  fontSize: 30,
+                  color: textColor1(context),
+                ),
+              ),
             ],
-          ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 /// 丸ボタン＋テキスト共通部品
 
-Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
+Widget quizInfo(BuildContext context, MakingData P) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
-  int sumscore = int.parse(P["usedScoreValue"]);
+  int sumscore = P.totalScore;
   return Padding(
     padding: const EdgeInsets.only(left: 10, right: 10),
     child: Column(
@@ -89,12 +85,12 @@ Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: isDark
-                    ? getQuizColor2(P["fi1"], context, 0.6, 0.4, 0.65)
-                    : getQuizColor2(P["fi1"], context, 0.6, 0.4, 0.95),
+                    ? getQuizColor2(P.subject, context, 0.6, 0.4, 0.65)
+                    : getQuizColor2(P.subject, context, 0.6, 0.4, 0.95),
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text(
-                '${P["fi2"]}',
+                P.domain,
                 style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
@@ -115,7 +111,7 @@ Widget quizInfo(BuildContext context, Map<String, dynamic> P) {
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text(
-                '${P["fi3"]}',
+                P.field,
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,

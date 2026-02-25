@@ -3,9 +3,10 @@ import 'dart:math';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:math_quiz/math_quiz.dart';
 
 class QuizOptions extends StatefulWidget {
-  final Map<String, dynamic> quizData;
+  final OptionMakingData quizData;
   final Function(String) onCorrect;
 
   const QuizOptions({
@@ -20,6 +21,7 @@ class QuizOptions extends StatefulWidget {
 
 class _QuizOptionsState extends State<QuizOptions> {
   late List<String> options;
+  late String correctAnswer;
   bool _answered = false;
   int? _pressedIndex; // 押されているボタンのインデックス
 
@@ -40,12 +42,8 @@ class _QuizOptionsState extends State<QuizOptions> {
   }
 
   void _generateOptions() {
-    options = [
-      if (widget.quizData['correct'] != null) widget.quizData['correct'],
-      if (widget.quizData['option1'] != null) widget.quizData['option1'],
-      if (widget.quizData['option2'] != null) widget.quizData['option2'],
-      if (widget.quizData['option3'] != null) widget.quizData['option3'],
-    ];
+    correctAnswer = widget.quizData.optionList[0]; // 元の正解を保持
+    options = widget.quizData.optionList;
     options.shuffle(Random());
   }
 
@@ -85,7 +83,7 @@ class _QuizOptionsState extends State<QuizOptions> {
                       });
 
                       // 正誤判定
-                      if (option == widget.quizData['correct']) {
+                      if (option == correctAnswer) {
                         widget.onCorrect("maru");
                       } else {
                         widget.onCorrect("peke");

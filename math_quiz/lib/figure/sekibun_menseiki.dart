@@ -6,12 +6,6 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:math_expressions/math_expressions.dart' hide Stack;
 import 'package:math_quiz/math_quiz.dart';
 
-class OriginSekibunMenseki {
-  final Map<String, dynamic> deta;
-
-  OriginSekibunMenseki({required this.deta});
-}
-
 class ResultSekibunmenseki {
   final String? graph1;
   final String? graph2;
@@ -41,11 +35,11 @@ class ResultSekibunmenseki {
 }
 
 class CalculateSekibunMenseki {
-  ResultSekibunmenseki convert(OriginSekibunMenseki origin) {
-    final sx1 = origin.deta["points"][0][0];
-    final sy1 = origin.deta["points"][0][1];
-    final sx2 = origin.deta["points"][1][0];
-    final sy2 = origin.deta["points"][1][1];
+  ResultSekibunmenseki convert(SekimenMakingData origin) {
+    final sx1 = origin.data.x1;
+    final sy1 = origin.data.y1;
+    final sx2 = origin.data.x2;
+    final sy2 = origin.data.y2;
     final x1 = latextonumber(sx1);
     final y1 = latextonumber(sy1);
     final x2 = latextonumber(sx2);
@@ -53,10 +47,10 @@ class CalculateSekibunMenseki {
 
     String? graph1, graph2, graph3, ss1, ss2, ss3;
 
-    final sort = origin.deta["st2"];
+    final sort = origin.making[1];
 
     if (sort == "pd") {
-      final sa = origin.deta["a1"];
+      final sa = origin.data.a1;
       final sb = lc("(($sy1-$sy2)/($sx1-$sx2))-$sa*($sx1+$sx2)");
       final sc = lc("$sy1-$sa*$sx1*$sx1-($sb)*$sx1");
       ss1 = makingFanction2D(sa, sb, sc);
@@ -66,8 +60,8 @@ class CalculateSekibunMenseki {
       final cc = zeroIfClose(y1 - aa * x1 * x1 - bb * x1);
       graph1 = "$aa*x*x+$bb*x+$cc";
     } else if (sort == "pp") {
-      final sa1 = origin.deta["a1"];
-      final sa2 = origin.deta["a2"];
+      final sa1 = origin.data.a1;
+      final sa2 = origin.data.a2;
       final sb1 = lc("(($sy1-$sy2)/($sx1-$sx2))-$sa1*($sx1+$sx2)");
       final sb2 = lc("(($sy1-$sy2)/($sx1-$sx2))-$sa2*($sx1+$sx2)");
       final sc1 = lc("$sy1-$sa1*$sx1*$sx1-($sb1)*$sx1");
@@ -85,7 +79,7 @@ class CalculateSekibunMenseki {
       graph1 = "$aa1*x*x+$bb1*x+$cc1";
       graph2 = "$aa2*x*x+$bb2*x+$cc2";
     } else if (sort == "psd") {
-      final sa = origin.deta["a1"];
+      final sa = origin.data.a1;
       final sb = lc("(($sy1-$sy2)/($sx1-$sx2))-2*$sa*$sx1");
       final sc = lc("$sy1-$sa*$sx1*$sx1-($sb)*$sx1");
       ss1 = makingFanction2D(sa, sb, sc);
@@ -96,7 +90,7 @@ class CalculateSekibunMenseki {
       graph1 = "$aa*x*x+$bb*x+$cc";
       ss1 = makingFanction2D(sa, sb, sc);
     } else if (sort == "pps") {
-      final sa = origin.deta["a1"];
+      final sa = origin.data.a1;
       final sb1 = lc("(($sy1-$sy2)/($sx1-$sx2))-2*$sa*$sx1");
       final sb2 = lc("(($sy1-$sy2)/($sx1-$sx2))-2*$sa*$sx2");
       final sc1 = lc("$sy1-$sa*$sx1*$sx1-($sb1)*$sx1");
@@ -112,7 +106,7 @@ class CalculateSekibunMenseki {
       graph1 = "$aa*x*x+$bb1*x+$cc1";
       graph3 = "$aa*x*x+$bb2*x+$cc2";
     } else if (sort == "pss") {
-      final sa = origin.deta["a1"];
+      final sa = origin.data.a1;
       final sb = lc("(($sy1-$sy2)/($sx1-$sx2))-$sa*($sx1+$sx2)");
       final sc = lc("$sy1-$sa*$sx1*$sx1-($sb)*$sx1");
       final sm1 = lc("2*$sa*$sx1+($sb)");
@@ -134,7 +128,7 @@ class CalculateSekibunMenseki {
       graph1 = "$mm1*x+$nn1";
       graph3 = "$mm2*x+$nn2";
     } else if (sort == "cs") {
-      final sa = origin.deta["a1"];
+      final sa = origin.data.a1;
       final sb = lc("-$sa*(2*$sx1+$sx2)");
       final sc =
           lc("($sa*($sx1^3+$sx1^2*$sx2-2*$sx1*$sx2^2)+$sy1-$sy2)/($sx1-$sx2)");
@@ -239,13 +233,13 @@ class CalculateSekibunMenseki {
 }
 // 座標をフォーマットするメソッド
 
-class KaigaSekibunMenseki extends StatelessWidget {
-  final OriginSekibunMenseki origin;
-  final CalculateSekibunMenseki calculate = CalculateSekibunMenseki();
+class Sekimen extends StatelessWidget {
+  final SekimenMakingData origin;
+
   final double height;
   final double width;
 
-  KaigaSekibunMenseki(
+  const Sekimen(
       {super.key,
       required this.origin,
       required this.width,
@@ -253,6 +247,7 @@ class KaigaSekibunMenseki extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final CalculateSekibunMenseki calculate = CalculateSekibunMenseki();
     final converted = CalculateSekibunMenseki().convert(origin);
 
     final graph1 = converted.graph1;

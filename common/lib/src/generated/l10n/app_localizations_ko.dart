@@ -317,4 +317,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get volumeLabel => '볼륨';
+
+  @override
+  String get loadingProblem => '문제 로드 중, 잠시만 기다려 주십시오';
 }

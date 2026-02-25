@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'app_locale.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AppLocale extends _$AppLocale {
   @override
   Future<Locale> build() async {

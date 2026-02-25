@@ -1,9 +1,7 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-// 1. Converted to ConsumerStatefulWidget to manage state for navigation
 class CommonModeSelectionPage extends ConsumerStatefulWidget {
   const CommonModeSelectionPage({super.key});
 
@@ -12,47 +10,43 @@ class CommonModeSelectionPage extends ConsumerStatefulWidget {
       _CommonModeSelectionPageState();
 }
 
-class _CommonModeSelectionPageState extends ConsumerState<CommonModeSelectionPage> {
-  // 2. State variable to signal navigation intent
+class _CommonModeSelectionPageState
+    extends ConsumerState<CommonModeSelectionPage> {
   MidData? _navigationRequest;
 
   @override
+  void initState() {
+    super.initState();
+    // 最初の読み込み
+    Future.microtask(() => ref.read(appMidConfigProvider.notifier).loadMid());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 3. Listener that reacts to state changes and navigates
+    // 状態を監視（これが更新のトリガー）
+    final midState = ref.watch(appMidConfigProvider);
+
     ref.listen<MidConfig>(appMidConfigProvider, (previous, next) {
       if (_navigationRequest != null &&
           next.mid.modeTitle == _navigationRequest!.modeTitle) {
-        // Clear the request
         _navigationRequest = null;
-
-        // Navigate only after the state has been updated
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => CommonDetailCard(),
-          ),
-        );
+          MaterialPageRoute(builder: (_) => const CommonDetailCard()),
+        ).then((_) {
+          // 戻ってきたときに再ロードして、バッジを確実に書き換える
+          ref.read(appMidConfigProvider.notifier).loadMid();
+        });
       }
     });
 
     return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const CommonFirstPage(),
-            ),
-          );
-        }
-      },
+      canPop: false,
       child: AppAdScaffold(
         body: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              /// ===== タイトル =====
               Expanded(
                 flex: 1,
                 child: Padding(
@@ -65,66 +59,56 @@ class _CommonModeSelectionPageState extends ConsumerState<CommonModeSelectionPag
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
                         color: textColor1(context),
-                        shadows: [
-                          Shadow(
-                            offset: const Offset(1, 2),
-                            blurRadius: 4,
-                            color: textColor2(context).withAlpha(128),
-                          ),
-                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-
-              /// ===== 無制限モード =====
+              // 無制限モード
               BigModeButton(
                 color: Colors.blue,
                 icon: allData.mid[0].modeIcon ?? Icons.all_inclusive,
                 title: l10n(context, allData.mid[0].modeTitle!),
                 sub1: l10n(context, allData.mid[0].sub1!),
                 sub2: l10n(context, allData.mid[0].sub2!),
-                onPressed: () => _navigate(0), // Pass index only
+                onPressed: () => _navigate(0),
+                badge: allData.mid[0].modeData.badgeText.isNotEmpty
+                    ? LimitedModeBadge(
+                        text: l10n(context, allData.mid[0].modeData.badgeText))
+                    : null,
               ),
-
-              /// ===== 1日限定モード =====
+              // 1日限定モード
               BigModeButton(
                 color: Colors.red,
                 icon: allData.mid[1].modeIcon ?? Icons.timer,
                 title: l10n(context, allData.mid[1].modeTitle!),
                 sub1: l10n(context, allData.mid[1].sub1!),
                 sub2: l10n(context, allData.mid[1].sub2!),
-                onPressed: () => _navigate(1), // Pass index only
-                badge:
-                    allData.mid[1].islimited ? const LimitedModeBadge() : null,
+                onPressed: () => _navigate(1),
+                // ↓ ここを allData.mid[1] ではなく、最新の状態を反映させる
+                badge: allData.mid[1].modeData.badgeText.isNotEmpty
+                    ? LimitedModeBadge(
+                        text: l10n(context, allData.mid[1].modeData.badgeText))
+                    : null,
               ),
-
-              /// ===== 下段ボタン =====
               Expanded(
                 flex: 1,
                 child: Row(
                   children: [
                     _smallButton(
-                      context,
-                      Colors.grey,
-                      l10n(context, 'settingsButton'),
-                      () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => SettingsPage()),
-                      ),
-                    ),
+                        Colors.grey,
+                        l10n(context, 'settingsButton'),
+                        () => Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => SettingsPage()))),
                     _smallButton(
-                      context,
-                      Colors.orange,
-                      l10n(context, 'rankingButton'),
-                      () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => CommonRankingPage(),
-                        ),
-                      ),
-                    ),
+                        Colors.orange,
+                        l10n(context, 'rankingButton'),
+                        () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => CommonRankingPage()))),
                   ],
                 ),
               ),
@@ -135,24 +119,13 @@ class _CommonModeSelectionPageState extends ConsumerState<CommonModeSelectionPag
     );
   }
 
-  // 4. _navigate now only updates state and signals intent. No longer navigates.
-  void _navigate(int listNumber) {
-    final midConfig = allData.mid[listNumber];
-
-    // Set the intent flag
-    _navigationRequest = midConfig;
-
-    // Update the provider. The listener will handle the rest.
-    ref.read(appMidConfigProvider.notifier).selectMid(midConfig);
+  void _navigate(int index) {
+    _navigationRequest = allData.mid[index];
+    ref.read(appMidConfigProvider.notifier).selectMid(allData.mid[index]);
   }
 
-  // _smallButton is kept as a static method for simplicity
   static Widget _smallButton(
-    BuildContext context,
-    Color color,
-    String text,
-    VoidCallback onPressed,
-  ) {
+      BuildContext context, Color color, String text, VoidCallback onPressed) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -160,17 +133,13 @@ class _CommonModeSelectionPageState extends ConsumerState<CommonModeSelectionPag
           child: ElevatedButton(
             onPressed: onPressed,
             style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+                backgroundColor: color,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
             child: FittedBox(
-              child: Text(
-                text,
-                style: const TextStyle(color: Colors.white, fontSize: 100),
-              ),
-            ),
+                child: Text(text,
+                    style:
+                        const TextStyle(color: Colors.white, fontSize: 100))),
           ),
         ),
       ),
@@ -274,88 +243,43 @@ class BigModeButton extends StatelessWidget {
   }
 }
 
-class LimitedModeBadge extends StatefulWidget {
-  const LimitedModeBadge({super.key});
+class LimitedModeBadge extends StatelessWidget {
+  final String text; // 表示するテキストを受け取る
+
+  const LimitedModeBadge({super.key, required this.text});
 
   @override
-  State<LimitedModeBadge> createState() => _LimitedModeBadgeState();
+  Widget build(BuildContext context) {
+    // アニメーションを使いたい場合は以前のまま StatefulWidget でも良いですが、
+    // ロジック（_loadStatus）はすべて削除して、渡された text を出すだけにします。
+    return _AnimatedBadge(text: text);
+  }
 }
 
-class _LimitedModeBadgeState extends State<LimitedModeBadge>
+// アニメーション部分だけを分離してスッキリさせます
+class _AnimatedBadge extends StatefulWidget {
+  final String text;
+  const _AnimatedBadge({required this.text});
+
+  @override
+  State<_AnimatedBadge> createState() => _AnimatedBadgeState();
+}
+
+class _AnimatedBadgeState extends State<_AnimatedBadge>
     with SingleTickerProviderStateMixin {
-  String? _status;
   late final AnimationController _controller;
   late final Animation<Offset> _bob;
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     )..repeat(reverse: true);
 
-    _bob = Tween(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStatus();
-    });
-  }
-
-  Future<void> _loadStatus() async {
-    final sortData = allData.mid;
-    final prefs = await SharedPreferences.getInstance();
-
-    final today = DateTime.now();
-    final dateKey =
-        DateTime(today.year, today.month, today.day).toIso8601String();
-
-    bool playable = false;
-    bool adPlayable = false;
-
-    // 各 GameData の detail をループ
-    for (final gameData in sortData) {
-      for (final subject in gameData.detail) {
-        final title = subject.label;
-        final last = prefs.getString('lastPlayDate_$title');
-
-        // 今日まだプレイしていない
-        if (last != dateKey) {
-          playable = true;
-          break;
-        }
-
-        final count = prefs.getInt('playCount_$title') ?? 0;
-        final reward = prefs.getString('rewardGranted_$title') == dateKey;
-
-        // 1回だけプレイ済みなら広告でプレイ可能
-        if (count == 0 || (count == 1 && reward)) {
-          playable = true;
-          break;
-        } else if (count == 1) {
-          adPlayable = true;
-        }
-      }
-
-      if (playable) break; // 1つでも通常プレイ可能なら抜ける
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      if (playable) {
-        _status = l10n(context, 'playableStatus');
-      } else if (adPlayable) {
-        _status = l10n(context, 'playableWithAdStatus');
-      }
-    });
+    _bob = Tween(begin: const Offset(0, 0.1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -366,19 +290,15 @@ class _LimitedModeBadgeState extends State<LimitedModeBadge>
 
   @override
   Widget build(BuildContext context) {
-    if (_status == null) return const SizedBox.shrink();
-
     return SlideTransition(
       position: _bob,
       child: CustomPaint(
         painter: const BubblePainter(
-          color: Colors.white,
-          borderColor: Colors.orange,
-        ),
+            color: Colors.white, borderColor: Colors.orange),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
           child: Text(
-            _status!,
+            widget.text, // 渡されたテキストを表示
             style: const TextStyle(
               color: Colors.orange,
               fontWeight: FontWeight.bold,

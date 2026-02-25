@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'app_number.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AppNumber extends _$AppNumber {
   @override
   Future<String> build() async {

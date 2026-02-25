@@ -1,7 +1,10 @@
 library common;
 
+export 'assistance/ad_banner.dart';
+export 'assistance/ad_inter.dart';
 // assistance
 export 'assistance/ad_manager.dart';
+export 'assistance/ad_reward.dart';
 export 'assistance/firebase_score.dart';
 export 'assistance/japanese_translator.dart'; // ADDED
 export 'assistance/l10n_helper.dart'; // ADDED

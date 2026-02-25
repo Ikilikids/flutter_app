@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // getWeekNumber はHighScoreManagerとRankingManagerの両方で使うのでトップレベルに配置
 int getWeekNumber(DateTime date) {
@@ -20,28 +21,37 @@ bool isBetter(num newScore, num prevScore, bool isDescending) {
 class CommonHighScoreManager {
   static final _firestore = FirebaseFirestore.instance;
 
-  /// ユーザーの自己ベスト（users配下はそのまま）
-  static Future<double> getHighScore(
-    String quizId,
-    String rankingType,
-  ) async {
+  /// 移行用：Firebaseからスコア取得
+  static Future<double> getHighScore(String quizId, String rankingType) async {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) return 0;
 
-    final jName = 'highscores_${rankingType}';
-
+    final jName = 'highscores_$rankingType';
     final doc = await _firestore
         .collection('users')
         .doc(user.uid)
         .collection(jName)
         .doc(quizId)
         .get();
-
     final score = doc.data()?['score'];
+    print('Firebaseからスコア取得: $quizId - $rankingType - $score');
     return score is num ? score.toDouble() : 0.0;
   }
 
-  /// ランキング upsert（v2）
+  /// SharedPreferences版：ローカルから自己ベストを取得
+  static Future<double> getLocalHighScore(
+      String rankingId, String rankingType) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // これまで定義してきたキー 'highScore_ラベル名' で取得
+    final key = 'highScore_${rankingType}_$rankingId';
+
+    // 値がなければ 0.0 を返す
+    return prefs.getDouble(key) ?? 0.0;
+  }
+
+  /// ランキング更新（変更なし）
   static Future<void> _upsertRanking({
     required String rankingType,
     required String quizId,
@@ -55,7 +65,6 @@ class CommonHighScoreManager {
     required bool isDescending,
     required bool isbattle,
   }) async {
-    print(userName);
     final query = await _firestore
         .collection('rankings_v2')
         .where('rankingType', isEqualTo: rankingType)
@@ -97,7 +106,7 @@ class CommonHighScoreManager {
     }
   }
 
-  /// ハイスコア & ランキング更新（完全v2）
+  /// 【決定版】ハイスコア保存 (Firebase users は廃止、Local & Rankingsのみ)
   static Future<void> setHighScoreSafe(
     String quizId,
     String rankingId,
@@ -116,80 +125,70 @@ class CommonHighScoreManager {
     final now = DateTime.now();
     final rounded = (score * roundingFactor).roundToDouble() / roundingFactor;
 
-    final jName = 'highscores_${rankingType}';
+    // 1. ローカル（SharedPreferences）への保存
+    final prefs = await SharedPreferences.getInstance();
+    final localKey = 'highScore_${rankingType}_$quizId';
+    final prevLocal = prefs.getDouble(localKey) ?? 0.0;
 
-    // 🔹 自己ベスト保存
-    final userHighScoreRef = _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection(jName)
-        .doc(quizId);
+    double newLocalScore = prevLocal;
+    if (!isbattle) {
+      newLocalScore = prevLocal + rounded;
+    } else if (isBetter(rounded, prevLocal, isDescending)) {
+      newLocalScore = rounded;
+    }
+    await prefs.setDouble(localKey, newLocalScore);
 
-    await _firestore.runTransaction((tx) async {
-      final snap = await tx.get(userHighScoreRef);
-      final prev = (snap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-      if (!isbattle) {
-        tx.set(userHighScoreRef, {
-          'score': rounded + prev,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else if (isBetter(rounded, prev, isDescending)) {
-        tx.set(userHighScoreRef, {
-          'score': rounded,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    });
+    // 2. Firebaseランキングの更新 (引数をすべて明示的に渡す)
+    await Future.wait([
+      _upsertRanking(
+        rankingType: rankingType,
+        quizId: rankingId,
+        period: 'all',
+        year: now.year,
+        uid: user.uid,
+        userName: userName,
+        score: rounded,
+        isDescending: isDescending,
+        isbattle: isbattle,
+      ),
+      _upsertRanking(
+        rankingType: rankingType,
+        quizId: rankingId,
+        period: 'monthly',
+        year: now.year,
+        month: now.month,
+        uid: user.uid,
+        userName: userName,
+        score: rounded,
+        isDescending: isDescending,
+        isbattle: isbattle,
+      ),
+      _upsertRanking(
+        rankingType: rankingType,
+        quizId: rankingId,
+        period: 'weekly',
+        year: now.year,
+        week: getWeekNumber(now),
+        uid: user.uid,
+        userName: userName,
+        score: rounded,
+        isDescending: isDescending,
+        isbattle: isbattle,
+      ),
+    ]);
 
-    // 🔹 rankings_v2（3種）
-    await _upsertRanking(
-      rankingType: rankingType,
-      quizId: rankingId,
-      period: 'all',
-      year: now.year,
-      uid: user.uid,
-      userName: userName,
-      score: rounded,
-      isDescending: isDescending,
-      isbattle: isbattle,
-    );
-
-    await _upsertRanking(
-      rankingType: rankingType,
-      quizId: rankingId,
-      period: 'monthly',
-      year: now.year,
-      month: now.month,
-      uid: user.uid,
-      userName: userName,
-      score: rounded,
-      isDescending: isDescending,
-      isbattle: isbattle,
-    );
-
-    await _upsertRanking(
-      rankingType: rankingType,
-      quizId: rankingId,
-      period: 'weekly',
-      year: now.year,
-      week: getWeekNumber(now),
-      uid: user.uid,
-      userName: userName,
-      score: rounded,
-      isDescending: isDescending,
-      isbattle: isbattle,
-    );
-
-    // 🔁 制限 → 通常へ昇格
+    // 3. 制限 → 通常への昇格ロジック
     if (isLimitedMode) {
-      final normal = await getHighScore(quizId, "t");
-      if (isBetter(rounded, normal, isDescending)) {
+      final normalKey = 'highScore_t_$rankingId';
+      final normalLocalScore = prefs.getDouble(normalKey) ?? 0.0;
+      print(normalLocalScore);
+      if (isBetter(rounded, normalLocalScore, isDescending)) {
         await setHighScoreSafe(
           quizId,
           rankingId,
           rounded,
           userName,
-          "t",
+          "t", // 通常モード
           isLimitedMode: false,
           roundingFactor: roundingFactor,
           isDescending: isDescending,

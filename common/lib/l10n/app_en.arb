@@ -100,5 +100,6 @@
     "calculatorMode": "Calculator Mode",
     "detailSetting": "Detail Setting",
     "soundSectionTitle": "Sound",
-    "volumeLabel": "Volume"
+    "volumeLabel": "Volume",
+    "loadingProblem": "Loading problem, please wait a moment"
 }

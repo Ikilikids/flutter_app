@@ -128,7 +128,7 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
     }
     if (_quizinfo.modeData.isbattle) {
       // 🔹 ハイスコア取得
-      _highScore = await CommonHighScoreManager.getHighScore(
+      _highScore = await CommonHighScoreManager.getLocalHighScore(
         quizId,
         _quizinfo.modeData.ranking,
       );

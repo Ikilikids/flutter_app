@@ -6,12 +6,11 @@ part of 'app_uid.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appUidHash() => r'cc4b4a42a2f1096a3da9e889d2b2db9fdce80d91';
+String _$appUidHash() => r'251ef64a2298798a1113a943f34cce491d9050e0';
 
 /// See also [AppUid].
 @ProviderFor(AppUid)
-final appUidProvider =
-    AutoDisposeAsyncNotifierProvider<AppUid, String>.internal(
+final appUidProvider = AsyncNotifierProvider<AppUid, String>.internal(
   AppUid.new,
   name: r'appUidProvider',
   debugGetCreateSourceHash:
@@ -20,6 +19,6 @@ final appUidProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$AppUid = AutoDisposeAsyncNotifier<String>;
+typedef _$AppUid = AsyncNotifier<String>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

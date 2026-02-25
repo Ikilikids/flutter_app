@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_uid.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AppUid extends _$AppUid {
   @override
   Future<String> build() async {

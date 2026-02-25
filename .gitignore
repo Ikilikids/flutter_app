@@ -10,13 +10,16 @@
 *.iml
 
 # iOS
-**/ios/Pods/
-**/ios/Runner.xcworkspace/
+**/ios/
 
 # Android
-**/android/.gradle/
-**/android/app/build/
+**/android/
+
+**/web/
+
 
 # その他
 *.log
 **/.firebase
+
+**/rakuraku_amedas/

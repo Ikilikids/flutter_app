@@ -100,5 +100,6 @@
     "calculatorMode": "Modo calculadora",
     "detailSetting": "Configuração detalhada",
     "soundSectionTitle": "Som",
-    "volumeLabel": "Volume"
+    "volumeLabel": "Volume",
+    "loadingProblem": "Carregando problema, por favor aguarde um momento"
 }

@@ -6,12 +6,6 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:math_expressions/math_expressions.dart' hide Stack;
 import 'package:math_quiz/math_quiz.dart';
 
-class OriginPointlined {
-  final Map<String, dynamic> deta;
-
-  OriginPointlined({required this.deta});
-}
-
 class ResultPointlined {
   final String? graph1, graph2;
   final String? ss1;
@@ -32,16 +26,16 @@ class ResultPointlined {
 }
 
 class CalculatePointlined {
-  ResultPointlined convert(OriginPointlined origin) {
-    final sx = origin.deta["x"];
-    final sy = origin.deta["y"];
+  ResultPointlined convert(PointLinedMakingData origin) {
+    final sx = origin.data.x;
+    final sy = origin.data.y;
     final x = latextonumber(sx);
     final y = latextonumber(sy);
-    final sa = origin.deta["a"];
+    final sa = origin.data.a;
     final aa = latextonumber(sa);
-    final sb = origin.deta["b"];
+    final sb = origin.data.b;
     final bb = latextonumber(sb);
-    final sc = origin.deta["c"];
+    final sc = origin.data.c;
     final cc = latextonumber(sc);
     final graph1 = plusminusreplace("${-(aa / bb)}*x-${(cc / bb)}");
     final graph2 = plusminusreplace("${(bb / aa)}*x-${(bb / aa) * x}+$y");
@@ -118,19 +112,19 @@ class CalculatePointlined {
   }
 }
 
-class KaigaPointlined extends StatelessWidget {
-  final OriginPointlined origin;
-  final CalculatePointlined calculate = CalculatePointlined();
+class PointLined extends StatelessWidget {
+  final PointLinedMakingData origin;
   final double height;
   final double width;
 
-  KaigaPointlined(
+  const PointLined(
       {super.key,
       required this.origin,
       required this.width,
       required this.height});
   @override
   Widget build(BuildContext context) {
+    final CalculatePointlined calculate = CalculatePointlined();
     final converted = CalculatePointlined().convert(origin);
     final graph1 = converted.graph1;
     final graph2 = converted.graph2;

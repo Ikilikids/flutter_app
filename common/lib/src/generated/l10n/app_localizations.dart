@@ -709,6 +709,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Volume'**
   String get volumeLabel;
+
+  /// No description provided for @loadingProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading problem, please wait a moment'**
+  String get loadingProblem;
 }
 
 class _AppLocalizationsDelegate

@@ -100,5 +100,6 @@
     "calculatorMode": "계산기 모드",
     "detailSetting": "상세 설정",
     "soundSectionTitle": "소리",
-    "volumeLabel": "볼륨"
+    "volumeLabel": "볼륨",
+    "loadingProblem": "문제 로드 중, 잠시만 기다려 주십시오"
 }
