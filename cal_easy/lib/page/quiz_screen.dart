@@ -3,14 +3,15 @@ import 'dart:math';
 
 import 'package:cal_easy/assistance/latex_formatter.dart';
 import 'package:common/common.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart' as qrovider;
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../assistance/makingdata.dart';
 import '../page/common_widget.dart';
 import '../page/latex.dart';
 
-class Quizscreen extends StatefulWidget {
+class Quizscreen extends ConsumerStatefulWidget {
   final List<String> quizDirectives;
   final DetailConfig quizinfo;
 
@@ -24,7 +25,7 @@ class Quizscreen extends StatefulWidget {
   QuizScreenState createState() => QuizScreenState();
 }
 
-class QuizScreenState extends State<Quizscreen> {
+class QuizScreenState extends ConsumerState<Quizscreen> {
   late DetailConfig quizinfo;
   DateTime? startTime;
   Map<String, dynamic> P = {};
@@ -38,7 +39,6 @@ class QuizScreenState extends State<Quizscreen> {
   double elapsedTime = 0.0;
   int count = 20;
 
-  late SoundManager soundManager;
   final GlobalKey<LatexInputScreenState> _latexInputKey =
       GlobalKey<LatexInputScreenState>();
   bool _initialized = false;
@@ -54,7 +54,6 @@ class QuizScreenState extends State<Quizscreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      soundManager = qrovider.Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
       count = quizinfo.detail.sort == "4867" ? 10 : 1;
       startWatch();
@@ -122,7 +121,7 @@ class QuizScreenState extends State<Quizscreen> {
         result = '×';
         isAnswerChecked = true;
       });
-      soundManager.playSound('peke.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
     } else if (seigo == "maru") {
       setState(() {
         result = "◯";
@@ -130,7 +129,7 @@ class QuizScreenState extends State<Quizscreen> {
         correctCount += 1;
       });
 
-      soundManager.playSound('maru.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
 
       if (correctCount == count) {
         setState(() {
@@ -138,7 +137,7 @@ class QuizScreenState extends State<Quizscreen> {
         });
 
         Future.delayed(const Duration(milliseconds: 500), () {
-          soundManager.playSound('hoi.mp3');
+          ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
           if (!mounted) return;
           Navigator.pushReplacement(
             context,

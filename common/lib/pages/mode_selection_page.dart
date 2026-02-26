@@ -133,13 +133,16 @@ class _CommonModeSelectionPageState
           child: ElevatedButton(
             onPressed: onPressed,
             style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              side: BorderSide(
+                color: color, // 枠線の色
+                width: 3, // 枠線の太さ
+              ),
+            ),
             child: FittedBox(
-                child: Text(text,
-                    style:
-                        const TextStyle(color: Colors.white, fontSize: 100))),
+                child:
+                    Text(text, style: TextStyle(color: color, fontSize: 100))),
           ),
         ),
       ),
@@ -181,7 +184,10 @@ class BigModeButton extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onPressed,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
+                  side: BorderSide(
+                    color: color, // 枠線の色
+                    width: 3, // 枠線の太さ
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
@@ -193,7 +199,7 @@ class BigModeButton extends StatelessWidget {
                       Expanded(
                         flex: 2,
                         child: FittedBox(
-                          child: Icon(icon, color: Colors.white),
+                          child: Icon(icon, color: color),
                         ),
                       ),
                       Expanded(
@@ -201,7 +207,7 @@ class BigModeButton extends StatelessWidget {
                         child: FittedBox(
                           child: Text(
                             title,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: color),
                           ),
                         ),
                       ),
@@ -209,8 +215,8 @@ class BigModeButton extends StatelessWidget {
                         child: FittedBox(
                           child: Text(
                             sub1,
-                            style: const TextStyle(
-                              color: Color.fromARGB(150, 255, 255, 255),
+                            style: TextStyle(
+                              color: color,
                             ),
                           ),
                         ),
@@ -219,8 +225,8 @@ class BigModeButton extends StatelessWidget {
                         child: FittedBox(
                           child: Text(
                             sub2,
-                            style: const TextStyle(
-                              color: Color.fromARGB(150, 255, 255, 255),
+                            style: TextStyle(
+                              color: color,
                             ),
                           ),
                         ),

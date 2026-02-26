@@ -1,15 +1,16 @@
 import 'dart:math';
 
 import 'package:common/common.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../math_quiz.dart';
 
 // These typedefs are local to this file for now.
 
-class NtEndScreen extends StatefulWidget {
+class NtEndScreen extends ConsumerStatefulWidget {
   final int correctCount;
   final List<MakingData> P;
   final List<String> marks;
@@ -27,22 +28,20 @@ class NtEndScreen extends StatefulWidget {
   _NtEndScreenState createState() => _NtEndScreenState();
 }
 
-class _NtEndScreenState extends State<NtEndScreen> {
-  int step = 0; // 0:正解数 1:最高記録 2:ランキング
-  late SoundManager soundManager; // main.dart にある SoundManager を使用
+class _NtEndScreenState extends ConsumerState<NtEndScreen> {
+  int step = 0; // 0:正解数 1:最高記録 2:ランキン
   late DetailConfig _quizinfo;
 
   @override
   void initState() {
     super.initState();
-    soundManager = Provider.of<SoundManager>(context, listen: false);
     _quizinfo = widget.quizinfo;
     _startSequence();
   }
 
   Future<void> _startSequence() async {
     await Future.delayed(const Duration(milliseconds: 800));
-    soundManager.playSound('pipi.mp3'); // main.dart の soundManager を使用
+    ref.read(appSoundProvider).requireValue.playSound('pipi.mp3');
     if (!mounted) return;
     setState(() => step = 1);
   }
@@ -69,7 +68,7 @@ class _NtEndScreenState extends State<NtEndScreen> {
                 Expanded(
                   flex: 1,
                   child: _QuizNameSection(
-                    quizName: _quizinfo.detail.label,
+                    quizName: _quizinfo.detail.displayLabel,
                     backgroundColor: quizColor,
                   ),
                 ),

@@ -1,9 +1,10 @@
 import 'package:common/common.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LatexInputScreen3 extends StatefulWidget {
+class LatexInputScreen3 extends ConsumerStatefulWidget {
   // 引数としてリストを受け取る
   final String marusikaku;
   final String shubetu;
@@ -32,8 +33,7 @@ class LatexInputScreen3 extends StatefulWidget {
   LatexInputScreenState createState() => LatexInputScreenState();
 }
 
-class LatexInputScreenState extends State<LatexInputScreen3> {
-  late SoundManager soundManager;
+class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
   String latexInput = "";
   final TextEditingController _controller = TextEditingController();
   List<String> latexOutputs = [];
@@ -88,8 +88,6 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    soundManager = Provider.of<SoundManager>(context, listen: false);
   }
 
   void resetLatexOutputs() {
@@ -132,7 +130,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
 
   // 次のインデックスに移動
   void moveToNextIndex() {
-    soundManager.playSound('maru.mp3');
+    ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
     List<String> button2 = widget.button2;
     List<int> ctscore = widget.ctscore;
     setState(() {
@@ -157,8 +155,7 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
       latexInput = value;
     } else {
       // カーソル位置に入力値を追加
-      latexInput =
-          latexInput.substring(0, cursorPos) +
+      latexInput = latexInput.substring(0, cursorPos) +
           value +
           latexInput.substring(cursorPos);
     }
@@ -255,9 +252,9 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
     }
 
     if (!containsDigit(symbol)) {
-      soundManager.playSound('0.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('0.mp3');
     } else {
-      soundManager.playSound('$symbol.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('$symbol.mp3');
     }
     if (symbol == "p") {
       _addToLatex("\\pi");
@@ -551,9 +548,8 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
     final bool isVisible = buttonVisibility[symbol] ?? true;
     final bool sc = label == "\\cos" || label == "\\sin";
     // 文字色
-    Color forecolor = isVisible
-        ? textColor1(context)
-        : textColor1(context).withAlpha(50);
+    Color forecolor =
+        isVisible ? textColor1(context) : textColor1(context).withAlpha(50);
 
     // 背景色
     Color backcolor = isVisible
@@ -570,15 +566,13 @@ class LatexInputScreenState extends State<LatexInputScreen3> {
       padding: const EdgeInsets.all(2),
       child: InkWell(
         onTap: isVisible ? () => onPressed1(symbol) : null,
-        borderRadius: sc
-            ? BorderRadius.circular(20)
-            : BorderRadius.circular(40),
+        borderRadius:
+            sc ? BorderRadius.circular(20) : BorderRadius.circular(40),
         child: Container(
           decoration: BoxDecoration(
             color: backcolor,
-            borderRadius: sc
-                ? BorderRadius.circular(20)
-                : BorderRadius.circular(40),
+            borderRadius:
+                sc ? BorderRadius.circular(20) : BorderRadius.circular(40),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(5),

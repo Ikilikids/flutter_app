@@ -20,7 +20,7 @@ final _appConfig = AllData(
       detail: [
         DetailData(
           sort: "32",
-          label: "足し算・引き算",
+          displayLabel: "足し算・引き算",
           method: "20問の正解タイムで競う",
           description: "足し算・引き算、気軽にプレイ!!",
           color: "2",
@@ -28,7 +28,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "3251",
-          label: "四則演算",
+          displayLabel: "四則演算",
           method: "20問の正解タイムで競う",
           description: "足し算・引き算・掛け算・割り算、素早く判断!!",
           color: "5",
@@ -36,7 +36,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "46",
-          label: "2桁の足し算・引き算",
+          displayLabel: "2桁の足し算・引き算",
           method: "10問の正解タイムで競う",
           description: "2桁の足し算・引き算、計算力を鍛えよう!!",
           color: "4",
@@ -53,7 +53,7 @@ final _appConfig = AllData(
       detail: [
         DetailData(
           sort: "32",
-          label: "足し算・引き算",
+          displayLabel: "足し算・引き算",
           method: "20問の正解タイムで競う",
           description: "足し算・引き算、気軽にプレイ!!",
           color: "3",
@@ -61,7 +61,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "3251",
-          label: "四則演算",
+          displayLabel: "四則演算",
           method: "20問の正解タイムで競う",
           description: "足し算・引き算・掛け算・割り算、素早く判断!!",
           color: "1",
@@ -69,7 +69,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "46",
-          label: "2桁の足し算・引き算",
+          displayLabel: "2桁の足し算・引き算",
           method: "10問の正解タイムで競う",
           description: "2桁の足し算・引き算、計算力を鍛えよう!!",
           color: "6",

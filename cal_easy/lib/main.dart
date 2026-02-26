@@ -41,7 +41,10 @@ final _appConfig = AllData(
       detail: [
         DetailData(
           sort: "32",
-          label: "addSubtract",
+          displayLabel: "addSubtract",
+          displayRank: "addSubtract",
+          resisterRank: "足し算・引き算",
+          resisterUser: "足し算・引き算",
           method: "compete20Questions",
           description: "addSubtractDesc",
           color: "2",
@@ -49,7 +52,10 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "3251",
-          label: "fourArithmeticOperations",
+          displayLabel: "fourArithmeticOperations",
+          displayRank: "fourArithmeticOperations",
+          resisterRank: "四則演算",
+          resisterUser: "四則演算",
           method: "compete20Questions",
           description: "fourArithmeticOperationsDesc",
           color: "5",
@@ -57,7 +63,10 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "4867",
-          label: "addSubtract2Digits",
+          displayLabel: "addSubtract2Digits",
+          displayRank: "addSubtract2Digits",
+          resisterRank: "2桁の足し算・引き算",
+          resisterUser: "2桁の足し算・引き算",
           method: "compete10Questions",
           description: "addSubtract2DigitsDesc",
           color: "4",
@@ -81,7 +90,10 @@ final _appConfig = AllData(
       detail: [
         DetailData(
           sort: "32",
-          label: "addSubtract",
+          displayLabel: "addSubtract",
+          displayRank: "addSubtract",
+          resisterRank: "足し算・引き算",
+          resisterUser: "足し算・引き算",
           method: "compete20Questions",
           description: "addSubtractDesc",
           color: "3",
@@ -89,7 +101,10 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "3251",
-          label: "fourArithmeticOperations",
+          displayLabel: "fourArithmeticOperations",
+          displayRank: "fourArithmeticOperations",
+          resisterRank: "四則演算",
+          resisterUser: "四則演算",
           method: "compete20Questions",
           description: "fourArithmeticOperationsDesc",
           color: "1",
@@ -97,7 +112,10 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "4867",
-          label: "addSubtract2Digits",
+          displayLabel: "addSubtract2Digits",
+          displayRank: "addSubtract2Digits",
+          resisterRank: "2桁の足し算・引き算",
+          resisterUser: "2桁の足し算・引き算",
           method: "compete10Questions",
           description: "addSubtract2DigitsDesc",
           color: "6",

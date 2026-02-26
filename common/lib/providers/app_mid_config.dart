@@ -34,8 +34,7 @@ class AppMidConfig extends _$AppMidConfig {
 
       // データの読み込みを並列処理
       final futures = mid.detail.map((detail) async {
-        final label = detail.label;
-        final quizId = JapaneseTranslator.translateKeyToJapanese(label);
+        final quizId = detail.resisterUser;
         final rankingId = mid.modeData.ranking;
 
         // --- スコア移行ロジック ---
@@ -106,8 +105,8 @@ class AppMidConfig extends _$AppMidConfig {
     state = MidConfig(appData: state.appData, mid: state.mid);
   }
 
-  Future<void> recordPlay(String label) async {
-    final quizId = JapaneseTranslator.translateKeyToJapanese(label);
+  Future<void> recordPlay(String userLabel) async {
+    final quizId = userLabel;
     final prefs = await SharedPreferences.getInstance();
     final dateKey = _getDateKey();
 
@@ -120,8 +119,8 @@ class AppMidConfig extends _$AppMidConfig {
     await loadMid();
   }
 
-  Future<void> grantReward(String label) async {
-    final quizId = JapaneseTranslator.translateKeyToJapanese(label);
+  Future<void> grantReward(String userLabel) async {
+    final quizId = userLabel;
     final prefs = await SharedPreferences.getInstance();
     final dateKey = _getDateKey();
 

@@ -25,7 +25,7 @@ final _appConfig = AllData(
       detail: [
         DetailData(
           sort: "color",
-          label: "colorReact",
+          displayLabel: "colorReact",
           method: "colorReactMethod",
           description: "colorReactDesc",
           color: "2",
@@ -33,7 +33,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "number",
-          label: "numberReact",
+          displayLabel: "numberReact",
           method: "reactMethodAverage",
           description: "numberReactDesc",
           color: "5",
@@ -41,7 +41,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "grid",
-          label: "gridReact",
+          displayLabel: "gridReact",
           method: "reactMethodAverage",
           description: "gridReactDesc",
           color: "4",
@@ -61,7 +61,7 @@ final _appConfig = AllData(
       detail: [
         DetailData(
           sort: "color",
-          label: "colorReact",
+          displayLabel: "colorReact",
           method: "colorReactMethod",
           description: "colorReactDesc",
           color: "3",
@@ -69,7 +69,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "number",
-          label: "numberReact",
+          displayLabel: "numberReact",
           method: "reactMethodAverage",
           description: "numberReactDesc",
           color: "1",
@@ -77,7 +77,7 @@ final _appConfig = AllData(
         ),
         DetailData(
           sort: "grid",
-          label: "gridReact",
+          displayLabel: "gridReact",
           method: "reactMethodAverage",
           description: "gridReactDesc",
           color: "6",

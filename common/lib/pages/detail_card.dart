@@ -65,7 +65,7 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
                     isNavigating: _isNavigating,
                     onPlay: (qcount) =>
                         _handlePlay(detail, midConfig.mid.modeData, qcount),
-                    onWatchAd: () => _handleWatchAd(detail.label),
+                    onWatchAd: () => _handleWatchAd(detail.resisterUser),
                     fix: midConfig.mid.fix,
                     unit: midConfig.mid.unit,
                     title: allData.appTitle,
@@ -79,7 +79,9 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
   void _handlePlay(DetailData detail, ModeData modeData, int? qCount) async {
     if (modeData.islimited) {
       // プレイ開始時にカウントを増やす
-      await ref.read(appMidConfigProvider.notifier).recordPlay(detail.label);
+      await ref
+          .read(appMidConfigProvider.notifier)
+          .recordPlay(detail.resisterUser);
     }
     setState(() => _isNavigating = true);
     ref
@@ -87,11 +89,11 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
         .selectDetail(detail, modeData, qCount);
   }
 
-  void _handleWatchAd(String label) {
+  void _handleWatchAd(String userLabel) {
     if (RewardedAdManager.isAdReady) {
       RewardedAdManager.showAd(onReward: () async {
         // ここで報酬付与。Provider内の日付判定と一致させる
-        await ref.read(appMidConfigProvider.notifier).grantReward(label);
+        await ref.read(appMidConfigProvider.notifier).grantReward(userLabel);
       });
     } else {
       RewardedAdManager.loadAd();
@@ -133,6 +135,9 @@ class _CommonSubjectCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor1(context),
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: getQuizColor2(detail.color, context, 0.7, 0.55, 0.95),
+              width: 2),
           boxShadow: const [
             BoxShadow(
                 color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
@@ -193,7 +198,7 @@ class _CommonSubjectCard extends StatelessWidget {
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  l10n(context, detail.label),
+                  l10n(context, detail.displayLabel),
                   style: TextStyle(fontSize: 100, color: textColor1(context)),
                 ),
               ),

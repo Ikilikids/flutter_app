@@ -1,7 +1,8 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as provider;
+
+import '../providers/app_sound.dart';
 
 // These typedefs are local to this file for now.
 
@@ -27,29 +28,27 @@ class CommonEndScreen extends ConsumerStatefulWidget {
 
 class _CommonEndScreenState extends ConsumerState<CommonEndScreen> {
   int step = 0; // 0:正解数 1:最高記録 2:ランキング
-  late SoundManager soundManager; // main.dart にある SoundManager を使用
 
   @override
   void initState() {
     super.initState();
-    soundManager = provider.Provider.of<SoundManager>(context, listen: false);
 
     _startSequence();
   }
 
   Future<void> _startSequence() async {
     await Future.delayed(const Duration(milliseconds: 700));
-    soundManager.playSound('pi.mp3'); // main.dart の soundManager を使用
+    ref.read(appSoundProvider).requireValue.playSound('pi.mp3');
     if (!mounted) return;
     setState(() => step = 1);
 
     await Future.delayed(const Duration(milliseconds: 700));
-    soundManager.playSound('pi.mp3'); // main.dart の soundManager を使用
+    ref.read(appSoundProvider).requireValue.playSound('pi.mp3');
     if (!mounted) return;
     setState(() => step = 2);
 
     await Future.delayed(const Duration(milliseconds: 700));
-    soundManager.playSound('pipi.mp3'); // main.dart の soundManager を使用
+    ref.read(appSoundProvider).requireValue.playSound('pipi.mp3');
     if (!mounted) return;
     setState(() => step = 3);
   }
@@ -74,7 +73,7 @@ class _CommonEndScreenState extends ConsumerState<CommonEndScreen> {
                 Expanded(
                   flex: 2,
                   child: _QuizNameSection(
-                    quizName: _quizinfo.detail.label,
+                    quizName: _quizinfo.detail.displayLabel,
                     backgroundColor: quizColor,
                   ),
                 ),

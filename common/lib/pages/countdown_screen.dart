@@ -1,7 +1,8 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart';
+
+import '../providers/app_sound.dart';
 
 class CommonCountdownScreen extends ConsumerStatefulWidget {
   const CommonCountdownScreen({super.key});
@@ -13,15 +14,13 @@ class CommonCountdownScreen extends ConsumerStatefulWidget {
 
 class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
   int _countdown = 3;
-  late SoundManager soundManager;
+
   bool _initialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      soundManager = context.read<SoundManager>();
-
       _initialized = true;
       _startCountdown();
     }
@@ -44,11 +43,11 @@ class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
     }
 
     if (_countdown > 1) {
-      soundManager.playSound('countdown1.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('countdown1.mp3');
       setState(() => _countdown--);
       Future.delayed(const Duration(seconds: 1), _startCountdown);
     } else {
-      soundManager.playSound('countdown2.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('countdown2.mp3');
 
       Navigator.pushReplacement(
         context,

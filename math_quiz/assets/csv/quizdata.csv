@@ -15,7 +15,7 @@ latex,squarecomp,pq,a!=1,n,1,二次関数,平方完成,s,[+-],+,[+-],+,0a,2a,1b,
 latex,equation2,(x+a)(x+b),1-5,n,1,二次関数,二次方程式の解,s,+,+,,,1a,2a,,,end
 latex,equation2,(x+a)(x+b),6-10,n,1,二次関数,二次方程式の解,s,+,+,,,2a,2a,,,end
 latex,maxmin,n,n,n,1,二次関数,最大値・最小値,s,+,+,,,2,2,,,end
-choose,symmetry,n,n,n,1,二次関数,対象移動,,,,,,1,,,,end
+choose,symmetry,n,n,n,1,二次関数,対称移動,,,,,,1,,,,end
 choose,discriminant,easy,a=1,n,1,二次関数,判別式,,,,,,1,,,,end
 choose,discriminant,easy,a!=1,n,1,二次関数,判別式,,,,,,2,,,,end
 choose,discriminant,hard,a=1,n,1,二次関数,判別式,,,,,,2,,,,end

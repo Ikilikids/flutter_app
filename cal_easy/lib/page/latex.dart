@@ -1,9 +1,8 @@
 import 'package:common/common.dart';
-import 'package:common/providers/app_number.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'; // ConsumerStatefulWidget 用
-import 'package:provider/provider.dart' as qrovider; // SoundManager 用
 
 class LatexInputScreen3 extends ConsumerStatefulWidget {
   // 引数としてリストを受け取る
@@ -36,7 +35,6 @@ class LatexInputScreen3 extends ConsumerStatefulWidget {
 }
 
 class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
-  late SoundManager soundManager;
   String latexInput = "";
   final TextEditingController _controller = TextEditingController();
   List<String> latexOutputs = [];
@@ -88,13 +86,6 @@ class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    soundManager = qrovider.Provider.of<SoundManager>(context, listen: false);
-  }
-
   void resetLatexOutputs() {
     List<String> resetList = [];
     String abcdePart = widget.marusikaku;
@@ -135,7 +126,7 @@ class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
 
   // 次のインデックスに移動
   void moveToNextIndex() {
-    soundManager.playSound('maru.mp3');
+    ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
     List<String> button2 = widget.button2;
     List<int> ctscore = widget.ctscore;
     setState(() {
@@ -256,9 +247,9 @@ class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
     }
 
     if (!containsDigit(symbol)) {
-      soundManager.playSound('0.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('0.mp3');
     } else {
-      soundManager.playSound('$symbol.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('$symbol.mp3');
     }
     if (symbol == "p") {
       _addToLatex("\\pi");

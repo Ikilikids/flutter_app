@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common.dart';
+import '../providers/app_sound.dart';
 
 class CommonApp extends ConsumerWidget {
   final Widget home;
@@ -11,21 +12,23 @@ class CommonApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 3つの状態を監視
+    // 1. SoundManager も追加で監視
     final themeAsync = ref.watch(appThemeProvider);
     final localeAsync = ref.watch(appLocaleProvider);
     final uidAsync = ref.watch(appUidProvider);
+    final soundAsync = ref.watch(appSoundProvider); // ★追加
 
-    // 全てデータが揃っているかチェック
-    final bool isReady =
-        themeAsync.hasValue && localeAsync.hasValue && uidAsync.hasValue;
+    // 2. 全てデータが揃っているかチェック（SoundManager も含める）
+    final bool isReady = themeAsync.hasValue &&
+        localeAsync.hasValue &&
+        uidAsync.hasValue &&
+        soundAsync.hasValue; // ★追加
 
     // appTitle が特定文字列なら日本語固定
     final isJapaneseTitle = allData.appData.appTitle == "とことん高校数学";
     final localeToUse =
         isJapaneseTitle ? const Locale('ja') : localeAsync.valueOrNull;
 
-    // 外枠（MaterialApp）は常に返す
     return MaterialApp(
       locale: localeToUse,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -34,7 +37,7 @@ class CommonApp extends ConsumerWidget {
       darkTheme: ThemeData.dark(),
       themeMode: themeAsync.valueOrNull ?? ThemeMode.system,
 
-      // 中身だけをロード状況で切り替える
+      // ★ ここで一括ガード
       home: isReady
           ? home
           : Scaffold(

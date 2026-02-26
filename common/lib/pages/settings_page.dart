@@ -314,18 +314,13 @@ Future<void> _saveUserName(
     return;
   }
 
-  final labels = allData.appTitle == "とことん高校数学"
-      ? [
-          "全合計",
-          "数Ⅰ・数A",
-          "数Ⅱ・数B",
-          "数Ⅲ・数C",
-        ]
-      : allData.mid
-          .expand((g) => g.detail)
-          .map((d) => d.label)
-          .toSet()
-          .toList();
+  final rankLabels = allData.mid
+      .expand((g) => g.detail)
+      .map((d) => d.resisterRank)
+      .toSet()
+      .toList();
+
+  rankLabels.add("全合計");
 
   await FirebaseFirestore.instance.collection("users").doc(uid).set({
     "userName": newName,
@@ -335,7 +330,7 @@ Future<void> _saveUserName(
   currentUserName.value = newName;
   isEditingName.value = false;
 
-  Future(() => _updateRankingsAfterNameChange(uid, newName, labels));
+  Future(() => _updateRankingsAfterNameChange(uid, newName, rankLabels));
 
   showDialog(
     context: context,
@@ -358,19 +353,19 @@ Future<void> _saveUserName(
 Future<void> _updateRankingsAfterNameChange(
   String uid,
   String newName,
-  List<String> labels,
+  List<String> rankLabels,
 ) async {
   final firestore = FirebaseFirestore.instance;
 
   final periods = ['all', 'monthly', 'weekly'];
 
-  for (var quizId in labels) {
+  for (var quizId in rankLabels) {
     for (var period in periods) {
       Query q = firestore
           .collection("rankings_v2")
           .where(
             "quizId",
-            isEqualTo: JapaneseTranslator.translateKeyToJapanese(quizId),
+            isEqualTo: quizId,
           )
           .where("uid", isEqualTo: uid)
           .where("period", isEqualTo: period);

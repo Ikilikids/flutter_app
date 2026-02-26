@@ -94,17 +94,13 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
   Future<void> _loadData() async {
     final _quizinfo = ref.read(appDetailConfigProvider);
     // Translate keys to Japanese for DB storage
-    final quizId =
-        JapaneseTranslator.translateKeyToJapanese(_quizinfo.detail.label);
-    final rankingId =
-        allData.appTitle == "とことん高校数学" && !_quizinfo.modeData.isbattle
-            ? convertLabel(_quizinfo.detail.sort)
-            : quizId; // Use the already translated quizId
+    final rankLabel = _quizinfo.detail.resisterRank;
+    final userLabel = _quizinfo.detail.resisterUser;
 
     // 🔹 ハイスコア & ランキング更新（v2共通マネージャ）
     await CommonHighScoreManager.setHighScoreSafe(
-      quizId,
-      rankingId,
+      userLabel,
+      rankLabel,
       widget.totalScore,
       userName,
       _quizinfo.modeData.ranking,
@@ -115,8 +111,8 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
     );
     if (!_quizinfo.modeData.isbattle) {
       await CommonHighScoreManager.setHighScoreSafe(
-        JapaneseTranslator.translateKeyToJapanese('allScores'),
-        JapaneseTranslator.translateKeyToJapanese('allScores'),
+        "全合計",
+        "全合計",
         widget.totalScore,
         userName,
         _quizinfo.modeData.ranking,
@@ -129,26 +125,26 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
     if (_quizinfo.modeData.isbattle) {
       // 🔹 ハイスコア取得
       _highScore = await CommonHighScoreManager.getLocalHighScore(
-        quizId,
+        rankLabel,
         _quizinfo.modeData.ranking,
       );
 
       _rankAll = await CommonRankingManager.getMyRank(
-        rankingId,
+        userLabel,
         "all",
         _highScore,
         _quizinfo.modeData.ranking,
         isDescending: _quizinfo.modeData.isDescending,
       );
       _rankMonthly = await CommonRankingManager.getMyRank(
-        rankingId,
+        userLabel,
         "monthly",
         _highScore,
         _quizinfo.modeData.ranking,
         isDescending: _quizinfo.modeData.isDescending,
       );
       _rankWeekly = await CommonRankingManager.getMyRank(
-        rankingId,
+        userLabel,
         "weekly",
         _highScore,
         _quizinfo.modeData.ranking,

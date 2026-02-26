@@ -117,6 +117,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
 
   @override
   Widget build(BuildContext context) {
+    final seen = <String>{};
     if (!_isAppConfigInitialized) {
       return const SizedBox.shrink();
     }
@@ -124,33 +125,22 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     final gameData = allData.mid[selectedModeIndex];
 
     if (!_areTabsInitialized) {
-      final isSpecialMode =
-          JapaneseTranslator.translateKeyToJapanese(allData.appTitle) ==
-                  "とことん高校数学" &&
-              selectedModeIndex == 0;
-
-      quizTabs = isSpecialMode
-          ? [
-              QuizTabInfo(
-                  id: JapaneseTranslator.translateKeyToJapanese("allScores"),
-                  display: l10n(context, "allScores")),
-              QuizTabInfo(
-                  id: JapaneseTranslator.translateKeyToJapanese("mathA"),
-                  display: l10n(context, "mathA")),
-              QuizTabInfo(
-                  id: JapaneseTranslator.translateKeyToJapanese("mathB"),
-                  display: l10n(context, "mathB")),
-              QuizTabInfo(
-                  id: JapaneseTranslator.translateKeyToJapanese("mathC"),
-                  display: l10n(context, "mathC")),
-            ]
-          : gameData.detail.map((d) {
-              return QuizTabInfo(
-                id: JapaneseTranslator.translateKeyToJapanese(d.label),
-                display: l10n(context, d.label),
-              );
-            }).toList();
-
+      quizTabs = gameData.detail
+          .where((d) => seen.add(d.resisterRank))
+          .map((d) => QuizTabInfo(
+                id: d.resisterRank,
+                display: l10n(context, d.displayRank),
+              ))
+          .toList();
+      if (!gameData.isbattle) {
+        quizTabs.insert(
+          0,
+          QuizTabInfo(
+            id: "全合計",
+            display: "全合計",
+          ),
+        );
+      }
       selectedSubjectId = quizTabs.first.id;
 
       quizTabController = TabController(length: quizTabs.length, vsync: this);
@@ -163,25 +153,13 @@ class _CommonRankingPageState extends State<CommonRankingPage>
       _areTabsInitialized = true;
     }
 
-    final subjectData = gameData.detail.firstWhere(
-      (d) =>
-          JapaneseTranslator.translateKeyToJapanese(d.label) ==
-          selectedSubjectId,
-      orElse: () {
-        return gameData.detail.firstWhere(
-          (d) => convertLabel(d.sort) == selectedSubjectId,
-          orElse: () => DetailData(
-              sort: "",
-              label: "",
-              method: "",
-              description: "",
-              color: "7",
-              circleColor: ""),
-        );
-      },
-    );
+    final color = gameData.detail
+            .where((d) => d.resisterRank == selectedSubjectId)
+            .map((d) => d.color)
+            .firstOrNull ??
+        "9";
 
-    Color tabColor = getQuizColor2(subjectData.color, context, 1, 0.65, 1);
+    Color tabColor = getQuizColor2(color, context, 1, 0.65, 1);
     final fix = gameData.fix;
     final unit = gameData.unit;
 

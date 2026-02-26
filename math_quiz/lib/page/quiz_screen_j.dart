@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:common/common.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_quiz/math_quiz.dart' hide QuizStateProvider;
-import 'package:provider/provider.dart';
 
 import '../assistance/quiz_download.dart';
 
-class Quizscreen extends StatefulWidget {
+class Quizscreen extends ConsumerStatefulWidget {
   final DetailConfig quizinfo;
   final Map<int, List<PartData>> filteredMap;
 
@@ -22,7 +23,7 @@ class Quizscreen extends StatefulWidget {
   QuizScreenState createState() => QuizScreenState();
 }
 
-class QuizScreenState extends State<Quizscreen> {
+class QuizScreenState extends ConsumerState<Quizscreen> {
   late DetailConfig quizinfo;
   DateTime? startTime;
   late MakingData P;
@@ -39,7 +40,6 @@ class QuizScreenState extends State<Quizscreen> {
   int qcount = 0; // 問題数
   late List<String> marks;
   List<MakingData> plist = [];
-  late SoundManager soundManager;
   // LateXInputScreenのキーを作成
   final GlobalKey<LatexInputScreenState> _latexInputKey =
       GlobalKey<LatexInputScreenState>();
@@ -55,8 +55,6 @@ class QuizScreenState extends State<Quizscreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      soundManager = Provider.of<SoundManager>(context, listen: false);
-
       quizinfo = widget.quizinfo;
       if (!quizinfo.modeData.isbattle && quizinfo.detail.qcount != null) {
         marks = List.filled(quizinfo.detail.qcount!, "");
@@ -129,7 +127,7 @@ class QuizScreenState extends State<Quizscreen> {
         if (qcount == quizinfo.detail.qcount! - 1) {
           if (!mounted) return;
 
-          soundManager.playSound('hoi.mp3');
+          ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -155,7 +153,7 @@ class QuizScreenState extends State<Quizscreen> {
         totalScore = max(0, totalScore - 10);
         scoreIncrement1 = '-10点';
       });
-      soundManager.playSound('peke.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
     } else if (seigo == "maru") {
       // ★ ここから修正：モードによってスコアの計算パーツを分ける
       int lastScore = 0;
@@ -193,9 +191,9 @@ class QuizScreenState extends State<Quizscreen> {
 
       // ★ 音の出し分けも soundLevel で判定
       if (soundLevel > 1) {
-        soundManager.playSound('marumaru.mp3');
+        ref.read(appSoundProvider).requireValue.playSound('marumaru.mp3');
       } else {
-        soundManager.playSound('maru.mp3');
+        ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
       }
     }
   }
@@ -207,7 +205,7 @@ class QuizScreenState extends State<Quizscreen> {
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (remainingTime > 1 && !isGameOver) {
-        soundManager.playSound('ry.mp3');
+        ref.read(appSoundProvider).requireValue.playSound('ry.mp3');
         setState(() {
           remainingTime--;
         });
@@ -221,7 +219,7 @@ class QuizScreenState extends State<Quizscreen> {
 
         // 結果画面に遷移
         if (!mounted) return;
-        soundManager.playSound('hoi.mp3');
+        ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

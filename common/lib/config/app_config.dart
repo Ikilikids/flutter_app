@@ -114,7 +114,10 @@ class ModeData {
 
 class DetailData {
   final String sort;
-  final String label;
+  final String displayLabel;
+  final String displayRank;
+  final String resisterRank;
+  final String resisterUser;
   final String method;
   final String description;
   final String color;
@@ -125,7 +128,10 @@ class DetailData {
 
   DetailData({
     required this.sort,
-    required this.label,
+    required this.displayLabel,
+    required this.displayRank,
+    required this.resisterRank,
+    required this.resisterUser,
     required this.method,
     required this.description,
     required this.color,

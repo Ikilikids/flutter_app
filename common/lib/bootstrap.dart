@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart' as provider;
 
 class Bootstrap extends StatefulWidget {
   final AllData appConfig;
@@ -20,8 +19,6 @@ class Bootstrap extends StatefulWidget {
 }
 
 class _BootstrapState extends State<Bootstrap> {
-  final _soundManager = SoundManager();
-
   bool _isThemeLoaded = false;
 
   @override
@@ -55,11 +52,6 @@ class _BootstrapState extends State<Bootstrap> {
       await Firebase.initializeApp(options: widget.firebaseOptions);
     }
 
-    // Sounds
-    if (!kIsWeb) {
-      _soundManager.loadSounds();
-    }
-
     // Ads
     if (!kIsWeb) {
       AdManager.initialize();
@@ -77,7 +69,6 @@ class _BootstrapState extends State<Bootstrap> {
 
   @override
   void dispose() {
-    _soundManager.dispose();
     super.dispose();
   }
 
@@ -98,13 +89,8 @@ class _BootstrapState extends State<Bootstrap> {
 
     // 初期化完了後のみ Riverpod / Provider を開始する
     return ProviderScope(
-      child: provider.MultiProvider(
-        providers: [
-          provider.Provider.value(value: _soundManager),
-        ],
-        child: CommonApp(
-          home: CommonFirstPage(),
-        ),
+      child: CommonApp(
+        home: CommonFirstPage(),
       ),
     );
   }
