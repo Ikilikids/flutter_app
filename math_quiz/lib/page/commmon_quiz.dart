@@ -1,10 +1,10 @@
 import 'dart:math';
 
-import 'package:common/common.dart';
+import 'package:common/freezed/ui_config.dart';
 import 'package:flutter/material.dart';
 import 'package:math_quiz/math_quiz.dart';
 
-import '../assistance/quiz_download.dart';
+import '../providers/quiz_data_provider.dart';
 
 class ChooseQuizData {
   int correctCount;

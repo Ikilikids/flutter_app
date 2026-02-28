@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:common/common.dart';
-import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../freezed/app_data.dart';
 
 class InterstitialAdHelper {
   static InterstitialAd? _ad;
@@ -26,7 +27,7 @@ class InterstitialAdHelper {
     // ---- カウント判定（3回に1回）----
     final prefs = await SharedPreferences.getInstance();
     int count = prefs.getInt(_key) ?? 0;
-    bool shouldShow = count % 90 == 0;
+    bool shouldShow = count % 3 == 2;
     await prefs.setInt(_key, count + 1);
 
     // ---- 広告タイミングじゃない ----

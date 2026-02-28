@@ -1,4 +1,3 @@
-import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,13 +15,10 @@ class CommonApp extends ConsumerWidget {
     final themeAsync = ref.watch(appThemeProvider);
     final localeAsync = ref.watch(appLocaleProvider);
     final uidAsync = ref.watch(appUidProvider);
-    final soundAsync = ref.watch(appSoundProvider); // ★追加
+    final soundAsync = ref.watch(appSoundProvider);
 
-    // 2. 全てデータが揃っているかチェック（SoundManager も含める）
-    final bool isReady = themeAsync.hasValue &&
-        localeAsync.hasValue &&
-        uidAsync.hasValue &&
-        soundAsync.hasValue; // ★追加
+    // 2. 最低限必要なものだけチェック（テーマとロケールのみ）
+    final bool isReady = themeAsync.hasValue && localeAsync.hasValue;
 
     // appTitle が特定文字列なら日本語固定
     final isJapaneseTitle = allData.appData.appTitle == "とことん高校数学";
@@ -30,6 +26,7 @@ class CommonApp extends ConsumerWidget {
         isJapaneseTitle ? const Locale('ja') : localeAsync.valueOrNull;
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       locale: localeToUse,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -37,7 +34,7 @@ class CommonApp extends ConsumerWidget {
       darkTheme: ThemeData.dark(),
       themeMode: themeAsync.valueOrNull ?? ThemeMode.system,
 
-      // ★ ここで一括ガード
+      // ★ 最低限（テーマと言語）が揃ったらタイトルを出し、他は裏で待つ
       home: isReady
           ? home
           : Scaffold(

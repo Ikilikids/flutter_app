@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../providers/app_sound.dart';
+import '../providers/ui_provider.dart';
 
 // These typedefs are local to this file for now.
 
@@ -55,7 +56,7 @@ class _CommonEndScreenState extends ConsumerState<CommonEndScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _quizinfo = ref.watch(appDetailConfigProvider);
+    final _quizinfo = ref.watch(currentDetailConfigProvider);
     Color quizColor =
         getQuizColor2(_quizinfo.detail.color, context, 1, 0.35, 0.95);
     String unit = _quizinfo.modeData.unit;

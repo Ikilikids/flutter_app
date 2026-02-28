@@ -2,6 +2,8 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/ui_provider.dart';
+
 class PipiScreen extends ConsumerStatefulWidget {
   final num totalScore;
   final dynamic originalData;
@@ -14,15 +16,12 @@ class PipiScreen extends ConsumerStatefulWidget {
 
 class _PipiScreenState extends ConsumerState<PipiScreen> {
   double _highScore = 0.0;
-  int _rankAll = 0;
-  int _rankMonthly = 0;
-  int _rankWeekly = 0;
+  List<int> myRank = [0, 0, 0];
   late final String userName;
 
   @override
   void initState() {
     super.initState();
-
     _loadDataWithDelay();
   }
 
@@ -49,13 +48,15 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
   }
 
   Future<void> _loadDataWithDelay() async {
-    final _quizinfo = ref.read(appDetailConfigProvider);
+    final _quizinfo = ref.read(currentDetailConfigProvider);
     final minDuration = const Duration(seconds: 2);
     final maxDuration = const Duration(seconds: 5);
     final EndBuilder = allData.endBuilder;
     final startTime = DateTime.now();
     final uid = await ref.read(appUidProvider.future);
     userName = await ref.read(appUidProvider.notifier).loadUsername(uid);
+    print('UID: $uid');
+    print('ユーザー名: $userName');
 
     try {
       await _loadData();
@@ -75,9 +76,9 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
               builder: (_) => CommonEndScreen(
                 totalScore: widget.totalScore,
                 highScore: _highScore,
-                rankAll: _rankAll,
-                rankMonthly: _rankMonthly,
-                rankWeekly: _rankWeekly,
+                rankAll: myRank[0],
+                rankMonthly: myRank[1],
+                rankWeekly: myRank[2],
               ),
             )
           : MaterialPageRoute(
@@ -92,79 +93,41 @@ class _PipiScreenState extends ConsumerState<PipiScreen> {
   }
 
   Future<void> _loadData() async {
-    final _quizinfo = ref.read(appDetailConfigProvider);
-    // Translate keys to Japanese for DB storage
-    final rankLabel = _quizinfo.detail.resisterRank;
-    final userLabel = _quizinfo.detail.resisterUser;
+    final _quizinfo = ref.read(currentDetailConfigProvider);
 
-    // 🔹 ハイスコア & ランキング更新（v2共通マネージャ）
-    await CommonHighScoreManager.setHighScoreSafe(
-      userLabel,
-      rankLabel,
-      widget.totalScore,
-      userName,
-      _quizinfo.modeData.ranking,
+    // 1. Firebase更新を実行（戻り値として、更新された場合のみ新しいスコアが返る）
+    final double? updatedScore = await ScoreManager.updateAllScores(
+      score: widget.totalScore.toDouble(),
+      resisterOrigin: _quizinfo.detail.resisterOrigin,
+      resisterSub: _quizinfo.detail.resisterSub,
+      modeType: _quizinfo.modeData.modeType,
+      isBattle: _quizinfo.modeData.isbattle,
+      isSmallerBetter: _quizinfo.modeData.isSmallerBetter,
       isLimitedMode: _quizinfo.modeData.islimited,
-      roundingFactor: 100,
-      isbattle: _quizinfo.modeData.isbattle,
-      isDescending: _quizinfo.modeData.isDescending,
+      fix: 100,
+      userName: userName,
     );
-    if (!_quizinfo.modeData.isbattle) {
-      await CommonHighScoreManager.setHighScoreSafe(
-        "全合計",
-        "全合計",
-        widget.totalScore,
-        userName,
-        _quizinfo.modeData.ranking,
-        isLimitedMode: _quizinfo.modeData.islimited,
-        roundingFactor: 100,
-        isbattle: _quizinfo.modeData.isbattle,
-        isDescending: _quizinfo.modeData.isDescending,
-      );
-    }
-    if (_quizinfo.modeData.isbattle) {
-      // 🔹 ハイスコア取得
-      _highScore = await CommonHighScoreManager.getLocalHighScore(
-        rankLabel,
-        _quizinfo.modeData.ranking,
-      );
 
-      _rankAll = await CommonRankingManager.getMyRank(
-        userLabel,
-        "all",
-        _highScore,
-        _quizinfo.modeData.ranking,
-        isDescending: _quizinfo.modeData.isDescending,
-      );
-      _rankMonthly = await CommonRankingManager.getMyRank(
-        userLabel,
-        "monthly",
-        _highScore,
-        _quizinfo.modeData.ranking,
-        isDescending: _quizinfo.modeData.isDescending,
-      );
-      _rankWeekly = await CommonRankingManager.getMyRank(
-        userLabel,
-        "weekly",
-        _highScore,
-        _quizinfo.modeData.ranking,
-        isDescending: _quizinfo.modeData.isDescending,
-      );
-    }
+    _highScore = await ScoreManager.getScore(
+      resisterOriginOrSub: _quizinfo.detail.resisterOrigin,
+      modeType: _quizinfo.modeData.modeType,
+    );
+    ref.read(userStatusNotifierProvider.notifier).updateScoreLocally(
+        _quizinfo.detail.resisterOrigin,
+        _quizinfo.modeData.modeType,
+        _highScore);
+
+    print("記録: $_highScore");
+
+    // 3. ランキングを取得（これは更新に関係なく常に最新を取る）
+    myRank = await ScoreManager.getMyRank(
+      resisterOrigin: _quizinfo.detail.resisterSub,
+      modeType: _quizinfo.modeData.modeType,
+      myScore: widget.totalScore.toDouble(),
+      isSmallerBetter: _quizinfo.modeData.isSmallerBetter,
+    );
 
     if (!mounted) return;
     setState(() {});
   }
-}
-
-String convertLabel(String label) {
-  String result = "??";
-  if (label == "1" || label == "A") {
-    result = "数Ⅰ・数A";
-  } else if (label == "2" || label == "B") {
-    result = "数Ⅱ・数B";
-  } else if (label == "3" || label == "C") {
-    result = "数Ⅲ・数C";
-  }
-  return result;
 }

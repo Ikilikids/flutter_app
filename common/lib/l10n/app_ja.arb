@@ -101,5 +101,8 @@
     "detailSetting": "詳細設定",
     "soundSectionTitle": "サウンド",
     "volumeLabel": "音量",
-    "loadingProblem": "問題ロード中、少々お待ちください"
+    "loadingProblem": "問題ロード中、少々お待ちください",
+    "updateRequiredTitle": "アップデートのお知らせ",
+    "updateRequiredMessage": "より快適にご利用いただくため、最新バージョンへのアップデートをお願いします。",
+    "updateButton": "今すぐアップデート"
 }

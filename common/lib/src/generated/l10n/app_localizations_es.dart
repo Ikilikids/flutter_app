@@ -326,4 +326,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get loadingProblem => 'Cargando problema, por favor espere un momento';
+
+  @override
+  String get updateRequiredTitle => 'Actualización requerida';
+
+  @override
+  String get updateRequiredMessage =>
+      'Actualice a la última versión para una mejor experiencia.';
+
+  @override
+  String get updateButton => 'Actualizar ahora';
 }

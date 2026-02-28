@@ -2,24 +2,24 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:common/common.dart';
-import 'package:common/src/generated/l10n/app_localizations.dart';
+import 'package:common/freezed/ui_config.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'games/color_game.dart';
 import 'games/grid_game.dart';
 import 'games/number_game.dart';
 
-class Gamescreen extends StatefulWidget {
-  final QuizData quizinfo;
+class Gamescreen extends ConsumerStatefulWidget {
+  final DetailConfig quizinfo;
   const Gamescreen({super.key, required this.quizinfo});
 
   @override
-  State<Gamescreen> createState() => _GamescreenState();
+  ConsumerState<Gamescreen> createState() => _GamescreenState();
 }
 
-class _GamescreenState extends State<Gamescreen> {
-  late SoundManager soundManager;
+class _GamescreenState extends ConsumerState<Gamescreen> {
   late String mode;
   int trialCount = 0;
   final int maxTrials = 3;
@@ -47,9 +47,8 @@ class _GamescreenState extends State<Gamescreen> {
   @override
   void initState() {
     super.initState();
-    soundManager = Provider.of<SoundManager>(context, listen: false);
     // quizinfo[0] に sort キーが入っている
-    mode = widget.quizinfo.sort;
+    mode = widget.quizinfo.detail.sort;
 
     startTrial();
   }
@@ -111,8 +110,8 @@ class _GamescreenState extends State<Gamescreen> {
       // お手付き
 
       _delayTimer?.cancel();
-      soundManager.playSound('peke.mp3');
-      showFlyingDialog(context, () {}, widget.quizinfo.islimited);
+      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
+      showFlyingDialog(context, () {}, widget.quizinfo.modeData.islimited);
       return;
     }
 
@@ -131,14 +130,14 @@ class _GamescreenState extends State<Gamescreen> {
     if (isCorrect) {
       final endTime = DateTime.now();
       final elapsed = endTime.difference(startTime!).inMilliseconds;
-      soundManager.playSound('maru.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
 
       handleSuccess(elapsed);
     } else {
       // 間違ったボタンやマスを押した場合（お手つき）
 
-      showFlyingDialog(context, () {}, widget.quizinfo.islimited);
-      soundManager.playSound('peke.mp3');
+      showFlyingDialog(context, () {}, widget.quizinfo.modeData.islimited);
+      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
     }
   }
 
@@ -167,7 +166,7 @@ class _GamescreenState extends State<Gamescreen> {
 
   void finishGame() {
     int finalScore;
-    soundManager.playSound('hoi.mp3');
+    ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
     if (mode == "color") {
       // 最も悪い（遅い）記録を取得 (最大値)
       finalScore = results.reduce(max);
@@ -218,9 +217,8 @@ class _GamescreenState extends State<Gamescreen> {
               child: Text(
                 text,
                 style: TextStyle(
-                  fontWeight: isCurrent || isDone
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+                  fontWeight:
+                      isCurrent || isDone ? FontWeight.bold : FontWeight.normal,
                   color: isCurrent
                       ? Theme.of(context).colorScheme.onPrimaryContainer
                       : Theme.of(context).textTheme.bodyMedium?.color,
@@ -231,7 +229,7 @@ class _GamescreenState extends State<Gamescreen> {
           menuButton(
             context,
             () => setState(() {}),
-            widget.quizinfo.islimited,
+            widget.quizinfo.modeData.islimited,
             istap: !isGameOver,
           ),
         ],
@@ -300,7 +298,7 @@ class _GamescreenState extends State<Gamescreen> {
                 () => setState(() {
                   isGameOver = true;
                 }),
-                widget.quizinfo.islimited,
+                widget.quizinfo.modeData.islimited,
               );
       },
       child: AppAdScaffold(

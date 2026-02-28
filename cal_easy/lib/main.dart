@@ -1,5 +1,8 @@
 import 'package:common/common.dart';
+import 'package:common/freezed/app_data.dart';
+import 'package:common/freezed/ui_config.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'assistance/quiz_logic.dart';
 import 'firebase_options.dart';
@@ -12,6 +15,7 @@ final _appConfig = AllData(
       appIcon: Icons.calculate,
       symbols: ["+", "-", "×", "÷"],
       isRotation: false,
+      URL: "https://play.google.com/store/apps/details?id=jp.ponta.cal_easy",
       bannerId: "ca-app-pub-1440692612851416/5101110710",
       interId: "ca-app-pub-1440692612851416/6696946185",
       rewardId: "ca-app-pub-1440692612851416/5939549664",
@@ -31,8 +35,8 @@ final _appConfig = AllData(
         fix: 2,
         islimited: false,
         isbattle: true,
-        isDescending: false,
-        ranking: "t",
+        isSmallerBetter: true,
+        modeType: "t",
         modeTitle: "unlimitedModeTitle",
         modeIcon: Icons.all_inclusive,
         sub1: "unlimitedModeSub1",
@@ -43,8 +47,8 @@ final _appConfig = AllData(
           sort: "32",
           displayLabel: "addSubtract",
           displayRank: "addSubtract",
-          resisterRank: "足し算・引き算",
-          resisterUser: "足し算・引き算",
+          resisterSub: "足し算・引き算",
+          resisterOrigin: "足し算・引き算",
           method: "compete20Questions",
           description: "addSubtractDesc",
           color: "2",
@@ -54,8 +58,8 @@ final _appConfig = AllData(
           sort: "3251",
           displayLabel: "fourArithmeticOperations",
           displayRank: "fourArithmeticOperations",
-          resisterRank: "四則演算",
-          resisterUser: "四則演算",
+          resisterSub: "四則演算",
+          resisterOrigin: "四則演算",
           method: "compete20Questions",
           description: "fourArithmeticOperationsDesc",
           color: "5",
@@ -65,8 +69,8 @@ final _appConfig = AllData(
           sort: "4867",
           displayLabel: "addSubtract2Digits",
           displayRank: "addSubtract2Digits",
-          resisterRank: "2桁の足し算・引き算",
-          resisterUser: "2桁の足し算・引き算",
+          resisterSub: "2桁の足し算・引き算",
+          resisterOrigin: "2桁の足し算・引き算",
           method: "compete10Questions",
           description: "addSubtract2DigitsDesc",
           color: "4",
@@ -80,8 +84,8 @@ final _appConfig = AllData(
         fix: 2,
         islimited: true,
         isbattle: true,
-        isDescending: false,
-        ranking: "g",
+        isSmallerBetter: true,
+        modeType: "g",
         modeTitle: "dailyLimitedModeTitle",
         modeIcon: Icons.timer,
         sub1: "dailyLimitedModeSub1",
@@ -92,8 +96,8 @@ final _appConfig = AllData(
           sort: "32",
           displayLabel: "addSubtract",
           displayRank: "addSubtract",
-          resisterRank: "足し算・引き算",
-          resisterUser: "足し算・引き算",
+          resisterSub: "足し算・引き算",
+          resisterOrigin: "足し算・引き算",
           method: "compete20Questions",
           description: "addSubtractDesc",
           color: "3",
@@ -103,8 +107,8 @@ final _appConfig = AllData(
           sort: "3251",
           displayLabel: "fourArithmeticOperations",
           displayRank: "fourArithmeticOperations",
-          resisterRank: "四則演算",
-          resisterUser: "四則演算",
+          resisterSub: "四則演算",
+          resisterOrigin: "四則演算",
           method: "compete20Questions",
           description: "fourArithmeticOperationsDesc",
           color: "1",
@@ -114,8 +118,8 @@ final _appConfig = AllData(
           sort: "4867",
           displayLabel: "addSubtract2Digits",
           displayRank: "addSubtract2Digits",
-          resisterRank: "2桁の足し算・引き算",
-          resisterUser: "2桁の足し算・引き算",
+          resisterSub: "2桁の足し算・引き算",
+          resisterOrigin: "2桁の足し算・引き算",
           method: "compete10Questions",
           description: "addSubtract2DigitsDesc",
           color: "6",
@@ -131,9 +135,11 @@ void main() {
   final options = DefaultFirebaseOptions.currentPlatform;
 
   runApp(
-    Bootstrap(
-      appConfig: _appConfig,
-      firebaseOptions: options,
+    ProviderScope(
+      child: Bootstrap(
+        appConfig: _appConfig,
+        firebaseOptions: options,
+      ),
     ),
   );
 }

@@ -320,4 +320,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loadingProblem => '문제 로드 중, 잠시만 기다려 주십시오';
+
+  @override
+  String get updateRequiredTitle => '업데이트 알림';
+
+  @override
+  String get updateRequiredMessage => '더 나은 환경을 위해 최신 버전으로 업데이트해 주세요.';
+
+  @override
+  String get updateButton => '지금 업데이트';
 }

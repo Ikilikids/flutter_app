@@ -1,15 +1,18 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CommonFirstPage extends StatefulWidget {
+import '../providers/app_sound.dart';
+
+class CommonFirstPage extends ConsumerStatefulWidget {
   const CommonFirstPage({super.key});
 
   @override
-  State<CommonFirstPage> createState() => _CommonFirstPageState();
+  ConsumerState<CommonFirstPage> createState() => _CommonFirstPageState();
 }
 
-class _CommonFirstPageState extends State<CommonFirstPage>
+class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
     with TickerProviderStateMixin {
   bool _isNavigating = false;
 
@@ -17,7 +20,6 @@ class _CommonFirstPageState extends State<CommonFirstPage>
   late final Animation<Offset> _iconAnimation;
   late final Animation<Offset> _titleAnimation;
 
-  // 点滅用
   late final AnimationController _blinkController;
   late final Animation<double> _blinkAnimation;
 
@@ -26,7 +28,6 @@ class _CommonFirstPageState extends State<CommonFirstPage>
     super.initState();
     _checkFirstLaunch();
 
-    // スライドアニメーション
     _controller = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 800));
 
@@ -40,7 +41,6 @@ class _CommonFirstPageState extends State<CommonFirstPage>
 
     _controller.forward();
 
-    // 点滅アニメーション
     _blinkController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 800));
     _blinkAnimation =
@@ -49,7 +49,6 @@ class _CommonFirstPageState extends State<CommonFirstPage>
       curve: Curves.easeInOut,
     ));
 
-    // 点滅をループ
     _blinkController.repeat(reverse: true);
   }
 
@@ -60,16 +59,53 @@ class _CommonFirstPageState extends State<CommonFirstPage>
     super.dispose();
   }
 
-  void _navigateToDestination() {
+  Future<void> _navigateToDestination() async {
     if (_isNavigating) return;
+
     setState(() {
-      _isNavigating = true;
+      _isNavigating = true; // 判定が始まるのでインジケーターを出す
     });
 
+    try {
+      // 1. アップデートチェックが終わっていなければ待つ
+      // Bootstrap で呼び出しているはずなので、通常はすぐ終わります
+      if (UpdateManager.needsUpdate == null) {
+        await UpdateManager.checkUpdate();
+      }
+
+      // 2. 強制アップデートが必要な場合はダイアログを出して終了
+      if (UpdateManager.needsUpdate == true) {
+        if (mounted) {
+          UpdateManager.showUpdateDialog(context, allData.appData.URL);
+          setState(() => _isNavigating = false); // ダイアログの裏でぐるぐるを消す
+        }
+        return;
+      }
+
+      // 3. UIDとSoundのロード状況を確認
+      final uidAsync = ref.read(appUidProvider);
+      final soundAsync = ref.read(appSoundProvider);
+
+      if (uidAsync.isLoading || soundAsync.isLoading) {
+        // ロード完了を待つ (Future.wait)
+        await Future.wait([
+          ref.read(appUidProvider.future),
+          ref.read(appSoundProvider.future),
+        ]);
+      }
+    } catch (e) {
+      debugPrint('Navigation initialization error: $e');
+      if (mounted) setState(() => _isNavigating = false);
+      return;
+    }
+
+    if (!mounted) return;
+
+    // 4. 次の画面へ遷移
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => CommonModeSelectionPage(),
+        builder: (context) => const CommonModeSelectionPage(),
       ),
     );
   }
@@ -79,12 +115,15 @@ class _CommonFirstPageState extends State<CommonFirstPage>
     final icon = allData.appIcon;
 
     return AppAdScaffold(
-        advisible: false,
-        body: GestureDetector(
-          onTap: _navigateToDestination,
-          child: Container(
-            child: Padding(
-              padding: EdgeInsetsGeometry.all(30),
+      advisible: false,
+      body: Stack(
+        children: [
+          // メインコンテンツ
+          GestureDetector(
+            onTap: _navigateToDestination,
+            child: Container(
+              color: Colors.transparent, // タップ判定を広げるため
+              padding: const EdgeInsets.all(30),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -98,7 +137,8 @@ class _CommonFirstPageState extends State<CommonFirstPage>
                         child: FittedBox(
                           fit: BoxFit.contain,
                           child: Icon(
-                            icon, size: 120, // 初期サイズを指定
+                            icon,
+                            size: 120,
                             color: textColor1(context),
                           ),
                         ),
@@ -117,7 +157,7 @@ class _CommonFirstPageState extends State<CommonFirstPage>
                           child: Text(
                             l10n(context, allData.appTitle),
                             style: TextStyle(
-                              fontSize: 120, // 初期サイズを指定
+                              fontSize: 120,
                               fontWeight: FontWeight.w900,
                               color: textColor1(context),
                               shadows: [
@@ -138,31 +178,42 @@ class _CommonFirstPageState extends State<CommonFirstPage>
                   Expanded(
                     flex: 2,
                     child: Align(
-                        alignment: Alignment.topCenter,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 30),
-                          child: FadeTransition(
-                            opacity: _blinkAnimation,
-                            child: FittedBox(
-                              fit: BoxFit.contain,
-                              child: Text(
-                                l10n(context, 'tapToStart'),
-                                style: TextStyle(
-                                  fontSize: 120, // 初期サイズを指定
-                                  color:
-                                      Theme.of(context).colorScheme.secondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: FadeTransition(
+                          opacity: _blinkAnimation,
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Text(
+                              l10n(context, 'tapToStart'),
+                              style: TextStyle(
+                                fontSize: 120,
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                        )),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-        ));
+
+          // ★ インジケーター表示 (ロード中のみ)
+          if (_isNavigating)
+            Container(
+              color: Colors.black.withAlpha(50), // 画面を少し暗くして入力を防ぐ
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -172,7 +223,6 @@ Future<void> _checkFirstLaunch() async {
 
   if (isFirstLaunch) {
     await prefs.setBool('isFirstLaunch', false);
-    // ここで初回起動時にしたい処理があれば書く
-    print("初回起動です！");
+    debugPrint("初回起動です！");
   }
 }

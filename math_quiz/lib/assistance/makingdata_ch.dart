@@ -1,7 +1,8 @@
 import 'dart:math';
 
-import 'package:math_quiz/assistance/quiz_download.dart';
 import 'package:math_quiz/math_quiz.dart';
+
+import '../providers/quiz_data_provider.dart';
 
 // --------------------------------------------------
 // 選択肢モード専用

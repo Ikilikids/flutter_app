@@ -101,5 +101,8 @@
     "detailSetting": "Ajustes detallados",
     "soundSectionTitle": "Sonido",
     "volumeLabel": "Volumen",
-    "loadingProblem": "Cargando problema, por favor espere un momento"
+    "loadingProblem": "Cargando problema, por favor espere un momento",
+    "updateRequiredTitle": "Actualización requerida",
+    "updateRequiredMessage": "Actualice a la última versión para una mejor experiencia.",
+    "updateButton": "Actualizar ahora"
 }

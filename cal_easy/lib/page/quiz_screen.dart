@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:cal_easy/assistance/latex_formatter.dart';
 import 'package:common/common.dart';
+import 'package:common/freezed/ui_config.dart';
 import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -55,7 +56,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
     if (!_initialized) {
       _initialized = true;
       quizinfo = widget.quizinfo;
-      count = quizinfo.detail.sort == "4867" ? 10 : 1;
+      count = quizinfo.detail.sort == "4867" ? 10 : 20;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {
@@ -143,7 +144,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
             context,
             MaterialPageRoute(
               builder: (context) => PipiScreen(
-                totalScore: 26,
+                totalScore: elapsedTime,
               ),
             ),
           );

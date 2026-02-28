@@ -8,8 +8,10 @@ part 'app_theme.g.dart';
 class AppTheme extends _$AppTheme {
   @override
   Future<ThemeMode> build() async {
+    print('AppTheme: Building and loading theme from SharedPreferences...');
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString('ThemeMode');
+    print('Loaded ThemeMode from SharedPreferences: $code');
     return code == 'dark' ? ThemeMode.dark : ThemeMode.light;
   }
 

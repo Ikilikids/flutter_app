@@ -319,4 +319,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loadingProblem => '問題ロード中、少々お待ちください';
+
+  @override
+  String get updateRequiredTitle => 'アップデートのお知らせ';
+
+  @override
+  String get updateRequiredMessage => 'より快適にご利用いただくため、最新バージョンへのアップデートをお願いします。';
+
+  @override
+  String get updateButton => '今すぐアップデート';
 }

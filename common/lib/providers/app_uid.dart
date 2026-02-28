@@ -8,6 +8,7 @@ part 'app_uid.g.dart';
 class AppUid extends _$AppUid {
   @override
   Future<String> build() async {
+    print('AppUid: Building and signing in anonymously...');
     // 🔹 匿名ログイン
     final userCred = await FirebaseAuth.instance.signInAnonymously();
     final uid = userCred.user?.uid;
@@ -18,13 +19,13 @@ class AppUid extends _$AppUid {
 
     // 🔹 Firestore にユーザーレコード作成
     await _createUserRecord(uid);
-
+    print('AppUid: Anonymous sign-in successful, UID: $uid');
     return uid;
   }
 
   /// ユーザードキュメント作成（初回のみ）
   Future<void> _createUserRecord(String uid) async {
-    final ref = FirebaseFirestore.instance.collection('users').doc(uid);
+    final ref = FirebaseFirestore.instance.collection('users2').doc(uid);
     final snapshot = await ref.get();
 
     if (!snapshot.exists) {
@@ -37,11 +38,12 @@ class AppUid extends _$AppUid {
   /// ユーザー名取得
   Future<String> loadUsername(String uid) async {
     final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        await FirebaseFirestore.instance.collection('users2').doc(uid).get();
 
     if (!doc.exists) return '名無し';
 
     final data = doc.data();
+    print(data);
     final userName = data?['userName'];
 
     return userName is String ? userName : '名無し';

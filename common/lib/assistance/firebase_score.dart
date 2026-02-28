@@ -1,278 +1,213 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/widgets.dart';
 
-// getWeekNumber はHighScoreManagerとRankingManagerの両方で使うのでトップレベルに配置
+import '../common.dart';
+
 int getWeekNumber(DateTime date) {
-  final firstDayOfYear = DateTime(date.year, 1, 1);
-  final daysOffset = firstDayOfYear.weekday - DateTime.monday;
-  final firstMonday = firstDayOfYear.subtract(Duration(days: daysOffset));
-  return ((date.difference(firstMonday).inDays) / 7).ceil();
+  final firstThursday = DateTime(date.year, 1, 4);
+  final diff = date.difference(
+    firstThursday.subtract(
+      Duration(days: firstThursday.weekday - 1),
+    ),
+  );
+  return (diff.inDays / 7).floor() + 1;
 }
 
-bool isBetter(num newScore, num prevScore, bool isDescending) {
+bool isBetter(num newScore, num prevScore, bool isSmallerBetter) {
   if (prevScore == 0) return true;
-  print(isDescending);
-  return isDescending
-      ? newScore > prevScore // タイム系（小さい方が良い）
-      : newScore < prevScore; // スコア系（大きい方が良い）
+  return isSmallerBetter ? newScore < prevScore : newScore > prevScore;
 }
 
-class CommonHighScoreManager {
+List<String> buildPeriod() {
+  final now = DateTime.now();
+  int year = now.year;
+  int month = now.month;
+  int week = getWeekNumber(now);
+
+  String periodMonth = '${year}_m${month.toString().padLeft(2, '0')}';
+  String periodWeek = '${year}_w${week.toString().padLeft(2, '0')}';
+  String periodAll = 'all';
+
+  return [
+    periodAll,
+    periodMonth,
+    periodWeek,
+  ];
+}
+
+class ScoreManager {
   static final _firestore = FirebaseFirestore.instance;
 
-  /// 移行用：Firebaseからスコア取得
-  static Future<double> getHighScore(String quizId, String rankingType) async {
+  static Future<double> getScore(
+      {required String resisterOriginOrSub, required String modeType}) async {
     final user = FirebaseAuth.instance.currentUser;
-
     if (user == null) return 0;
 
-    final jName = 'highscores_$rankingType';
-    final doc = await _firestore
-        .collection('users')
+    final jName = '${resisterOriginOrSub}_$modeType';
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users2')
         .doc(user.uid)
-        .collection(jName)
-        .doc(quizId)
+        .collection('scores')
+        .doc(jName)
         .get();
-    final score = doc.data()?['score'];
-    print('Firebaseからスコア取得: $quizId - $rankingType - $score');
-    return score is num ? score.toDouble() : 0.0;
+
+    if (!doc.exists) return 0;
+
+    return (doc.data()?['score'] as num?)?.toDouble() ?? 0;
   }
 
-  /// SharedPreferences版：ローカルから自己ベストを取得
-  static Future<double> getLocalHighScore(
-      String rankingId, String rankingType) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // これまで定義してきたキー 'highScore_ラベル名' で取得
-    final key = 'highScore_${rankingType}_$rankingId';
-
-    // 値がなければ 0.0 を返す
-    return prefs.getDouble(key) ?? 0.0;
-  }
-
-  /// ランキング更新（変更なし）
-  static Future<void> _upsertRanking({
-    required String rankingType,
-    required String quizId,
-    required String period,
-    required int year,
-    int? month,
-    int? week,
-    required String uid,
-    required String userName,
+  static Future<double?> updateAllScores({
     required double score,
-    required bool isDescending,
-    required bool isbattle,
-  }) async {
-    final query = await _firestore
-        .collection('rankings_v2')
-        .where('rankingType', isEqualTo: rankingType)
-        .where('quizId', isEqualTo: quizId)
-        .where('period', isEqualTo: period)
-        .where('year', isEqualTo: year)
-        .where(month != null ? 'month' : 'week', isEqualTo: month ?? week)
-        .where('uid', isEqualTo: uid)
-        .limit(1)
-        .get();
-
-    if (query.docs.isEmpty) {
-      await _firestore.collection('rankings_v2').add({
-        'rankingType': rankingType,
-        'quizId': quizId,
-        'period': period,
-        'year': year,
-        'month': month,
-        'week': week,
-        'uid': uid,
-        'userName': userName,
-        'score': score,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } else {
-      final doc = query.docs.first;
-      final prev = (doc['score'] as num).toDouble();
-      if (!isbattle) {
-        await doc.reference.update({
-          'score': score + prev,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else if (isBetter(score, prev, isDescending)) {
-        await doc.reference.update({
-          'score': score,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    }
-  }
-
-  /// 【決定版】ハイスコア保存 (Firebase users は廃止、Local & Rankingsのみ)
-  static Future<void> setHighScoreSafe(
-    String quizId,
-    String rankingId,
-    num score,
-    String userName,
-    String rankingType, {
+    required String resisterOrigin,
+    required String resisterSub,
+    required String modeType,
+    required bool isBattle,
+    required bool isSmallerBetter,
     required bool isLimitedMode,
-    required int roundingFactor,
-    required bool isDescending,
-    required bool isbattle,
+    required int fix,
+    required String userName,
   }) async {
-    if (score <= 0) return;
+    if (score <= 0) return null;
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final now = DateTime.now();
-    final rounded = (score * roundingFactor).roundToDouble() / roundingFactor;
+    if (user == null) return null;
 
-    // 1. ローカル（SharedPreferences）への保存
-    final prefs = await SharedPreferences.getInstance();
-    final localKey = 'highScore_${rankingType}_$quizId';
-    final prevLocal = prefs.getDouble(localKey) ?? 0.0;
+    final uid = user.uid;
+    final rounded = (score * fix).roundToDouble() / fix;
+    final List<DocumentReference> targets = [];
 
-    double newLocalScore = prevLocal;
-    if (!isbattle) {
-      newLocalScore = prevLocal + rounded;
-    } else if (isBetter(rounded, prevLocal, isDescending)) {
-      newLocalScore = rounded;
+    final resisterTypes =
+        isBattle ? [resisterOrigin] : [resisterOrigin, resisterSub, "全合計"];
+
+    // ===== userスコア =====
+
+    for (var rType in resisterTypes) {
+      final jName = '${rType}_$modeType';
+      targets.add(
+        _firestore
+            .collection('users2')
+            .doc(uid)
+            .collection('scores')
+            .doc(jName),
+      );
     }
-    await prefs.setDouble(localKey, newLocalScore);
 
-    // 2. Firebaseランキングの更新 (引数をすべて明示的に渡す)
-    await Future.wait([
-      _upsertRanking(
-        rankingType: rankingType,
-        quizId: rankingId,
-        period: 'all',
-        year: now.year,
-        uid: user.uid,
-        userName: userName,
-        score: rounded,
-        isDescending: isDescending,
-        isbattle: isbattle,
-      ),
-      _upsertRanking(
-        rankingType: rankingType,
-        quizId: rankingId,
-        period: 'monthly',
-        year: now.year,
-        month: now.month,
-        uid: user.uid,
-        userName: userName,
-        score: rounded,
-        isDescending: isDescending,
-        isbattle: isbattle,
-      ),
-      _upsertRanking(
-        rankingType: rankingType,
-        quizId: rankingId,
-        period: 'weekly',
-        year: now.year,
-        week: getWeekNumber(now),
-        uid: user.uid,
-        userName: userName,
-        score: rounded,
-        isDescending: isDescending,
-        isbattle: isbattle,
-      ),
-    ]);
+    // ===== ranking =====
+    final periods = buildPeriod();
 
-    // 3. 制限 → 通常への昇格ロジック
-    if (isLimitedMode) {
-      final normalKey = 'highScore_t_$rankingId';
-      final normalLocalScore = prefs.getDouble(normalKey) ?? 0.0;
-      print(normalLocalScore);
-      if (isBetter(rounded, normalLocalScore, isDescending)) {
-        await setHighScoreSafe(
-          quizId,
-          rankingId,
-          rounded,
-          userName,
-          "t", // 通常モード
-          isLimitedMode: false,
-          roundingFactor: roundingFactor,
-          isDescending: isDescending,
-          isbattle: isbattle,
+    for (var rType in resisterTypes) {
+      for (var period in periods) {
+        final rankingId = "${rType}_${modeType}_${period}";
+
+        targets.add(
+          _firestore
+              .collection('rankings_v5')
+              .doc(rankingId)
+              .collection('users')
+              .doc(uid),
         );
       }
     }
+    double? finalUpdatedScore; // ★ここを返す
+    await _firestore.runTransaction((tx) async {
+      // --- 1. 読み取りフェーズ（Read Phase） ---
+      // すべての参照先データを先に取得してMapに溜める
+      final Map<DocumentReference, DocumentSnapshot> snapshots = {};
+      for (final ref in targets) {
+        snapshots[ref] = await tx.get(ref);
+      }
+
+      for (final ref in targets) {
+        final snapshot = snapshots[ref]!;
+
+        if (!snapshot.exists) {
+          tx.set(ref, {
+            'score': rounded,
+            'userName': userName, // ← ここで保存！
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          finalUpdatedScore = rounded; // 更新された値をセット
+          continue;
+        }
+
+        final data = snapshot.data() as Map<String, dynamic>?;
+        final prev = (data?['score'] as num?)?.toDouble() ?? 0.0;
+
+        if (!isBattle) {
+          final newTotal = prev + rounded;
+          tx.update(ref, {
+            'score': newTotal,
+            'userName': userName, // ← ここで保存！
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          finalUpdatedScore = newTotal; // 加算後の値をセット
+        } else if (isBetter(rounded, prev, isSmallerBetter)) {
+          tx.update(ref, {
+            'score': rounded,
+            'userName': userName, // ← ここで保存！
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          finalUpdatedScore = rounded; // 更新された値をセット
+        }
+      }
+    });
+    return finalUpdatedScore; // 更新されなかったら null が返る
   }
-}
 
-class CommonRankingManager {
-  static final _firestore = FirebaseFirestore.instance;
-
-  /// period: "all" | "monthly" | "weekly"
-  static Future<List<Map<String, dynamic>>> getRanking(
-    String quizId,
-    String period, {
-    required String rankingtype,
-    required bool isDescending,
+  static Future<List<Map<String, dynamic>>> getRanking({
+    required BuildContext context,
+    required String rankingId,
+    required bool isSmallerBetter,
   }) async {
-    final now = DateTime.now();
-
-    Query q = _firestore
-        .collection('rankings_v2')
-        .where('rankingType', isEqualTo: rankingtype)
-        .where('quizId', isEqualTo: quizId)
-        .where('period', isEqualTo: period)
-        .where('year', isEqualTo: now.year);
-
-    if (period == 'monthly') {
-      q = q.where('month', isEqualTo: now.month);
-    }
-    if (period == 'weekly') {
-      q = q.where('week', isEqualTo: getWeekNumber(now));
-    }
-
-    final snap =
-        await q.orderBy('score', descending: isDescending).limit(50).get();
+    final snap = await FirebaseFirestore.instance
+        .collection('rankings_v5')
+        .doc(rankingId)
+        .collection('users')
+        .orderBy('score', descending: !isSmallerBetter)
+        .limit(30)
+        .get();
 
     return snap.docs.map((d) {
-      final data = d.data() as Map<String, dynamic>;
+      final data = d.data();
       return {
-        'userName': data['userName'],
         'score': (data['score'] as num).toDouble(),
+        'userName': data['userName'] ?? l10n(context, 'defaultUsername'),
         'date': (data['updatedAt'] as Timestamp?)?.toDate(),
       };
     }).toList();
   }
 
-  static Future<int> getMyRank(
-    String quizId,
-    String period,
-    num myScore,
-    String quiztype, {
-    required bool isDescending,
+  static Future<List<int>> getMyRank({
+    required String resisterOrigin, // ← periodを含まない部分
+    required String modeType,
+    required num myScore,
+    required bool isSmallerBetter,
   }) async {
-    if (myScore <= 0) return 0;
+    if (myScore <= 0) return [0, 0, 0];
 
-    final now = DateTime.now();
+    final periods = buildPeriod();
+    // ['all', '2026_m02', '2026_w08'] みたいな形
 
-    Query q = _firestore
-        .collection('rankings_v2')
-        .where('rankingType', isEqualTo: quiztype)
-        .where('quizId', isEqualTo: quizId)
-        .where('period', isEqualTo: period)
-        .where('year', isEqualTo: now.year);
+    final List<int> ranks = [];
 
-    if (period == 'monthly') q = q.where('month', isEqualTo: now.month);
-    if (period == 'weekly') q = q.where('week', isEqualTo: getWeekNumber(now));
+    for (final period in periods) {
+      final rankingId = "${resisterOrigin}_${modeType}_$period";
 
-    try {
-      final snap = isDescending
-          ? await q.where('score', isGreaterThan: myScore).count().get()
-          : await q.where('score', isLessThan: myScore).count().get();
+      final q = FirebaseFirestore.instance
+          .collection('rankings_v5')
+          .doc(rankingId)
+          .collection('users');
 
-      print(
-          "Query executed. Count of entries matching condition: ${snap.count ?? 0}");
-      final rank = (snap.count ?? 0) + 1;
-      print("Calculated rank: $rank");
-      return rank;
-    } catch (e, st) {
-      print("Error during Firestore query: $e");
-      print(st);
-      return 0;
+      final snap = isSmallerBetter
+          ? await q.where('score', isLessThan: myScore).count().get()
+          : await q.where('score', isGreaterThan: myScore).count().get();
+
+      ranks.add((snap.count ?? 0) + 1);
     }
+
+    return ranks;
+    // [allRank, monthlyRank, weeklyRank]
   }
 }

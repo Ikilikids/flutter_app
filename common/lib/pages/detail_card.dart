@@ -1,99 +1,96 @@
 import 'package:common/common.dart';
-import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class CommonDetailCard extends ConsumerStatefulWidget {
+// 新しいプロバイダーをインポート
+import '../freezed/app_data.dart';
+import '../freezed/ui_config.dart';
+import '../providers/ui_provider.dart';
+
+class CommonDetailCard extends ConsumerWidget {
   const CommonDetailCard({super.key});
 
   @override
-  ConsumerState<CommonDetailCard> createState() => _CommonDetailCardState();
-}
-
-class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
-  // ★ _highScores は不要になったので削除！
-  bool _loading = true;
-  bool _isNavigating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeScreen();
-  }
-
-  Future<void> _initializeScreen() async {
-    // 読み込み（ボタンテキストもハイスコアも全部 Provider で完結）
-    await ref.read(appMidConfigProvider.notifier).loadMid();
-
-    final mid = ref.read(appMidConfigProvider).mid;
-    if (mid.islimited) RewardedAdManager.loadAd();
-
-    if (mounted) setState(() => _loading = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final midConfig = ref.watch(appMidConfigProvider);
-
-    ref.listen<DetailConfig>(appDetailConfigProvider, (prev, next) {
-      if (_isNavigating) {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const CommonCountdownScreen())).then((_) {
-          if (mounted) setState(() => _isNavigating = false);
-        });
-      }
-    });
-
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 現在のモードの合体済みパックを監視
+    final midConfig = ref.watch(currentMidConfigProvider);
+    if (midConfig.details.isEmpty) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              Text(AppLocalizations.of(context)!.loadingProblem),
+            ],
+          ),
+        ),
+      );
+    }
     return AppAdScaffold(
-      appBar: AppBar(title: Text(l10n(context, midConfig.mid.modeTitle))),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: midConfig.mid.detail.length,
-              itemBuilder: (context, index) {
-                final detail = midConfig.mid.detail[index];
-                return SizedBox(
-                  height: 200,
-                  child: _CommonSubjectCard(
-                    detail: detail,
-                    score: detail.highScore.toDouble(),
-                    isLimitedMode: midConfig.mid.islimited,
-                    isbattle: midConfig.mid.isbattle,
-                    isNavigating: _isNavigating,
-                    onPlay: (qcount) =>
-                        _handlePlay(detail, midConfig.mid.modeData, qcount),
-                    onWatchAd: () => _handleWatchAd(detail.resisterUser),
-                    fix: midConfig.mid.fix,
-                    unit: midConfig.mid.unit,
-                    title: allData.appTitle,
-                  ),
-                );
-              },
+      appBar: AppBar(
+          title: Text(l10n(context, midConfig.modeData.modeTitle ?? ''))),
+      body: ListView.builder(
+        itemCount: midConfig.details.length,
+        itemBuilder: (context, index) {
+          final detailConfig = midConfig.details[index];
+
+          return SizedBox(
+            height: 200,
+            child: _CommonSubjectCard(
+              detailConfig: detailConfig,
+              // カード内部から Notifier を叩くためのコールバック
+              onPlay: (qcount) =>
+                  _handlePlay(context, ref, detailConfig, qcount),
+              onWatchAd: () =>
+                  _handleWatchAd(ref, detailConfig.detail.resisterOrigin),
             ),
+          );
+        },
+      ),
     );
   }
 
-  void _handlePlay(DetailData detail, ModeData modeData, int? qCount) async {
-    if (modeData.islimited) {
-      // プレイ開始時にカウントを増やす
-      await ref
-          .read(appMidConfigProvider.notifier)
-          .recordPlay(detail.resisterUser);
+  /// プレイ開始処理
+  void _handlePlay(BuildContext context, WidgetRef ref, DetailConfig config,
+      int? qcount) async {
+    final notifier = ref.read(userStatusNotifierProvider.notifier);
+
+    // このカードが持っている固有のIDとモードを抽出
+    final String resisterOrigin = config.detail.resisterOrigin;
+    final String modeType = config.modeData.modeType;
+
+    // 1. 選択状態を更新（これは画面表示用）
+    notifier.selectDetail(resisterOrigin);
+
+    // 2. 問題数を更新（IDとモードを指名して叩く）
+    if (qcount != null) {
+      notifier.updateQcount(resisterOrigin, modeType, qcount);
     }
-    setState(() => _isNavigating = true);
-    ref
-        .read(appDetailConfigProvider.notifier)
-        .selectDetail(detail, modeData, qCount);
+
+    // 3. 限定モードならプレイ記録をつける（IDを指名して叩く）
+    if (config.modeData.islimited) {
+      await notifier.recordPlay(resisterOrigin);
+    }
+
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CommonCountdownScreen()),
+      );
+    }
   }
 
-  void _handleWatchAd(String userLabel) {
+  /// 広告視聴処理
+  void _handleWatchAd(WidgetRef ref, String resisterOrigin) {
     if (RewardedAdManager.isAdReady) {
       RewardedAdManager.showAd(onReward: () async {
-        // ここで報酬付与。Provider内の日付判定と一致させる
-        await ref.read(appMidConfigProvider.notifier).grantReward(userLabel);
+        // ★ ここ！「今押されたカードのID」を直接渡す
+        await ref
+            .read(userStatusNotifierProvider.notifier)
+            .grantReward(resisterOrigin);
       });
     } else {
       RewardedAdManager.loadAd();
@@ -102,32 +99,21 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
 }
 
 class _CommonSubjectCard extends StatelessWidget {
-  final DetailData detail;
-  final double score;
-  final bool isLimitedMode;
-  final bool isbattle;
-  final bool isNavigating;
+  final DetailConfig detailConfig;
   final void Function(int? qcount) onPlay;
   final VoidCallback onWatchAd;
-  final int fix;
-  final String unit;
-  final String title;
 
   const _CommonSubjectCard({
-    required this.detail,
-    required this.score,
-    required this.isLimitedMode,
-    required this.isbattle,
-    required this.isNavigating,
+    required this.detailConfig,
     required this.onPlay,
     required this.onWatchAd,
-    required this.fix,
-    required this.unit,
-    required this.title,
   });
 
   @override
   Widget build(BuildContext context) {
+    final detail = detailConfig.detail;
+    final mode = detailConfig.modeData;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       child: Container(
@@ -149,8 +135,9 @@ class _CommonSubjectCard extends StatelessWidget {
               flex: 4,
               child: Row(
                 children: [
-                  _buildCircleIcon(context),
-                  _buildCardTitle(context, title),
+                  _buildCircleIcon(context, detail, mode.islimited),
+                  _buildCardTitle(
+                      context, detail, detailConfig.appData.appTitle),
                 ],
               ),
             ),
@@ -158,11 +145,11 @@ class _CommonSubjectCard extends StatelessWidget {
               flex: 2,
               child: Row(
                 children: [
-                  _buildScoreDisplay(context),
-                  if (isbattle) _buildPlayButton(context),
-                  if (!isbattle) ...[
-                    _buildPlayButton(context, qcount: 5),
-                    _buildPlayButton(context, qcount: 10),
+                  _buildScoreDisplay(context, detail, mode.unit, mode.fix),
+                  if (mode.isbattle) _buildPlayButton(context, detail),
+                  if (!mode.isbattle) ...[
+                    _buildPlayButton(context, detail, qcount: 5),
+                    _buildPlayButton(context, detail, qcount: 10),
                   ],
                 ],
               ),
@@ -173,19 +160,21 @@ class _CommonSubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCircleIcon(BuildContext context) {
+  Widget _buildCircleIcon(
+      BuildContext context, DetailData detail, bool isLimited) {
     return Expanded(
       flex: 1,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return buildCircleWidget(detail.circleColor.split(''), context,
-              constraints.maxHeight, detail.method, isLimitedMode);
+              constraints.maxHeight, detail.method, isLimited);
         },
       ),
     );
   }
 
-  Widget _buildCardTitle(BuildContext context, String appTitle) {
+  Widget _buildCardTitle(
+      BuildContext context, DetailData detail, String appTitle) {
     return Expanded(
       flex: 5,
       child: Padding(
@@ -207,10 +196,9 @@ class _CommonSubjectCard extends StatelessWidget {
               flex: 3,
               child: FittedBox(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  "-${l10n(context, detail.method)}-",
-                  style: TextStyle(fontSize: 100, color: textColor2(context)),
-                ),
+                child: Text("-${l10n(context, detail.method)}-",
+                    style:
+                        TextStyle(fontSize: 100, color: textColor2(context))),
               ),
             ),
             Expanded(
@@ -242,7 +230,9 @@ class _CommonSubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreDisplay(BuildContext context) {
+  Widget _buildScoreDisplay(
+      BuildContext context, DetailData detail, String unit, int fix) {
+    final score = detailConfig.highScore;
     return Expanded(
       child: FittedBox(
         child: Row(
@@ -276,22 +266,19 @@ class _CommonSubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlayButton(BuildContext context, {int? qcount}) {
-    final btnKey = detail.buttonText; // Providerが決めたキーを取得
+  Widget _buildPlayButton(BuildContext context, DetailData detail,
+      {int? qcount}) {
+    final btnKey = detailConfig.buttonText;
 
-    // 表示テキスト
     String buttonText = (qcount != null && btnKey == 'playButton')
         ? AppLocalizations.of(context)!.playButtonWithCount(qcount)
         : l10n(context, btnKey);
 
-    // ボタンの挙動
     VoidCallback? onPressed;
-    if (!isNavigating) {
-      if (btnKey == 'watchAdToPlayButton') {
-        onPressed = () => _showAdDialog(context);
-      } else if (btnKey != 'playedTodayButton') {
-        onPressed = () => onPlay(qcount);
-      }
+    if (btnKey == 'watchAdToPlayButton') {
+      onPressed = () => _showAdDialog(context);
+    } else if (btnKey != 'playedTodayButton') {
+      onPressed = () => onPlay(qcount);
     }
 
     return Expanded(

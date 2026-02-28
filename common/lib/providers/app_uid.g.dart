@@ -6,7 +6,7 @@ part of 'app_uid.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appUidHash() => r'251ef64a2298798a1113a943f34cce491d9050e0';
+String _$appUidHash() => r'3859255037b0fd41d49188bee22c5cc269fd424e';
 
 /// See also [AppUid].
 @ProviderFor(AppUid)

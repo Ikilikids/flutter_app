@@ -715,6 +715,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading problem, please wait a moment'**
   String get loadingProblem;
+
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Required'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please update to the latest version for a better experience.'**
+  String get updateRequiredMessage;
+
+  /// No description provided for @updateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Now'**
+  String get updateButton;
 }
 
 class _AppLocalizationsDelegate

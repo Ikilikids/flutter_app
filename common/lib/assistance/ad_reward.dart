@@ -1,7 +1,8 @@
-import 'package:common/common.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import '../freezed/app_data.dart';
 
 /// ===========================
 /// リワード広告（Widget 側変更不要）

@@ -2,43 +2,16 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class CommonModeSelectionPage extends ConsumerStatefulWidget {
+// 新しいプロバイダーをインポート
+import '../freezed/user_status.dart';
+
+class CommonModeSelectionPage extends ConsumerWidget {
   const CommonModeSelectionPage({super.key});
 
   @override
-  ConsumerState<CommonModeSelectionPage> createState() =>
-      _CommonModeSelectionPageState();
-}
-
-class _CommonModeSelectionPageState
-    extends ConsumerState<CommonModeSelectionPage> {
-  MidData? _navigationRequest;
-
-  @override
-  void initState() {
-    super.initState();
-    // 最初の読み込み
-    Future.microtask(() => ref.read(appMidConfigProvider.notifier).loadMid());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // 状態を監視（これが更新のトリガー）
-    final midState = ref.watch(appMidConfigProvider);
-
-    ref.listen<MidConfig>(appMidConfigProvider, (previous, next) {
-      if (_navigationRequest != null &&
-          next.mid.modeTitle == _navigationRequest!.modeTitle) {
-        _navigationRequest = null;
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CommonDetailCard()),
-        ).then((_) {
-          // 戻ってきたときに再ロードして、バッジを確実に書き換える
-          ref.read(appMidConfigProvider.notifier).loadMid();
-        });
-      }
-    });
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ユーザー状態（バッジテキストの反映に必要）
+    final statusAsync = ref.watch(userStatusNotifierProvider);
 
     return PopScope(
       canPop: false,
@@ -47,6 +20,7 @@ class _CommonModeSelectionPageState
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
+              // タイトルエリア
               Expanded(
                 flex: 1,
                 child: Padding(
@@ -64,51 +38,36 @@ class _CommonModeSelectionPageState
                   ),
                 ),
               ),
-              // 無制限モード
-              BigModeButton(
-                color: Colors.blue,
-                icon: allData.mid[0].modeIcon ?? Icons.all_inclusive,
-                title: l10n(context, allData.mid[0].modeTitle!),
-                sub1: l10n(context, allData.mid[0].sub1!),
-                sub2: l10n(context, allData.mid[0].sub2!),
-                onPressed: () => _navigate(0),
-                badge: allData.mid[0].modeData.badgeText.isNotEmpty
-                    ? LimitedModeBadge(
-                        text: l10n(context, allData.mid[0].modeData.badgeText))
-                    : null,
-              ),
-              // 1日限定モード
-              BigModeButton(
-                color: Colors.red,
-                icon: allData.mid[1].modeIcon ?? Icons.timer,
-                title: l10n(context, allData.mid[1].modeTitle!),
-                sub1: l10n(context, allData.mid[1].sub1!),
-                sub2: l10n(context, allData.mid[1].sub2!),
-                onPressed: () => _navigate(1),
-                // ↓ ここを allData.mid[1] ではなく、最新の状態を反映させる
-                badge: allData.mid[1].modeData.badgeText.isNotEmpty
-                    ? LimitedModeBadge(
-                        text: l10n(context, allData.mid[1].modeData.badgeText))
-                    : null,
-              ),
+
+              // 無制限モード (allData.mid[0])
+              _buildModeButton(context, ref, statusAsync,
+                  index: 0, color: Colors.blue),
+
+              // 1日限定モード (allData.mid[1])
+              _buildModeButton(context, ref, statusAsync,
+                  index: 1, color: Colors.red),
+
+              // 設定・ランキング
               Expanded(
                 flex: 1,
                 child: Row(
                   children: [
                     _smallButton(
-                        context,
-                        Colors.grey,
-                        l10n(context, 'settingsButton'),
-                        () => Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => SettingsPage()))),
+                      context,
+                      Colors.grey,
+                      l10n(context, 'settingsButton'),
+                      () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => SettingsPage())),
+                    ),
                     _smallButton(
-                        context,
-                        Colors.orange,
-                        l10n(context, 'rankingButton'),
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => CommonRankingPage()))),
+                      context,
+                      Colors.orange,
+                      l10n(context, 'rankingButton'),
+                      () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => CommonRankingPage())),
+                    ),
                   ],
                 ),
               ),
@@ -119,9 +78,46 @@ class _CommonModeSelectionPageState
     );
   }
 
-  void _navigate(int index) {
-    _navigationRequest = allData.mid[index];
-    ref.read(appMidConfigProvider.notifier).selectMid(allData.mid[index]);
+  /// 各モードボタンのビルド
+  Widget _buildModeButton(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<UserStatus> statusAsync, {
+    required int index,
+    required Color color,
+  }) {
+    final midData = allData.mid[index];
+
+    // 非同期データからバッジテキストを安全に取得
+    final badgeText = statusAsync.maybeWhen(
+      data: (s) =>
+          s.modes.firstWhere((m) => m.modeType == midData.modeType).badgeText,
+      orElse: () => '',
+    );
+
+    return BigModeButton(
+      color: color,
+      icon: midData.modeData.modeIcon ??
+          (index == 0 ? Icons.all_inclusive : Icons.timer),
+      title: l10n(context, midData.modeData.modeTitle ?? ''),
+      sub1: l10n(context, midData.modeData.sub1 ?? ''),
+      sub2: l10n(context, midData.modeData.sub2 ?? ''),
+      onPressed: () {
+        // 1. Notifier に対して「今はこのモードだよ」と通知
+        ref
+            .read(userStatusNotifierProvider.notifier)
+            .selectMode(midData.modeType);
+
+        // 2. そのまま画面遷移（listenを待つ必要はない）
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CommonDetailCard()),
+        );
+      },
+      badge: badgeText.isNotEmpty
+          ? LimitedModeBadge(text: l10n(context, badgeText))
+          : null,
+    );
   }
 
   static Widget _smallButton(
@@ -135,14 +131,11 @@ class _CommonModeSelectionPageState
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              side: BorderSide(
-                color: color, // 枠線の色
-                width: 3, // 枠線の太さ
-              ),
+              side: BorderSide(color: color, width: 3),
             ),
             child: FittedBox(
-                child:
-                    Text(text, style: TextStyle(color: color, fontSize: 100))),
+              child: Text(text, style: TextStyle(color: color, fontSize: 100)),
+            ),
           ),
         ),
       ),
@@ -150,7 +143,8 @@ class _CommonModeSelectionPageState
   }
 }
 
-// ... The rest of the file (BigModeButton, LimitedModeBadge, etc.) remains unchanged ...
+// --- BigModeButton / LimitedModeBadge 等の UI 部品はそのまま ---
+
 class BigModeButton extends StatelessWidget {
   const BigModeButton({
     super.key,
@@ -184,64 +178,36 @@ class BigModeButton extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onPressed,
                 style: ElevatedButton.styleFrom(
-                  side: BorderSide(
-                    color: color, // 枠線の色
-                    width: 3, // 枠線の太さ
-                  ),
+                  side: BorderSide(color: color, width: 3),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                      borderRadius: BorderRadius.circular(15)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [
                       Expanded(
-                        flex: 2,
-                        child: FittedBox(
-                          child: Icon(icon, color: color),
-                        ),
-                      ),
+                          flex: 2,
+                          child: FittedBox(child: Icon(icon, color: color))),
                       Expanded(
-                        flex: 2,
-                        child: FittedBox(
-                          child: Text(
-                            title,
-                            style: TextStyle(color: color),
-                          ),
-                        ),
-                      ),
+                          flex: 2,
+                          child: FittedBox(
+                              child:
+                                  Text(title, style: TextStyle(color: color)))),
                       Expanded(
-                        child: FittedBox(
-                          child: Text(
-                            sub1,
-                            style: TextStyle(
-                              color: color,
-                            ),
-                          ),
-                        ),
-                      ),
+                          child: FittedBox(
+                              child:
+                                  Text(sub1, style: TextStyle(color: color)))),
                       Expanded(
-                        child: FittedBox(
-                          child: Text(
-                            sub2,
-                            style: TextStyle(
-                              color: color,
-                            ),
-                          ),
-                        ),
-                      ),
+                          child: FittedBox(
+                              child:
+                                  Text(sub2, style: TextStyle(color: color)))),
                     ],
                   ),
                 ),
               ),
             ),
-            if (badge != null)
-              Positioned(
-                top: -20,
-                right: -10,
-                child: badge!,
-              ),
+            if (badge != null) Positioned(top: -20, right: -10, child: badge!),
           ],
         ),
       ),
@@ -250,19 +216,15 @@ class BigModeButton extends StatelessWidget {
 }
 
 class LimitedModeBadge extends StatelessWidget {
-  final String text; // 表示するテキストを受け取る
-
+  final String text;
   const LimitedModeBadge({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    // アニメーションを使いたい場合は以前のまま StatefulWidget でも良いですが、
-    // ロジック（_loadStatus）はすべて削除して、渡された text を出すだけにします。
     return _AnimatedBadge(text: text);
   }
 }
 
-// アニメーション部分だけを分離してスッキリさせます
 class _AnimatedBadge extends StatefulWidget {
   final String text;
   const _AnimatedBadge({required this.text});
@@ -304,12 +266,11 @@ class _AnimatedBadgeState extends State<_AnimatedBadge>
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
           child: Text(
-            widget.text, // 渡されたテキストを表示
+            widget.text,
             style: const TextStyle(
-              color: Colors.orange,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+                fontSize: 15),
           ),
         ),
       ),

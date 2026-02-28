@@ -4,7 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class Bootstrap extends StatefulWidget {
+import 'freezed/app_data.dart';
+import 'providers/app_sound.dart';
+
+class Bootstrap extends ConsumerStatefulWidget {
   final AllData appConfig;
   final FirebaseOptions firebaseOptions;
 
@@ -15,70 +18,61 @@ class Bootstrap extends StatefulWidget {
   });
 
   @override
-  State<Bootstrap> createState() => _BootstrapState();
+  ConsumerState<Bootstrap> createState() => _BootstrapState();
 }
 
-class _BootstrapState extends State<Bootstrap> {
-  bool _isThemeLoaded = false;
+class _BootstrapState extends ConsumerState<Bootstrap> {
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    print('🟢 Bootstrap initState');
-    // ★ 起動時に注入
     allData = widget.appConfig;
-    _preloadThemeAndInit();
+    _initialize();
   }
 
-  Future<void> _preloadThemeAndInit() async {
-    print('① 初期化プロセス開始');
-
-    // 1. まず Firebase と 必須設定を確実に終わらせる
-    await _initBackground();
-
-    print('④ 全ての必須初期化が完了');
-
-    // 2. 終わってから初めてフラグを立てて再描画
-    if (mounted) {
-      setState(() {
-        _isThemeLoaded = true;
-      });
-    }
-  }
-
-  Future<void> _initBackground() async {
-    print('③ Background init start');
+  Future<void> _initialize() async {
+    // 最小限の初期化。Firebase.initializeApp() だけは
+    // インスタンスを確実に準備するためだけに行い、チェックは後回しにする。
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(options: widget.firebaseOptions);
     }
 
-    // Ads
+    // 他の初期化（広告やアップデートチェック）はバックグラウンドで開始 (待たない)
+    _initBackgroundServices();
+
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  void _initBackgroundServices() {
+    // バージョンチェックをバックグラウンドで開始
+    UpdateManager.checkUpdate();
+    final themeAsync = ref.read(appThemeProvider);
+    final localeAsync = ref.read(appLocaleProvider);
+    final uidAsync = ref.read(appUidProvider);
+    final soundAsync = ref.read(appSoundProvider);
+    final statusAsync = ref.read(userStatusNotifierProvider);
     if (!kIsWeb) {
       AdManager.initialize();
-
-      // Interstitial 設定 + 初期ロード
       InterstitialAdHelper.configure(widget.appConfig);
       InterstitialAdHelper.init();
-
-      // Rewarded 設定 + 初期ロード
       RewardedAdManager.configure(widget.appConfig);
       RewardedAdManager.loadAd();
     }
-    print('④ Background init end');
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🔴 重要：初期化が終わるまでは絶対 ProviderScope を出さない
-    if (!_isThemeLoaded) {
+    // 最小限の初期化が終わるまで待つ (この間はプラットフォームの背景色を表示)
+    if (!_isInitialized) {
       final brightness =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
       return MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
           backgroundColor:
               brightness == Brightness.dark ? Colors.black : Colors.white,
@@ -87,11 +81,8 @@ class _BootstrapState extends State<Bootstrap> {
       );
     }
 
-    // 初期化完了後のみ Riverpod / Provider を開始する
-    return ProviderScope(
-      child: CommonApp(
-        home: CommonFirstPage(),
-      ),
+    return CommonApp(
+      home: const CommonFirstPage(),
     );
   }
 }

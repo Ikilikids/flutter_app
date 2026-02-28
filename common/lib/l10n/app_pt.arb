@@ -101,5 +101,8 @@
     "detailSetting": "Configuração detalhada",
     "soundSectionTitle": "Som",
     "volumeLabel": "Volume",
-    "loadingProblem": "Carregando problema, por favor aguarde um momento"
+    "loadingProblem": "Carregando problema, por favor aguarde um momento",
+    "updateRequiredTitle": "Atualização Necessária",
+    "updateRequiredMessage": "Atualize para a versão mais recente para uma melhor experiência.",
+    "updateButton": "Atualizar Agora"
 }

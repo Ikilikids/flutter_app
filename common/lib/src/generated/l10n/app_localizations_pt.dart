@@ -327,4 +327,14 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get loadingProblem =>
       'Carregando problema, por favor aguarde um momento';
+
+  @override
+  String get updateRequiredTitle => 'Atualização Necessária';
+
+  @override
+  String get updateRequiredMessage =>
+      'Atualize para a versão mais recente para uma melhor experiência.';
+
+  @override
+  String get updateButton => 'Atualizar Agora';
 }

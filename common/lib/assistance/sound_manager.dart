@@ -12,10 +12,20 @@ class SoundManager {
     );
   }
 
-  Future<void> loadSounds() async {
-    final soundFiles = <String>{
+  Future<void> firstLoadSounds() async {
+    final primarySoundFiles = <String>{
       'countdown1.mp3',
       'countdown2.mp3',
+    };
+    for (var file in primarySoundFiles) {
+      final data = await rootBundle.load('assets/sounds/$file');
+      final id = await _soundpool.load(data);
+      _soundIds[file] = id;
+    }
+  }
+
+  Future<void> secondloadSounds() async {
+    final secondSoundFiles = <String>{
       'marumaru.mp3',
       'maru.mp3',
       'peke.mp3',
@@ -25,9 +35,8 @@ class SoundManager {
       "pi.mp3",
       for (int i = 0; i <= 9; i++) '$i.mp3',
     };
-    for (var file in soundFiles) {
+    for (var file in secondSoundFiles) {
       final data = await rootBundle.load('assets/sounds/$file');
-
       final id = await _soundpool.load(data);
       _soundIds[file] = id;
     }

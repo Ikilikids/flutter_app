@@ -1,19 +1,20 @@
 import 'package:common/common.dart';
+import 'package:common/freezed/app_data.dart';
+import 'package:common/freezed/ui_config.dart';
 import 'package:flutter/material.dart';
-import 'package:math_quiz/assistance/quiz_download.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:math_quiz/math_quiz.dart';
-import 'package:math_quiz/providers/filtered_quiz_provider.dart';
-import 'package:provider/provider.dart';
 
 import 'assistance/formula.dart';
+import 'providers/quiz_data_provider.dart';
 
 final List<DetailData> gameDetails = subjects.map((s) {
   return DetailData(
     sort: s[0],
     displayLabel: s[2],
     displayRank: generateRankLabel(s[0]),
-    resisterRank: generateRankLabel(s[0]),
-    resisterUser: s[2],
+    resisterSub: generateRankLabel(s[0]),
+    resisterOrigin: s[2],
     method: s[1],
     description: s[3],
     color: s[0],
@@ -34,43 +35,42 @@ final _appConfig = AllData(
     appIcon: Icons.calculate,
     symbols: ["π", "√", "α", "β", "∫", "Σ", "→", "γ"],
     isRotation: false,
+    URL: "https://play.google.com/store/apps/details?id=jp.ponta.mathquiz",
     bannerId: "ca-app-pub-1440692612851416/6568630311",
     interId: "ca-app-pub-1440692612851416/7404533363",
-    loadGame: (BuildContext context, DetailConfig quizinfo) {
-      final quizProvider = context.watch<QuizProvider>();
-      final scoreIndexMap = quizProvider.scoreIndexMap;
+    loadGame: (BuildContext context, DetailConfig quizinfo) async {
+      final container = ProviderScope.containerOf(context);
 
-      // score が上のフラット Map
+      // 1. パース済みの全データを取得
+      final allDataValue = await container.read(quizDataProvider.future);
+      print("All Data: $allDataValue"); // デバッグ用ログ
+      // 2. フィルタリングロジックを実行
       final filtered = <int, List<PartData>>{};
-
-      scoreIndexMap.forEach((score, partList) {
+      allDataValue.forEach((score, partList) {
         final newList = partList.where((part) {
           if (!quizinfo.modeData.isbattle) {
-            // 非battle: field で絞る
             return part.field == quizinfo.detail.displayLabel;
           } else {
-            // battle: subject sort リストで絞る
             return quizinfo.detail.sort.contains(part.subject);
           }
         }).toList();
 
-        if (newList.isNotEmpty) {
-          filtered[score] = newList;
-        }
+        if (newList.isNotEmpty) filtered[score] = newList;
       });
-
-      // フィルタ済みリストを Provider にセット
-      Provider.of<FilteredQuizProvider>(context, listen: false)
-          .setFilteredListByScore(filtered);
+      print("Filtered Data: $filtered"); // デバッグ用ログ
+      // 3. Riverpod の状態を更新
+      container.read(activeGameMapProvider.notifier).update(filtered);
     },
     mainGame: (BuildContext context, DetailConfig quizinfo) {
-      final filteredList =
-          Provider.of<FilteredQuizProvider>(context, listen: false)
-              .filteredListByScore;
-      return Quizscreen(
-        quizinfo: quizinfo,
-        filteredMap: filteredList,
-      );
+      // 4. Consumer で activeGameMap を watch して Quizscreen に渡す
+      return Consumer(builder: (context, ref, child) {
+        final filteredMap = ref.watch(activeGameMapProvider);
+        print("Filtered Map: $filteredMap"); // デバッグ用ログ
+        return Quizscreen(
+          quizinfo: quizinfo,
+          filteredMap: filteredMap,
+        );
+      });
     },
     endBuilder: (context, totalScore, originalData, quizinfo) => NtEndScreen(
       correctCount: totalScore.round(),
@@ -86,12 +86,12 @@ final _appConfig = AllData(
         fix: 0,
         islimited: false,
         isbattle: false,
-        ranking: "t",
+        modeType: "t",
         modeIcon: Icons.school,
         modeTitle: "学習モード",
         sub1: "分野別に学習しよう！",
         sub2: "数Ⅰ～数Cまで対応！",
-        isDescending: true,
+        isSmallerBetter: false,
       ),
       detail: gameDetails,
     ),
@@ -102,19 +102,19 @@ final _appConfig = AllData(
         islimited: false,
         isbattle: true,
         modeIcon: Icons.local_fire_department,
-        ranking: "g",
+        modeType: "g",
         modeTitle: "実践モード",
         sub1: "時間制限あり(教科別)です",
         sub2: "ハイスコアを目指そう!!",
-        isDescending: true,
+        isSmallerBetter: false,
       ),
       detail: [
         DetailData(
           sort: "1A",
           displayLabel: "数Ⅰ・数A",
           displayRank: "数Ⅰ・数A",
-          resisterRank: "数Ⅰ・数A",
-          resisterUser: "数Ⅰ・数A",
+          resisterSub: "数Ⅰ・数A",
+          resisterOrigin: "数Ⅰ・数A",
           method: "数I・数Aの全範囲(因数分解, 三角比, 確率など)",
           description: "高1向け! 60秒での点数で競おう!!",
           color: "A",
@@ -124,8 +124,8 @@ final _appConfig = AllData(
           sort: "2B",
           displayLabel: "数Ⅱ・数B",
           displayRank: "数Ⅱ・数B",
-          resisterRank: "数Ⅱ・数B",
-          resisterUser: "数Ⅱ・数B",
+          resisterSub: "数Ⅱ・数B",
+          resisterOrigin: "数Ⅱ・数B",
           method: "数Ⅱ・数Bの全範囲(対数, 積分, 統計など)",
           description: "高2向け! 60秒での点数で競おう!!",
           color: "B",
@@ -135,8 +135,8 @@ final _appConfig = AllData(
           sort: "3C",
           displayLabel: "数Ⅲ・数C",
           displayRank: "数Ⅲ・数C",
-          resisterRank: "数Ⅲ・数C",
-          resisterUser: "数Ⅲ・数C",
+          resisterSub: "数Ⅲ・数C",
+          resisterOrigin: "数Ⅲ・数C",
           method: "数Ⅲ・数Cの全範囲(極限, 二次曲線, ベクトルなど)",
           description: "理系向け! 60秒での点数で競おう!!",
           color: "C",
@@ -153,16 +153,7 @@ Future<void> main() async {
   final options = DefaultFirebaseOptions.currentPlatform;
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          lazy: false,
-          create: (_) => QuizProvider()..initAll(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => FilteredQuizProvider(),
-        ),
-      ],
+    ProviderScope(
       child: Bootstrap(appConfig: _appConfig, firebaseOptions: options),
     ),
   );

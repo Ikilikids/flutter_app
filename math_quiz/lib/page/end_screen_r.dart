@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:common/common.dart';
+import 'package:common/freezed/ui_config.dart';
 import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';

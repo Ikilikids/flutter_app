@@ -203,6 +203,12 @@ String l10n(BuildContext context, String key) {
       return localizations.detailSetting;
     case 'adLoadingSnackbar':
       return localizations.adLoadingSnackbar;
+    case "updateRequiredMessage":
+      return localizations.updateRequiredMessage;
+    case 'updateRequiredTitle':
+      return localizations.updateRequiredTitle;
+    case 'updateButton':
+      return localizations.updateButton;
 
     default:
       return key;

@@ -1,5 +1,4 @@
 import 'package:common/common.dart';
-import 'package:common/src/generated/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -80,9 +79,9 @@ class _CommonRankingPageState extends State<CommonRankingPage>
   }
 
   String _periodToV2(String period) {
-    if (period == l10n(context, 'allPeriod')) return 'all';
-    if (period == l10n(context, 'monthlyPeriod')) return 'monthly';
-    if (period == l10n(context, 'weeklyPeriod')) return 'weekly';
+    if (period == l10n(context, 'allPeriod')) return buildPeriod()[0];
+    if (period == l10n(context, 'monthlyPeriod')) return buildPeriod()[1];
+    if (period == l10n(context, 'weeklyPeriod')) return buildPeriod()[2];
     return 'all';
   }
 
@@ -92,12 +91,13 @@ class _CommonRankingPageState extends State<CommonRankingPage>
 
     final key = selectedSubjectId; // Use the ID for fetching
     final periodV2 = _periodToV2(selectedPeriod);
-
-    final data = await CommonRankingManager.getRanking(
-      key, // Pass the Japanese ID
-      periodV2,
-      rankingtype: allData.mid[selectedModeIndex].ranking,
-      isDescending: allData.mid[selectedModeIndex].isDescending,
+    final modeType = allData.mid[selectedModeIndex].modeData.modeType;
+    final key2 =
+        "${key}_${modeType}_${periodV2}"; // Combine subject ID and mode type for unique key
+    final data = await ScoreManager.getRanking(
+      context: context,
+      rankingId: key2,
+      isSmallerBetter: allData.mid[selectedModeIndex].isSmallerBetter,
     );
 
     if (!mounted) return;
@@ -108,7 +108,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
               e['userName'] ?? l10n(context, 'defaultUsername'),
               (e['score'] as num).toDouble(),
               (e['date'] ?? DateTime.now()) as DateTime,
-              allData.mid[selectedModeIndex].ranking,
+              allData.mid[selectedModeIndex].modeType,
             ))
         .toList();
 
@@ -126,9 +126,9 @@ class _CommonRankingPageState extends State<CommonRankingPage>
 
     if (!_areTabsInitialized) {
       quizTabs = gameData.detail
-          .where((d) => seen.add(d.resisterRank))
+          .where((d) => seen.add(d.resisterSub))
           .map((d) => QuizTabInfo(
-                id: d.resisterRank,
+                id: d.resisterSub,
                 display: l10n(context, d.displayRank),
               ))
           .toList();
@@ -154,7 +154,7 @@ class _CommonRankingPageState extends State<CommonRankingPage>
     }
 
     final color = gameData.detail
-            .where((d) => d.resisterRank == selectedSubjectId)
+            .where((d) => d.resisterSub == selectedSubjectId)
             .map((d) => d.color)
             .firstOrNull ??
         "9";
@@ -182,9 +182,18 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                           });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            selectedModeIndex == 0 ? Colors.blue : Colors.grey,
-                        foregroundColor: Colors.white,
+                        backgroundColor: selectedModeIndex == 0
+                            ? bgColor2(context)
+                            : Colors.grey,
+                        foregroundColor: selectedModeIndex == 0
+                            ? Colors.blue
+                            : bgColor1(context),
+                        side: selectedModeIndex == 0
+                            ? BorderSide(
+                                color: Colors.blue, // 枠線の色
+                                width: 3, // 枠線の太さ
+                              )
+                            : null,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                         minimumSize: const Size(double.infinity, 50),
@@ -204,9 +213,18 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                           });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            selectedModeIndex == 1 ? Colors.red : Colors.grey,
-                        foregroundColor: Colors.white,
+                        backgroundColor: selectedModeIndex == 1
+                            ? bgColor2(context)
+                            : Colors.grey,
+                        foregroundColor: selectedModeIndex == 1
+                            ? Colors.red
+                            : bgColor1(context),
+                        side: selectedModeIndex == 1
+                            ? BorderSide(
+                                color: Colors.red, // 枠線の色
+                                width: 3, // 枠線の太さ
+                              )
+                            : null,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                         minimumSize: const Size(double.infinity, 50),
@@ -265,24 +283,17 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                           itemCount: data.length,
                           itemBuilder: (context, index) {
                             final entry = data[index];
-                            final localizations = AppLocalizations.of(context)!;
-                            String rankText;
-                            if (index == 0)
-                              rankText = localizations.rank1st;
-                            else if (index == 1)
-                              rankText = localizations.rank2nd;
-                            else if (index == 2)
-                              rankText = localizations.rank3rd;
-                            else
-                              rankText = localizations.rankNth(index + 1);
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 6, horizontal: 10),
+                                  vertical: 8, horizontal: 10),
                               child: Container(
                                 height: 110,
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: tabColor.withAlpha(100),
+                                      width: 1.5),
                                   color: bgColor1(context),
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: const [
@@ -297,15 +308,34 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                                   children: [
                                     Expanded(
                                       flex: 20,
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          rankText,
-                                          style: TextStyle(
+                                      child: Container(
+                                        // 円の外側に少し余白が欲しい場合は margin を追加
+                                        margin: const EdgeInsets.all(8),
+                                        padding: const EdgeInsets.all(
+                                            8), // 円と文字の間の余白
+                                        decoration: BoxDecoration(
+                                          color: index == 0
+                                              ? Colors.amber
+                                              : index == 1
+                                                  ? Colors.grey
+                                                  : index == 2
+                                                      ? Colors.brown
+                                                      : Colors.grey
+                                                          .withAlpha(100),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            "${index + 1}",
+                                            style: TextStyle(
                                               fontSize: 100,
                                               fontWeight: FontWeight.bold,
-                                              color: textColor1(context)),
-                                          textAlign: TextAlign.center,
+                                              // 背景色に合わせて文字色を調整（例: 白色）
+                                              color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
                                       ),
                                     ),

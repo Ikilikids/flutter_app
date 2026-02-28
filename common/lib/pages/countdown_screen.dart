@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../providers/app_sound.dart';
+import '../providers/ui_provider.dart';
 
 class CommonCountdownScreen extends ConsumerStatefulWidget {
   const CommonCountdownScreen({super.key});
@@ -32,7 +33,7 @@ class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
     if (!mounted) return;
 
     final gameBuilder = allData.mainGame;
-    final quizData = ref.read(appDetailConfigProvider);
+    final quizData = ref.read(currentDetailConfigProvider);
     print(quizData.modeData.islimited);
     final loadBuilder = allData.loadGame;
 
@@ -60,7 +61,7 @@ class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final quizinfo = ref.watch(appDetailConfigProvider);
+    final quizinfo = ref.watch(currentDetailConfigProvider);
     Color color = getQuizColor2(quizinfo.detail.color, context, 1, 0.35, 0.95);
 
     return PopScope(

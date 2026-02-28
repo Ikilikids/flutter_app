@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../src/generated/l10n/app_localizations.dart';
-
 class SettingsPage extends HookConsumerWidget {
   const SettingsPage({super.key});
 
@@ -288,7 +286,7 @@ Future<void> _loadUserName({
   final uid = FirebaseAuth.instance.currentUser?.uid ?? "guest";
 
   final doc =
-      await FirebaseFirestore.instance.collection("users").doc(uid).get();
+      await FirebaseFirestore.instance.collection("users2").doc(uid).get();
 
   if (doc.exists && doc.data()?["userName"] != null) {
     currentUserName.value = doc["userName"];
@@ -316,13 +314,13 @@ Future<void> _saveUserName(
 
   final rankLabels = allData.mid
       .expand((g) => g.detail)
-      .map((d) => d.resisterRank)
+      .map((d) => d.resisterSub)
       .toSet()
       .toList();
 
   rankLabels.add("全合計");
 
-  await FirebaseFirestore.instance.collection("users").doc(uid).set({
+  await FirebaseFirestore.instance.collection("users2").doc(uid).set({
     "userName": newName,
     "updatedAt": FieldValue.serverTimestamp(),
   }, SetOptions(merge: true));
@@ -353,40 +351,35 @@ Future<void> _saveUserName(
 Future<void> _updateRankingsAfterNameChange(
   String uid,
   String newName,
-  List<String> rankLabels,
+  List<String> rankLabels, // resisterTypes (展開, 因数分解など)
 ) async {
   final firestore = FirebaseFirestore.instance;
+  final batch = firestore.batch();
 
-  final periods = ['all', 'monthly', 'weekly'];
+  // 現在の全期間 (all, yyyy_mXX, yyyy_wXX) を取得
+  final periods = buildPeriod();
 
-  for (var quizId in rankLabels) {
-    for (var period in periods) {
-      Query q = firestore
-          .collection("rankings_v2")
-          .where(
-            "quizId",
-            isEqualTo: quizId,
-          )
-          .where("uid", isEqualTo: uid)
-          .where("period", isEqualTo: period);
+  // あなたのアプリで使用しているmodeTypeのリスト
+  // (例: 't', 'g' または通常モードなど。もし固定なら直接書く)
+  final modeTypes = ['t', 'g'];
 
-      final now = DateTime.now();
+  for (var rType in rankLabels) {
+    for (var mType in modeTypes) {
+      for (var period in periods) {
+        final rankingId = "${rType}_${mType}_$period";
 
-      if (period == 'monthly') {
-        q = q
-            .where("year", isEqualTo: now.year)
-            .where("month", isEqualTo: now.month);
-      } else if (period == 'weekly') {
-        q = q
-            .where("year", isEqualTo: now.year)
-            .where("week", isEqualTo: getWeekNumber(now));
-      }
-
-      final snap = await q.get();
-
-      for (var doc in snap.docs) {
-        await doc.reference.update({"userName": newName});
+        // v5のパス構造: rankings_v5 -> {rankingId} -> users -> {uid}
+        final docRef = firestore
+            .collection("rankings_v5")
+            .doc(rankingId)
+            .collection("users")
+            .doc(uid);
+        print(docRef.path);
+        // 注意: updateはドキュメントが存在しないとエラーになるため、
+        // 存在するかわからない場合は「set(merge: true)」を使うのが安全です。
+        batch.set(docRef, {"userName": newName}, SetOptions(merge: true));
       }
     }
   }
+  await batch.commit();
 }
