@@ -16,35 +16,37 @@ class ColorGame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => onTap(),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0), // ← const にできる
         child: Container(
           decoration: BoxDecoration(
             color: currentColor,
-            borderRadius: BorderRadius.circular(24), // ← ここ
+            borderRadius: BorderRadius.circular(24), // ← const にできる
           ),
           width: double.infinity,
           height: double.infinity,
-          child: Center(
-            child: Text(
-              isWaiting
-                  ? l10n(context, 'colorReactDesc')
-                  : l10n(context, 'colorGameTapNow'),
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 10.0,
-                    color: Colors.black,
-                    offset: Offset(2.0, 2.0),
+          child: isWaiting
+              ? Center(
+                  child: Text(
+                    l10n(context, 'colorReactDesc'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 8.0,
+                          color: Colors.black54,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                )
+              : const SizedBox.shrink(),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:common/common.dart';
 import 'package:common/freezed/ui_config.dart';
 import 'package:common/providers/app_sound.dart';
+import 'package:common/providers/ui_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,13 +16,11 @@ class NtEndScreen extends ConsumerStatefulWidget {
   final int correctCount;
   final List<MakingData> P;
   final List<String> marks;
-  final DetailConfig quizinfo;
   const NtEndScreen({
     super.key,
     required this.correctCount,
     required this.P,
     required this.marks,
-    required this.quizinfo,
   });
 
   @override
@@ -36,7 +35,7 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
   @override
   void initState() {
     super.initState();
-    _quizinfo = widget.quizinfo;
+    _quizinfo = ref.read(currentDetailConfigProvider);
     _startSequence();
   }
 

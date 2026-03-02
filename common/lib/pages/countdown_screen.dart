@@ -1,68 +1,62 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart'; // flutter_hooks をインポート
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../providers/app_sound.dart';
 import '../providers/ui_provider.dart';
 
-class CommonCountdownScreen extends ConsumerStatefulWidget {
+class CommonCountdownScreen extends HookConsumerWidget {
   const CommonCountdownScreen({super.key});
 
   @override
-  ConsumerState<CommonCountdownScreen> createState() =>
-      _CommonCountdownScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // useState でカウントダウンの状態を管理
+    final countdown = useState(2);
 
-class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
-  int _countdown = 3;
+    // クイズデータの取得
+    final quizData = ref.watch(currentDetailConfigProvider);
+    final color = getQuizColor2(quizData.detail.color, context, 1, 0.35, 0.95);
 
-  bool _initialized = false;
+    // useEffect を使って初期化処理を行う（マウント時に1回だけ実行）
+    useEffect(() {
+      final gameBuilder = allData.mainGame;
+      final loadBuilder = allData.loadGame;
+      final sound = ref.read(appSoundProvider).requireValue;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      _initialized = true;
-      _startCountdown();
-    }
-  }
+      // ゲームのロード処理 (旧 _isLoadGameCalled の代わり)
+      if (loadBuilder != null) {
+        loadBuilder(context, ref, quizData);
+      }
 
-  bool _isLoadGameCalled = false;
+      // カウントダウンタイマーのロジック
+      Future<void> startTimer() async {
+        for (int i = 2; i >= 0; i--) {
+          if (!context.mounted) return;
 
-  void _startCountdown() {
-    if (!mounted) return;
+          countdown.value = i;
 
-    final gameBuilder = allData.mainGame;
-    final quizData = ref.read(currentDetailConfigProvider);
-    print(quizData.modeData.islimited);
-    final loadBuilder = allData.loadGame;
+          if (i == 2 || i == 1) {
+            sound.playSound('countdown1.mp3');
+            await Future.delayed(const Duration(seconds: 1));
+          } else {
+            sound.playSound('countdown2.mp3');
+            // 最後のカウントが終わったら画面遷移
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => gameBuilder(context, quizData),
+                ),
+              );
+            }
+          }
+        }
+      }
 
-    // ★ 1回だけ実行
-    if (!_isLoadGameCalled) {
-      loadBuilder?.call(context, quizData);
-      _isLoadGameCalled = true;
-    }
-
-    if (_countdown > 1) {
-      ref.read(appSoundProvider).requireValue.playSound('countdown1.mp3');
-      setState(() => _countdown--);
-      Future.delayed(const Duration(seconds: 1), _startCountdown);
-    } else {
-      ref.read(appSoundProvider).requireValue.playSound('countdown2.mp3');
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => gameBuilder(context, quizData),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final quizinfo = ref.watch(currentDetailConfigProvider);
-    Color color = getQuizColor2(quizinfo.detail.color, context, 1, 0.35, 0.95);
+      startTimer();
+      return null;
+    }, const []); // 第2引数を空にすることで初回のみ実行
 
     return PopScope(
       canPop: false,
@@ -70,7 +64,7 @@ class _CommonCountdownScreenState extends ConsumerState<CommonCountdownScreen> {
         advisible: false,
         body: Center(
           child: Text(
-            '$_countdown',
+            '${countdown.value}',
             style: TextStyle(
               fontSize: 200,
               fontWeight: FontWeight.bold,

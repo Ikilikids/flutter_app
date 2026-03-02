@@ -4,7 +4,6 @@ class GridGame extends StatelessWidget {
   final bool isWaiting;
   final bool isReadyToAct;
   final int activeGridIndex;
-  final int gridSize;
   final ValueChanged<int> onGridSelected;
 
   const GridGame({
@@ -12,9 +11,28 @@ class GridGame extends StatelessWidget {
     required this.isWaiting,
     required this.isReadyToAct,
     required this.activeGridIndex,
-    required this.gridSize,
     required this.onGridSelected,
   });
+
+  // --- 再描画時の再生成を完全に排除するための static const ---
+
+  static const _normalDecoration = BoxDecoration(
+    color: Color(0xFFc0c0c0), // Colors.grey[300]
+    borderRadius: BorderRadius.all(Radius.circular(12)),
+    border: Border.fromBorderSide(BorderSide(color: Colors.black12, width: 2)),
+  );
+
+  static const _activeDecoration = BoxDecoration(
+    color: Colors.orange,
+    borderRadius: BorderRadius.all(Radius.circular(12)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.orangeAccent,
+        blurRadius: 10,
+        spreadRadius: 2,
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -23,39 +41,30 @@ class GridGame extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: AspectRatio(
           aspectRatio: 1,
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: gridSize,
-              mainAxisSpacing: 5,
-              crossAxisSpacing: 5,
-            ),
-            itemCount: gridSize * gridSize,
-            itemBuilder: (context, index) {
-              final bool isActive = isReadyToAct && index == activeGridIndex;
-              return GestureDetector(
-                onTap: () => onGridSelected(index),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isActive ? Colors.orange : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.black12,
-                      width: isActive ? 0 : 2,
-                    ),
-                    boxShadow: isActive
-                        ? [
-                            const BoxShadow(
-                              color: Colors.orangeAccent,
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            )
-                          ]
-                        : [],
+          child: RepaintBoundary(
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              // 固定値 4 を直接指定（動的計算を排除）
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 5,
+                crossAxisSpacing: 5,
+              ),
+              itemCount: 16, // 4 * 4
+              itemBuilder: (context, index) {
+                // インデックスの比較のみ（最速の論理判定）
+                final bool isActive = isReadyToAct && index == activeGridIndex;
+
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (_) => onGridSelected(index),
+                  child: Container(
+                    decoration:
+                        isActive ? _activeDecoration : _normalDecoration,
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),

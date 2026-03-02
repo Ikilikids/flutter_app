@@ -1,133 +1,129 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../providers/ui_provider.dart';
 
-class PipiScreen extends ConsumerStatefulWidget {
+class PipiScreen extends HookConsumerWidget {
   final num totalScore;
   final dynamic originalData;
 
-  const PipiScreen({super.key, required this.totalScore, this.originalData});
+  const PipiScreen({
+    super.key,
+    required this.totalScore,
+    this.originalData,
+  });
 
   @override
-  ConsumerState<PipiScreen> createState() => _PipiScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 内部的な状態管理（画面遷移に使うデータ）
+    final highScore = useRef(0.0);
+    final myRank = useRef([0, 0, 0]);
 
-class _PipiScreenState extends ConsumerState<PipiScreen> {
-  double _highScore = 0.0;
-  List<int> myRank = [0, 0, 0];
-  late final String userName;
+    useEffect(() {
+      // データのロードと画面遷移のロジック
+      Future<void> loadAndNavigate() async {
+        final quizinfo = ref.read(currentDetailConfigProvider);
+        final endBuilder = allData.endBuilder;
+        final startTime = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDataWithDelay();
-  }
+        // 1. UIDとユーザー名の取得
+        final uid = await ref.read(appUidProvider.future);
+        final userName =
+            await ref.read(appUidProvider.notifier).loadUsername(uid);
 
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-        canPop: false,
-        child: Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  l10n(context, 'finishingText'),
-                  style: const TextStyle(
-                      fontSize: 32, fontWeight: FontWeight.bold),
+        try {
+          // 2. Firebase更新とランキング取得
+          await ScoreManager.updateAllScores(
+            score: totalScore.toDouble(),
+            resisterOrigin: quizinfo.detail.resisterOrigin,
+            resisterSub: quizinfo.detail.resisterSub,
+            modeType: quizinfo.modeData.modeType,
+            isBattle: quizinfo.modeData.isbattle,
+            isSmallerBetter: quizinfo.modeData.isSmallerBetter,
+            isLimitedMode: quizinfo.modeData.islimited,
+            fix: 100,
+            userName: userName,
+          );
+
+          highScore.value = await ScoreManager.getScore(
+            resisterOriginOrSub: quizinfo.detail.resisterOrigin,
+            modeType: quizinfo.modeData.modeType,
+          );
+
+          // ローカルのスコア更新
+          ref.read(userStatusNotifierProvider.notifier).updateScoreLocally(
+                quizinfo.detail.resisterOrigin,
+                quizinfo.modeData.modeType,
+                highScore.value,
+              );
+
+          myRank.value = await ScoreManager.getMyRank(
+            resisterOrigin: quizinfo.detail.resisterSub,
+            modeType: quizinfo.modeData.modeType,
+            myScore: totalScore.toDouble(),
+            isSmallerBetter: quizinfo.modeData.isSmallerBetter,
+          );
+        } catch (e) {
+          debugPrint('Error loading data: $e');
+        }
+
+        // 3. 演出のための最低待ち時間（2秒）を確保
+        final elapsed = DateTime.now().difference(startTime);
+        const minDuration = Duration(seconds: 2);
+        if (elapsed < minDuration) {
+          await Future.delayed(minDuration - elapsed);
+        }
+
+        if (!context.mounted) return;
+
+        // 4. 画面遷移
+        Navigator.pushReplacement(
+          context,
+          quizinfo.modeData.isbattle
+              ? MaterialPageRoute(
+                  builder: (_) => CommonEndScreen(
+                    totalScore: totalScore,
+                    highScore: highScore.value,
+                    rankAll: myRank.value[0],
+                    rankMonthly: myRank.value[1],
+                    rankWeekly: myRank.value[2],
+                  ),
+                )
+              : MaterialPageRoute(
+                  builder: (context) => endBuilder!(
+                    context,
+                    totalScore,
+                    originalData,
+                    quizinfo,
+                  ),
                 ),
-                const SizedBox(height: 20),
-                const CircularProgressIndicator(),
-              ],
-            ),
+        );
+      }
+
+      loadAndNavigate();
+      return null;
+    }, const []);
+
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                l10n(context, 'finishingText'),
+                style:
+                    const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(),
+            ],
           ),
-        ));
-  }
-
-  Future<void> _loadDataWithDelay() async {
-    final _quizinfo = ref.read(currentDetailConfigProvider);
-    final minDuration = const Duration(seconds: 2);
-    final maxDuration = const Duration(seconds: 5);
-    final EndBuilder = allData.endBuilder;
-    final startTime = DateTime.now();
-    final uid = await ref.read(appUidProvider.future);
-    userName = await ref.read(appUidProvider.notifier).loadUsername(uid);
-    print('UID: $uid');
-    print('ユーザー名: $userName');
-
-    try {
-      await _loadData();
-    } catch (_) {}
-
-    final elapsed = DateTime.now().difference(startTime);
-    final remaining = minDuration - elapsed;
-    if (remaining > Duration.zero) await Future.delayed(remaining);
-
-    final totalElapsed = DateTime.now().difference(startTime);
-    if (totalElapsed > maxDuration) if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      _quizinfo.modeData.isbattle
-          ? MaterialPageRoute(
-              builder: (_) => CommonEndScreen(
-                totalScore: widget.totalScore,
-                highScore: _highScore,
-                rankAll: myRank[0],
-                rankMonthly: myRank[1],
-                rankWeekly: myRank[2],
-              ),
-            )
-          : MaterialPageRoute(
-              builder: (context) => EndBuilder!(
-                context,
-                widget.totalScore,
-                widget.originalData,
-                _quizinfo,
-              ),
-            ),
+        ),
+      ),
     );
-  }
-
-  Future<void> _loadData() async {
-    final _quizinfo = ref.read(currentDetailConfigProvider);
-
-    // 1. Firebase更新を実行（戻り値として、更新された場合のみ新しいスコアが返る）
-    final double? updatedScore = await ScoreManager.updateAllScores(
-      score: widget.totalScore.toDouble(),
-      resisterOrigin: _quizinfo.detail.resisterOrigin,
-      resisterSub: _quizinfo.detail.resisterSub,
-      modeType: _quizinfo.modeData.modeType,
-      isBattle: _quizinfo.modeData.isbattle,
-      isSmallerBetter: _quizinfo.modeData.isSmallerBetter,
-      isLimitedMode: _quizinfo.modeData.islimited,
-      fix: 100,
-      userName: userName,
-    );
-
-    _highScore = await ScoreManager.getScore(
-      resisterOriginOrSub: _quizinfo.detail.resisterOrigin,
-      modeType: _quizinfo.modeData.modeType,
-    );
-    ref.read(userStatusNotifierProvider.notifier).updateScoreLocally(
-        _quizinfo.detail.resisterOrigin,
-        _quizinfo.modeData.modeType,
-        _highScore);
-
-    print("記録: $_highScore");
-
-    // 3. ランキングを取得（これは更新に関係なく常に最新を取る）
-    myRank = await ScoreManager.getMyRank(
-      resisterOrigin: _quizinfo.detail.resisterSub,
-      modeType: _quizinfo.modeData.modeType,
-      myScore: widget.totalScore.toDouble(),
-      isSmallerBetter: _quizinfo.modeData.isSmallerBetter,
-    );
-
-    if (!mounted) return;
-    setState(() {});
   }
 }

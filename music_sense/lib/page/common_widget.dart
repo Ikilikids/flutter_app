@@ -1,13 +1,10 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 
 /// Pを受け取ってウィジェットを返す関数
 Widget buildChildWidget(BuildContext context, Map<String, dynamic> P) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
-  // 図のとき
 
-  // else の時は今まで通り
   return Center(
     child: Container(
       width: double.infinity,
@@ -15,28 +12,24 @@ Widget buildChildWidget(BuildContext context, Map<String, dynamic> P) {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: isDark
-            ? getQuizColor2(P["fi1"], context, 0.8, 0.4, 0.65)
-            : getQuizColor2(P["fi1"], context, 0.6, 0.4, 0.95),
+            ? getQuizColor2(P["fi1"] ?? "1", context, 0.8, 0.4, 0.65)
+            : getQuizColor2(P["fi1"] ?? "1", context, 0.6, 0.4, 0.95),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (var key in [
-              "question1",
-              "question2",
-              "question3",
-              "question4"
-            ])
-              if ((P[key] ?? "").isNotEmpty) ...[
-                if (key != "question1") const SizedBox(height: 5),
-                Math.tex(
-                  P[key]!,
-                  textStyle:
-                      TextStyle(fontSize: 40, color: textColor1(context)),
+            if ((P["question1"] ?? "").isNotEmpty)
+              Text(
+                P["question1"]!,
+                style: TextStyle(
+                  fontSize: 40,
+                  color: textColor1(context),
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
+                textAlign: TextAlign.center,
+              ),
           ],
         ),
       ),

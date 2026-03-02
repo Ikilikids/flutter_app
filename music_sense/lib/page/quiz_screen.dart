@@ -2,17 +2,17 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:common/common.dart';
+import 'package:common/freezed/ui_config.dart';
+import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../assistance/latex_formatter.dart';
 import '../assistance/makingdata.dart';
 import '../page/common_widget.dart';
-import '../page/latex.dart';
 
-class Quizscreen extends StatefulWidget {
+class Quizscreen extends ConsumerStatefulWidget {
   final List<String> quizDirectives;
-  final QuizData quizinfo;
+  final DetailConfig quizinfo;
 
   const Quizscreen({
     super.key,
@@ -24,11 +24,10 @@ class Quizscreen extends StatefulWidget {
   QuizScreenState createState() => QuizScreenState();
 }
 
-class QuizScreenState extends State<Quizscreen> {
-  late QuizData quizinfo;
+class QuizScreenState extends ConsumerState<Quizscreen> {
+  late DetailConfig quizinfo;
   DateTime? startTime;
   Map<String, dynamic> P = {};
-  String? selectedAnswer;
   String result = '';
   bool isAnswerChecked = false;
   int correctCount = 0;
@@ -38,11 +37,10 @@ class QuizScreenState extends State<Quizscreen> {
   double elapsedTime = 0.0;
   int count = 20;
 
-  late SoundManager soundManager;
-  final GlobalKey<LatexInputScreenState> _latexInputKey =
-      GlobalKey<LatexInputScreenState>();
   bool _initialized = false;
   bool _isQuestionReady = false;
+
+  String currentSpelling = "";
 
   @override
   void initState() {
@@ -54,13 +52,12 @@ class QuizScreenState extends State<Quizscreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      soundManager = Provider.of<SoundManager>(context, listen: false);
       quizinfo = widget.quizinfo;
-      count = quizinfo.sort == "56" ? 10 : 20;
+      count = quizinfo.detail.sort == "4867" ? 10 : 20;
       startWatch();
 
       if (widget.quizDirectives.isNotEmpty) {
-        updateQuestion().then((_) {
+        initDataAndQuestion().then((_) {
           if (mounted) {
             setState(() {
               _isQuestionReady = true;
@@ -76,17 +73,19 @@ class QuizScreenState extends State<Quizscreen> {
     }
   }
 
+  Future<void> initDataAndQuestion() async {
+    await OriginCentral.loadCSV();
+    await updateQuestion();
+  }
+
   Future<void> updateQuestion() async {
     String mainsort;
 
     if (_currentQuestionIndex < widget.quizDirectives.length) {
-      // Use the predefined sequence for the first 20 questions.
       mainsort = widget.quizDirectives[_currentQuestionIndex];
     } else {
-      // After 20 questions, select a random question type.
       final uniqueDirectives = widget.quizDirectives.toSet().toList();
       if (uniqueDirectives.isEmpty) {
-        // Fallback in case directives are empty, though unlikely.
         setState(() {
           isGameOver = true;
         });
@@ -98,20 +97,32 @@ class QuizScreenState extends State<Quizscreen> {
 
     OriginCentral originCentral = OriginCentral(mainsort: mainsort);
     Map<String, dynamic> variable = originCentral.makingvariable();
-    LatexQuizFormatter makingDeta = LatexQuizFormatter(
-      calculatedresult: variable,
-    );
-    Map<String, dynamic> endResult = makingDeta.deta();
 
-    result = '';
-    isAnswerChecked = false;
-
-    variable.addAll(endResult);
-    P = variable;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _latexInputKey.currentState?.resetLatexOutputs();
+    setState(() {
+      P = variable;
+      currentSpelling = "";
+      result = '';
+      isAnswerChecked = false;
     });
+  }
+
+  void handleLetterTap(String letter) {
+    if (isAnswerChecked || isGameOver) return;
+
+    String targetWord = P["all1"];
+    String nextSpelling = currentSpelling + letter;
+
+    if (targetWord.startsWith(nextSpelling)) {
+      setState(() {
+        currentSpelling = nextSpelling;
+      });
+
+      if (currentSpelling == targetWord) {
+        judge("maru");
+      }
+    } else {
+      judge("peke");
+    }
   }
 
   void judge(String seigo) async {
@@ -122,7 +133,7 @@ class QuizScreenState extends State<Quizscreen> {
         result = '×';
         isAnswerChecked = true;
       });
-      soundManager.playSound('peke.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
     } else if (seigo == "maru") {
       setState(() {
         result = "◯";
@@ -130,7 +141,7 @@ class QuizScreenState extends State<Quizscreen> {
         correctCount += 1;
       });
 
-      soundManager.playSound('maru.mp3');
+      ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
 
       if (correctCount == count) {
         setState(() {
@@ -138,7 +149,7 @@ class QuizScreenState extends State<Quizscreen> {
         });
 
         Future.delayed(const Duration(milliseconds: 500), () {
-          soundManager.playSound('hoi.mp3');
+          ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
@@ -149,16 +160,16 @@ class QuizScreenState extends State<Quizscreen> {
             ),
           );
         });
+        return;
       }
     }
 
     Future.delayed(
-      const Duration(milliseconds: 200),
+      const Duration(milliseconds: 500),
       () {
-        if (isGameOver) return;
+        if (isGameOver || !mounted) return;
         setState(() {
           _currentQuestionIndex++;
-          selectedAnswer = null;
           isAnswerChecked = false;
         });
 
@@ -177,10 +188,12 @@ class QuizScreenState extends State<Quizscreen> {
         timer.cancel();
         return;
       }
-      setState(() {
-        elapsedTime =
-            DateTime.now().difference(startTime!).inMilliseconds / 1000;
-      });
+      if (mounted) {
+        setState(() {
+          elapsedTime =
+              DateTime.now().difference(startTime!).inMilliseconds / 1000;
+        });
+      }
     });
   }
 
@@ -206,13 +219,15 @@ class QuizScreenState extends State<Quizscreen> {
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
-          showMenuDialog(
-            context,
-            () => setState(() {
-              isGameOver = true;
-            }),
-            quizinfo.islimited,
-          );
+          isGameOver
+              ? null
+              : showMenuDialog(
+                  context,
+                  () => setState(() {
+                    isGameOver = true;
+                  }),
+                  quizinfo.modeData.islimited,
+                );
         },
         child: AppAdScaffold(
           body: Container(
@@ -233,7 +248,7 @@ class QuizScreenState extends State<Quizscreen> {
                           Expanded(
                             flex: 3,
                             child: timewidget(
-                              quizinfo.sort,
+                              quizinfo.detail.sort,
                               elapsedTime,
                               correctCount,
                               context,
@@ -246,7 +261,8 @@ class QuizScreenState extends State<Quizscreen> {
                               () => setState(() {
                                 isGameOver = true;
                               }),
-                              quizinfo.islimited,
+                              quizinfo.modeData.islimited,
+                              istap: !isGameOver,
                             ),
                           ),
                           Expanded(
@@ -256,30 +272,38 @@ class QuizScreenState extends State<Quizscreen> {
                       ),
                     ),
                     Expanded(
-                      flex: 7,
+                      flex: 5,
                       child: childWidget,
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: Text(
+                          currentSpelling.split('').join(' ') +
+                              (currentSpelling.length < (P["all1"]?.length ?? 0)
+                                  ? ' _' *
+                                      ((P["all1"]?.length ?? 0) -
+                                          currentSpelling.length)
+                                  : ''),
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
+                          ),
+                        ),
+                      ),
                     ),
                     Expanded(
                       flex: 12,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: LatexInputScreen3(
-                          key: _latexInputKey,
-                          marusikaku: P['latex'],
-                          alist: P['alist'],
-                          categoly: P["fi1"],
-                          pekepeke: (String ddd) {
-                            judge(ddd);
-                          },
-                          shubetu: '',
-                          blist: null,
-                          button2: const [""],
-                          ctscore: const [],
-                          partpoint: (int a) {},
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: EnglishWordInput(
+                          letters: P['letters'] ?? [],
+                          onTap: handleLetterTap,
+                          category: P["fi1"] ?? "1",
                         ),
                       ),
                     ),
-                    const Expanded(flex: 1, child: SizedBox()),
                   ],
                 ),
                 Center(
@@ -305,5 +329,58 @@ class QuizScreenState extends State<Quizscreen> {
             ),
           ),
         ));
+  }
+}
+
+class EnglishWordInput extends StatelessWidget {
+  final List<String> letters;
+  final Function(String) onTap;
+  final String category;
+
+  const EnglishWordInput({
+    super.key,
+    required this.letters,
+    required this.onTap,
+    required this.category,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    Color buttonColor = isDark
+        ? getQuizColor2(category, context, 0.8, 0.4, 0.65)
+        : getQuizColor2(category, context, 0.6, 0.4, 0.95);
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        childAspectRatio: 1.0,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+      ),
+      itemCount: letters.length,
+      itemBuilder: (context, index) {
+        return ElevatedButton(
+          onPressed: () => onTap(letters[index]),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: buttonColor,
+            foregroundColor: textColor1(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            padding: EdgeInsets.zero,
+          ),
+          child: Text(
+            letters[index],
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      },
+    );
   }
 }

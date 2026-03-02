@@ -188,7 +188,6 @@ class ScoreManager {
     if (myScore <= 0) return [0, 0, 0];
 
     final periods = buildPeriod();
-    // ['all', '2026_m02', '2026_w08'] みたいな形
 
     final List<int> ranks = [];
 

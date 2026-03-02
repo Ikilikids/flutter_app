@@ -1,87 +1,85 @@
 import 'package:common/common.dart';
+import 'package:common/freezed/app_data.dart';
+import 'package:common/freezed/ui_config.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'assistance/quiz_logic.dart';
 import 'firebase_options.dart';
 import 'page/quiz_screen.dart';
+import 'page/setting_widgets.dart';
 
 final _appConfig = AllData(
-  appTitle: "とことん四則演算",
-  appIcon: Icons.calculate,
-  symbols: ["+", "-", "×", "÷"],
-  isRotation: false,
+  appData: AppData(
+      appTitle: "英単語クイズ",
+      appIcon: Icons.abc,
+      symbols: ["A", "B", "C", "D"],
+      isRotation: false,
+      URL: "https://play.google.com/store/apps/details?id=jp.ponta.eng_quiz",
+      mainGame: (BuildContext context, DetailConfig quizinfo) => Quizscreen(
+          quizDirectives: prepareQuizDirectives(quizinfo.detail.sort),
+          quizinfo: quizinfo),
+      settingWidgets:
+          (BuildContext context, String currentNumber, Function function) => [
+                const Divider(height: 1),
+                buildSectionHeader(context),
+              ]),
   mid: [
     MidData(
-      unit: "秒",
-      fix: 2,
-      islimited: false,
-      isbattle: true,
-      ranking: "t",
+      modeData: ModeData(
+        unit: "問",
+        fix: 0,
+        islimited: false,
+        isbattle: false,
+        modeType: "t",
+        modeIcon: Icons.school,
+        modeTitle: "学習モード",
+        sub1: "分野別に学習しよう！",
+        sub2: "数Ⅰ～数Cまで対応！",
+        isSmallerBetter: false,
+      ),
       detail: [
         DetailData(
           sort: "32",
-          displayLabel: "足し算・引き算",
-          method: "20問の正解タイムで競う",
-          description: "足し算・引き算、気軽にプレイ!!",
+          displayLabel: "英単語",
+          displayRank: "英単語",
+          resisterSub: "英単語",
+          resisterOrigin: "英単語",
+          method: "20問に挑戦",
+          description: "英単語をスペルで答えよう",
           color: "2",
           circleColor: "32",
-        ),
-        DetailData(
-          sort: "3251",
-          displayLabel: "四則演算",
-          method: "20問の正解タイムで競う",
-          description: "足し算・引き算・掛け算・割り算、素早く判断!!",
-          color: "5",
-          circleColor: "3251",
-        ),
-        DetailData(
-          sort: "46",
-          displayLabel: "2桁の足し算・引き算",
-          method: "10問の正解タイムで競う",
-          description: "2桁の足し算・引き算、計算力を鍛えよう!!",
-          color: "4",
-          circleColor: "46",
         ),
       ],
     ),
     MidData(
-      unit: "秒",
-      fix: 2,
-      islimited: true,
-      isbattle: true,
-      ranking: "g",
+      modeData: ModeData(
+        unit: "点",
+        fix: 0,
+        islimited: false,
+        isbattle: true,
+        modeIcon: Icons.local_fire_department,
+        modeType: "g",
+        modeTitle: "実践モード",
+        sub1: "時間制限あり(教科別)です",
+        sub2: "ハイスコアを目指そう!!",
+        isSmallerBetter: false,
+      ),
       detail: [
         DetailData(
           sort: "32",
-          displayLabel: "足し算・引き算",
-          method: "20問の正解タイムで競う",
-          description: "足し算・引き算、気軽にプレイ!!",
+          displayLabel: "英単語",
+          displayRank: "英単語",
+          resisterSub: "英単語",
+          resisterOrigin: "英単語",
+          method: "20問に挑戦",
+          description: "英単語をスペルで答えよう",
           color: "3",
           circleColor: "32",
-        ),
-        DetailData(
-          sort: "3251",
-          displayLabel: "四則演算",
-          method: "20問の正解タイムで競う",
-          description: "足し算・引き算・掛け算・割り算、素早く判断!!",
-          color: "1",
-          circleColor: "3251",
-        ),
-        DetailData(
-          sort: "46",
-          displayLabel: "2桁の足し算・引き算",
-          method: "10問の正解タイムで競う",
-          description: "2桁の足し算・引き算、計算力を鍛えよう!!",
-          color: "6",
-          circleColor: "46",
         ),
       ],
     ),
   ],
-  mainGame: (BuildContext context, QuizData quizinfo) => Quizscreen(
-    quizDirectives: prepareQuizDirectives(quizinfo.sort),
-    quizinfo: quizinfo,
-  ),
 );
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,9 +87,11 @@ void main() {
   final options = DefaultFirebaseOptions.currentPlatform;
 
   runApp(
-    Bootstrap(
-      appConfig: _appConfig,
-      firebaseOptions: options,
+    ProviderScope(
+      child: Bootstrap(
+        appConfig: _appConfig,
+        firebaseOptions: options,
+      ),
     ),
   );
 }

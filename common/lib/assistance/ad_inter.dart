@@ -27,7 +27,7 @@ class InterstitialAdHelper {
     // ---- カウント判定（3回に1回）----
     final prefs = await SharedPreferences.getInstance();
     int count = prefs.getInt(_key) ?? 0;
-    bool shouldShow = count % 3 == 2;
+    bool shouldShow = count % 5 == 2;
     await prefs.setInt(_key, count + 1);
 
     // ---- 広告タイミングじゃない ----

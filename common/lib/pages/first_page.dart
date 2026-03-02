@@ -1,128 +1,122 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart'; // Hookを追加
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/app_sound.dart';
 
-class CommonFirstPage extends ConsumerStatefulWidget {
+class CommonFirstPage extends HookConsumerWidget {
   const CommonFirstPage({super.key});
 
-  @override
-  ConsumerState<CommonFirstPage> createState() => _CommonFirstPageState();
-}
-
-class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
-    with TickerProviderStateMixin {
-  bool _isNavigating = false;
-
-  late final AnimationController _controller;
-  late final Animation<Offset> _iconAnimation;
-  late final Animation<Offset> _titleAnimation;
-
-  late final AnimationController _blinkController;
-  late final Animation<double> _blinkAnimation;
+  // 初回起動チェック
+  Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+    if (isFirstLaunch) {
+      await prefs.setBool('isFirstLaunch', false);
+      debugPrint("初回起動です！");
+    }
+  }
 
   @override
-  void initState() {
-    super.initState();
-    _checkFirstLaunch();
+  Widget build(BuildContext context, WidgetRef ref) {
+    // --- State & Controllers (Hooks) ---
 
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
+    final isNavigating = useState(false);
 
-    _iconAnimation = Tween<Offset>(
+    // メインアニメーション（アイコン・タイトル）
+    final controller = useAnimationController(
+      duration: const Duration(milliseconds: 800),
+    );
+
+    // 点滅アニメーション
+    final blinkController = useAnimationController(
+      duration: const Duration(milliseconds: 800),
+    );
+
+    // --- Animations ---
+
+    final iconAnimation = useMemoized(() => Tween<Offset>(
             begin: const Offset(1.2, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+        .animate(CurvedAnimation(parent: controller, curve: Curves.easeOut)));
 
-    _titleAnimation = Tween<Offset>(
+    final titleAnimation = useMemoized(() => Tween<Offset>(
             begin: const Offset(-1.2, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+        .animate(CurvedAnimation(parent: controller, curve: Curves.easeOut)));
 
-    _controller.forward();
+    final blinkAnimation = useMemoized(
+        () => Tween<double>(begin: 0.2, end: 1.0).animate(CurvedAnimation(
+              parent: blinkController,
+              curve: Curves.easeInOut,
+            )));
 
-    _blinkController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
-    _blinkAnimation =
-        Tween<double>(begin: 0.2, end: 1.0).animate(CurvedAnimation(
-      parent: _blinkController,
-      curve: Curves.easeInOut,
-    ));
+    // --- Effects (InitState の代わり) ---
 
-    _blinkController.repeat(reverse: true);
-  }
+    useEffect(() {
+      _checkFirstLaunch();
+      controller.forward();
+      blinkController.repeat(reverse: true);
+      return null; // dispose は Hook が自動で行うため不要
+    }, const []);
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _blinkController.dispose();
-    super.dispose();
-  }
+    // --- Logic ---
 
-  Future<void> _navigateToDestination() async {
-    if (_isNavigating) return;
+    Future<void> navigateToDestination() async {
+      if (isNavigating.value) return;
 
-    setState(() {
-      _isNavigating = true; // 判定が始まるのでインジケーターを出す
-    });
+      isNavigating.value = true;
 
-    try {
-      // 1. アップデートチェックが終わっていなければ待つ
-      // Bootstrap で呼び出しているはずなので、通常はすぐ終わります
-      if (UpdateManager.needsUpdate == null) {
-        await UpdateManager.checkUpdate();
-      }
-
-      // 2. 強制アップデートが必要な場合はダイアログを出して終了
-      if (UpdateManager.needsUpdate == true) {
-        if (mounted) {
-          UpdateManager.showUpdateDialog(context, allData.appData.URL);
-          setState(() => _isNavigating = false); // ダイアログの裏でぐるぐるを消す
+      try {
+        if (UpdateManager.needsUpdate == null) {
+          await UpdateManager.checkUpdate();
         }
+
+        if (UpdateManager.needsUpdate == true) {
+          if (context.mounted) {
+            UpdateManager.showUpdateDialog(context, allData.appData.URL);
+            isNavigating.value = false;
+          }
+          return;
+        }
+
+        final uidAsync = ref.read(appUidProvider);
+        final soundAsync = ref.read(appSoundProvider);
+
+        if (uidAsync.isLoading || soundAsync.isLoading) {
+          await Future.wait([
+            ref.read(appUidProvider.future),
+            ref.read(appSoundProvider.future),
+          ]);
+        }
+      } catch (e) {
+        debugPrint('Navigation initialization error: $e');
+        isNavigating.value = false;
         return;
       }
 
-      // 3. UIDとSoundのロード状況を確認
-      final uidAsync = ref.read(appUidProvider);
-      final soundAsync = ref.read(appSoundProvider);
+      if (!context.mounted) return;
 
-      if (uidAsync.isLoading || soundAsync.isLoading) {
-        // ロード完了を待つ (Future.wait)
-        await Future.wait([
-          ref.read(appUidProvider.future),
-          ref.read(appSoundProvider.future),
-        ]);
-      }
-    } catch (e) {
-      debugPrint('Navigation initialization error: $e');
-      if (mounted) setState(() => _isNavigating = false);
-      return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const CommonModeSelectionPage(),
+        ),
+      );
     }
 
-    if (!mounted) return;
+    // --- UI ---
 
-    // 4. 次の画面へ遷移
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CommonModeSelectionPage(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final icon = allData.appIcon;
 
     return AppAdScaffold(
       advisible: false,
       body: Stack(
         children: [
-          // メインコンテンツ
           GestureDetector(
-            onTap: _navigateToDestination,
+            onTap: navigateToDestination,
             child: Container(
-              color: Colors.transparent, // タップ判定を広げるため
+              color: Colors.transparent,
               padding: const EdgeInsets.all(30),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -133,7 +127,7 @@ class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
                     child: Align(
                       alignment: Alignment.bottomCenter,
                       child: SlideTransition(
-                        position: _iconAnimation,
+                        position: iconAnimation,
                         child: FittedBox(
                           fit: BoxFit.contain,
                           child: Icon(
@@ -151,7 +145,7 @@ class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
                     flex: 1,
                     child: Center(
                       child: SlideTransition(
-                        position: _titleAnimation,
+                        position: titleAnimation,
                         child: FittedBox(
                           fit: BoxFit.contain,
                           child: Text(
@@ -182,7 +176,7 @@ class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: FadeTransition(
-                          opacity: _blinkAnimation,
+                          opacity: blinkAnimation,
                           child: FittedBox(
                             fit: BoxFit.contain,
                             child: Text(
@@ -203,10 +197,10 @@ class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
             ),
           ),
 
-          // ★ インジケーター表示 (ロード中のみ)
-          if (_isNavigating)
+          // インジケーター表示
+          if (isNavigating.value)
             Container(
-              color: Colors.black.withAlpha(50), // 画面を少し暗くして入力を防ぐ
+              color: Colors.black.withAlpha(50),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),
@@ -214,15 +208,5 @@ class _CommonFirstPageState extends ConsumerState<CommonFirstPage>
         ],
       ),
     );
-  }
-}
-
-Future<void> _checkFirstLaunch() async {
-  final prefs = await SharedPreferences.getInstance();
-  final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
-
-  if (isFirstLaunch) {
-    await prefs.setBool('isFirstLaunch', false);
-    debugPrint("初回起動です！");
   }
 }

@@ -1,95 +1,67 @@
 import 'dart:math';
+import 'package:flutter/services.dart';
 
 class OriginCentral {
   String mainsort;
+  static List<List<String>>? _csvData;
 
   OriginCentral({required this.mainsort});
 
-  Map<String, dynamic> makingvariable() {
-    Map<String, dynamic> result = {};
-    final random = Random();
-
-    String ss1 = "";
-    String q1 = "";
-
-    // The 'fi1' is the same as mainsort, used for coloring.
-    result["fi1"] = mainsort;
-
-    int ran(int a, int b, {Set<int>? except}) {
-      a = min(a, b);
-      b = max(a, b);
-      except ??= const {};
-
-      final candidates = <int>[];
-      for (int i = a; i <= b; i++) {
-        if (!except.contains(i)) {
-          candidates.add(i);
+  static Future<void> loadCSV() async {
+    if (_csvData != null) return;
+    try {
+      final String response = await rootBundle.loadString('assets/csv/eng_data.csv');
+      final List<String> lines = response.split('\n');
+      _csvData = [];
+      for (String line in lines) {
+        String trimmedLine = line.trim();
+        if (trimmedLine.isEmpty) continue;
+        List<String> parts = trimmedLine.split(',').map((e) => e.trim()).toList();
+        if (parts.length >= 3) {
+          _csvData!.add(parts);
         }
       }
+    } catch (e) {
+      print("Error loading CSV: $e");
+      _csvData = [];
+    }
+  }
 
-      if (candidates.isEmpty) {
-        throw StateError('No valid numbers after exclusion');
-      }
-
-      return candidates[random.nextInt(candidates.length)];
+  Map<String, dynamic> makingvariable() {
+    if (_csvData == null || _csvData!.isEmpty) {
+      return {
+        "question1": "No Data",
+        "all1": "",
+        "fi1": mainsort,
+        "letters": [],
+      };
     }
 
-    if (mainsort == "3") {
-      // plus
-      int a, b;
-      a = ran(1, 9);
-      b = ran(1, 9);
-      ss1 = (a + b).toString();
-      q1 = "$a + $b = ？";
-    } else if (mainsort == "2") {
-      // minus_e
-      int a, b;
-      b = ran(1, 19);
-      a = ran(b, 19);
-      ss1 = (a - b).toString();
-      q1 = "$a - $b = ？";
-    } else if (mainsort == "5") {
-      // times
-      int a, b;
-      a = ran(1, 9);
-      b = ran(1, 9);
-      ss1 = (a * b).toString();
-      q1 = "$a × $b = ？";
-    } else if (mainsort == "1") {
-      // div
-      int a, b;
-      b = ran(1, 9);
-      a = b * ran(1, 9);
-      ss1 = (a ~/ b).toString();
-      q1 = "$a ÷ $b = ？";
-    } else if (mainsort == "6") {
-      // plus2
-      int a, b, f;
-      f = ran(22, 99);
-      do {
-        a = ran(11, f - 11);
-        b = f - a;
-      } while ((a % 10 == 0 || b % 10 == 0));
-      ss1 = f.toString();
-      q1 = "$a + $b = ？";
-    } else if (mainsort == "4") {
-      // minus2
-      int a, b, f;
-      do {
-        a = ran(22, 99);
-        b = ran(11, a - 11);
-      } while ((a % 10 == 0 || b % 10 == 0));
-      f = a - b;
-      ss1 = f.toString();
-      q1 = "$a - $b = ？";
-    }
+    final random = Random();
+    final entry = _csvData![random.nextInt(_csvData!.length)];
+    
+    // word is 1st column (index 0), meaning is 3rd column (index 2)
+    String word = entry[0];
+    String meaning = entry[2];
 
-    List<String> parts = q1.split(';');
-    result["question1"] = parts.isNotEmpty ? parts[0] : "";
-    result["question2"] = parts.length > 1 ? parts[1] : "";
-    result["question3"] = parts.length > 2 ? parts[2] : "";
-    result["question4"] = parts.length > 3 ? parts[3] : "";
-    result["all1"] = ss1;
+    // Generate letters for buttons
+    List<String> letters = word.split('');
+    // Add 2 random letters
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    for (int i = 0; i < 2; i++) {
+      String randomLetter;
+      do {
+        randomLetter = alphabet[random.nextInt(alphabet.length)];
+      } while (letters.contains(randomLetter));
+      letters.add(randomLetter);
+    }
+    letters.shuffle(random);
+
+    Map<String, dynamic> result = {};
+    result["fi1"] = mainsort;
+    result["question1"] = meaning;
+    result["all1"] = word;
+    result["letters"] = letters;
 
     return result;
   }

@@ -17,7 +17,10 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -56,15 +59,4 @@ class DefaultFirebaseOptions {
     projectId: 'music-sense-ad844',
     storageBucket: 'music-sense-ad844.firebasestorage.app',
   );
-
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCKEFgk4WLnRQEEdgbWGZD82ndQ-Yd6pH0',
-    appId: '1:517203206826:web:d5363d1ca180384f9b66d3',
-    messagingSenderId: '517203206826',
-    projectId: 'easy-cal-6b8c0',
-    authDomain: 'easy-cal-6b8c0.firebaseapp.com',
-    storageBucket: 'easy-cal-6b8c0.firebasestorage.app',
-    measurementId: 'G-JFHF1CR17B',
-  );
-
 }

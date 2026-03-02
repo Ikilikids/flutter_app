@@ -1,5 +1,6 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 // 新しいプロバイダーをインポート
@@ -215,62 +216,41 @@ class BigModeButton extends StatelessWidget {
   }
 }
 
-class LimitedModeBadge extends StatelessWidget {
+// 3. アニメーションを HookWidget で簡略化
+class LimitedModeBadge extends HookWidget {
+  // HookWidget に変更
   final String text;
   const LimitedModeBadge({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return _AnimatedBadge(text: text);
-  }
-}
-
-class _AnimatedBadge extends StatefulWidget {
-  final String text;
-  const _AnimatedBadge({required this.text});
-
-  @override
-  State<_AnimatedBadge> createState() => _AnimatedBadgeState();
-}
-
-class _AnimatedBadgeState extends State<_AnimatedBadge>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<Offset> _bob;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
+    // AnimationController の管理を Hooks に任せる（dispose不要！）
+    final controller = useAnimationController(
       duration: const Duration(seconds: 1),
     )..repeat(reverse: true);
 
-    _bob = Tween(begin: const Offset(0, 0.1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
+    // アニメーションの定義
+    final bob = useMemoized(
+      () => Tween(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      ),
+      [controller],
+    );
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return SlideTransition(
-      position: _bob,
+      position: bob,
       child: CustomPaint(
         painter: const BubblePainter(
             color: Colors.white, borderColor: Colors.orange),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
           child: Text(
-            widget.text,
+            text,
             style: const TextStyle(
-                color: Colors.orange,
-                fontWeight: FontWeight.bold,
-                fontSize: 15),
+              color: Colors.orange,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
           ),
         ),
       ),

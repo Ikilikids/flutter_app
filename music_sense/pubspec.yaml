@@ -40,6 +40,7 @@ flutter:
   assets:
     - assets/sounds/
     - assets/images/
+    - assets/csv/
 
 flutter_icons:
   android: true

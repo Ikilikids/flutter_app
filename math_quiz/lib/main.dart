@@ -38,12 +38,10 @@ final _appConfig = AllData(
     URL: "https://play.google.com/store/apps/details?id=jp.ponta.mathquiz",
     bannerId: "ca-app-pub-1440692612851416/6568630311",
     interId: "ca-app-pub-1440692612851416/7404533363",
-    loadGame: (BuildContext context, DetailConfig quizinfo) async {
-      final container = ProviderScope.containerOf(context);
-
+    loadGame:
+        (BuildContext context, WidgetRef ref, DetailConfig quizinfo) async {
       // 1. パース済みの全データを取得
-      final allDataValue = await container.read(quizDataProvider.future);
-      print("All Data: $allDataValue"); // デバッグ用ログ
+      final allDataValue = await ref.read(quizDataProvider.future);
       // 2. フィルタリングロジックを実行
       final filtered = <int, List<PartData>>{};
       allDataValue.forEach((score, partList) {
@@ -57,27 +55,23 @@ final _appConfig = AllData(
 
         if (newList.isNotEmpty) filtered[score] = newList;
       });
-      print("Filtered Data: $filtered"); // デバッグ用ログ
       // 3. Riverpod の状態を更新
-      container.read(activeGameMapProvider.notifier).update(filtered);
+      ref.read(activeGameMapProvider.notifier).update(filtered);
     },
     mainGame: (BuildContext context, DetailConfig quizinfo) {
-      // 4. Consumer で activeGameMap を watch して Quizscreen に渡す
-      return Consumer(builder: (context, ref, child) {
-        final filteredMap = ref.watch(activeGameMapProvider);
-        print("Filtered Map: $filteredMap"); // デバッグ用ログ
-        return Quizscreen(
-          quizinfo: quizinfo,
-          filteredMap: filteredMap,
-        );
-      });
+      return const Quizscreen(); // const を追加
     },
-    endBuilder: (context, totalScore, originalData, quizinfo) => NtEndScreen(
-      correctCount: totalScore.round(),
-      P: originalData[0],
-      marks: originalData[1],
-      quizinfo: quizinfo,
-    ),
+    endBuilder: (context, totalScore, originalData, quizinfo) {
+      // 念のため、中身をキャストして渡す
+      final List<MakingData> pData = List<MakingData>.from(originalData[0]);
+      final List<String> markData = List<String>.from(originalData[1]);
+
+      return NtEndScreen(
+        correctCount: totalScore.round(),
+        P: pData,
+        marks: markData,
+      );
+    },
   ),
   mid: [
     MidData(

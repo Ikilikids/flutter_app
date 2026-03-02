@@ -1,20 +1,16 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-// Helper class to hold both ID (for DB) and display text (for UI)
+// --- データモデル定義 ---
+
 class QuizTabInfo {
-  final String id; // Japanese string for DB key
-  final String display; // Localized string for UI display
-
-  QuizTabInfo({required this.id, required this.display});
-}
-
-class CommonRankingPage extends StatefulWidget {
-  const CommonRankingPage({super.key});
-
-  @override
-  State<CommonRankingPage> createState() => _CommonRankingPageState();
+  final String id;
+  final String display;
+  final String? color; // 科目ごとの色を保持
+  QuizTabInfo({required this.id, required this.display, this.color});
 }
 
 class RankingEntry {
@@ -22,221 +18,133 @@ class RankingEntry {
   final double score;
   final DateTime date;
   final String quizType;
-
   RankingEntry(this.userName, this.score, this.date, this.quizType);
 }
 
-class _CommonRankingPageState extends State<CommonRankingPage>
-    with TickerProviderStateMixin {
-  late TabController quizTabController;
-  late TabController periodTabController;
-  bool _isAppConfigInitialized = false;
-  String selectedPeriod = '';
-  String selectedSubjectId = ""; // Now holds the Japanese ID
-  bool isLoading = true;
-  int selectedModeIndex = 0; // 0: 無制限, 1: 限定
-  late List<QuizTabInfo> quizTabs; // Changed to List<QuizTabInfo>
-  bool _areTabsInitialized = false;
+// --- メインWidget ---
 
-  late final List<String> periodTabs;
-  Map<String, List<RankingEntry>> rankingData = {};
+class CommonRankingPage extends HookConsumerWidget {
+  const CommonRankingPage({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    // Initialization is now handled in build method
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    // --- State (Hooks) ---
+    final selectedModeIndex = useState(0); // 0: 無制限, 1: 限定
+    final selectedPeriodIndex = useState(0); // 期間タブのインデックス
+    final selectedSubjectIndex = useState(0); // クイズ種別タブのインデックス
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isAppConfigInitialized) {
-      periodTabs = [
-        l10n(context, 'allPeriod'),
-        l10n(context, 'monthlyPeriod'),
-        l10n(context, 'weeklyPeriod')
-      ];
-      selectedPeriod = periodTabs.first;
-      _isAppConfigInitialized = true;
-    }
-  }
+    final isLoading = useState(true);
+    final rankingData = useState<Map<String, List<RankingEntry>>>({});
 
-  @override
-  void dispose() {
-    if (_areTabsInitialized) {
-      quizTabController.dispose();
-      periodTabController.dispose();
-    }
-    super.dispose();
-  }
+    final gameData = allData.mid[selectedModeIndex.value];
 
-  void _resetTabs() {
-    if (_areTabsInitialized) {
-      quizTabController.dispose();
-      periodTabController.dispose();
-    }
-    _areTabsInitialized = false;
-  }
+    // --- 期間タブの生成 ---
+    final periodTabs = useMemoized(
+        () => [
+              QuizTabInfo(
+                  id: buildPeriod()[0], display: l10n(context, 'allPeriod')),
+              QuizTabInfo(
+                  id: buildPeriod()[1],
+                  display: l10n(context, 'monthlyPeriod')),
+              QuizTabInfo(
+                  id: buildPeriod()[2], display: l10n(context, 'weeklyPeriod')),
+            ],
+        [context]);
 
-  String _periodToV2(String period) {
-    if (period == l10n(context, 'allPeriod')) return buildPeriod()[0];
-    if (period == l10n(context, 'monthlyPeriod')) return buildPeriod()[1];
-    if (period == l10n(context, 'weeklyPeriod')) return buildPeriod()[2];
-    return 'all';
-  }
-
-  Future<void> fetchAllRanking() async {
-    if (!mounted) return;
-    setState(() => isLoading = true);
-
-    final key = selectedSubjectId; // Use the ID for fetching
-    final periodV2 = _periodToV2(selectedPeriod);
-    final modeType = allData.mid[selectedModeIndex].modeData.modeType;
-    final key2 =
-        "${key}_${modeType}_${periodV2}"; // Combine subject ID and mode type for unique key
-    final data = await ScoreManager.getRanking(
-      context: context,
-      rankingId: key2,
-      isSmallerBetter: allData.mid[selectedModeIndex].isSmallerBetter,
-    );
-
-    if (!mounted) return;
-
-    rankingData[key] = data
-        .where((e) => (e['score'] ?? 0) > 0)
-        .map((e) => RankingEntry(
-              e['userName'] ?? l10n(context, 'defaultUsername'),
-              (e['score'] as num).toDouble(),
-              (e['date'] ?? DateTime.now()) as DateTime,
-              allData.mid[selectedModeIndex].modeType,
-            ))
-        .toList();
-
-    setState(() => isLoading = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final seen = <String>{};
-    if (!_isAppConfigInitialized) {
-      return const SizedBox.shrink();
-    }
-
-    final gameData = allData.mid[selectedModeIndex];
-
-    if (!_areTabsInitialized) {
-      quizTabs = gameData.detail
+    // --- クイズ種別タブの生成 ---
+    final quizTabs = useMemoized(() {
+      final seen = <String>{};
+      final List<QuizTabInfo> tabs = gameData.detail
           .where((d) => seen.add(d.resisterSub))
           .map((d) => QuizTabInfo(
                 id: d.resisterSub,
                 display: l10n(context, d.displayRank),
+                color: d.color,
               ))
           .toList();
+
       if (!gameData.isbattle) {
-        quizTabs.insert(
-          0,
-          QuizTabInfo(
-            id: "全合計",
-            display: "全合計",
-          ),
-        );
+        tabs.insert(0, QuizTabInfo(id: "全合計", display: "全合計", color: "9"));
       }
-      selectedSubjectId = quizTabs.first.id;
+      return tabs;
+    }, [selectedModeIndex.value, context]);
 
-      quizTabController = TabController(length: quizTabs.length, vsync: this);
-      periodTabController = TabController(
-          length: periodTabs.length,
-          vsync: this,
-          initialIndex: periodTabs.indexOf(selectedPeriod));
+    // モード切り替え時に選択インデックスを安全にリセット
+    useEffect(() {
+      selectedSubjectIndex.value = 0;
+      selectedPeriodIndex.value = 0;
+      return null;
+    }, [selectedModeIndex.value]);
 
-      fetchAllRanking();
-      _areTabsInitialized = true;
-    }
+    // --- Tab Controllers ---
+    // keysを指定することで、タブの中身が変わった時にコントローラーを自動再生成
+    final quizTabController = useTabController(
+      initialLength: quizTabs.length,
+      keys: [quizTabs],
+    );
+    final periodTabController = useTabController(
+      initialLength: periodTabs.length,
+      keys: [periodTabs],
+    );
 
-    final color = gameData.detail
-            .where((d) => d.resisterSub == selectedSubjectId)
-            .map((d) => d.color)
-            .firstOrNull ??
-        "9";
+    // --- データ取得ロジック (Fetch) ---
+    useEffect(() {
+      // 現在のインデックスから必要なIDを取得
+      final subjectId = quizTabs[selectedSubjectIndex.value].id;
+      final periodId = periodTabs[selectedPeriodIndex.value].id;
 
-    Color tabColor = getQuizColor2(color, context, 1, 0.65, 1);
-    final fix = gameData.fix;
-    final unit = gameData.unit;
+      Future<void> fetch() async {
+        isLoading.value = true;
+        final modeType = gameData.modeData.modeType;
+        // 直接IDを結合してキーを作成
+        final rankingKey = "${subjectId}_${modeType}_$periodId";
+
+        final data = await ScoreManager.getRanking(
+          context: context,
+          rankingId: rankingKey,
+          isSmallerBetter: gameData.isSmallerBetter,
+        );
+
+        if (context.mounted) {
+          final entries = data
+              .where((e) => (e['score'] ?? 0) > 0)
+              .map((e) => RankingEntry(
+                    e['userName'] ?? l10n(context, 'defaultUsername'),
+                    (e['score'] as num).toDouble(),
+                    (e['date'] ?? DateTime.now()) as DateTime,
+                    modeType,
+                  ))
+              .toList();
+
+          // 取得したデータを保存
+          rankingData.value = {...rankingData.value, subjectId: entries};
+          isLoading.value = false;
+        }
+      }
+
+      fetch();
+      return null;
+    }, [
+      selectedModeIndex.value,
+      selectedPeriodIndex.value,
+      selectedSubjectIndex.value,
+    ]);
+
+    // --- デザイン用カラー取得 ---
+    // 現在選択されているタブのcolorを直接参照
+    final currentColorCode = quizTabs[selectedSubjectIndex.value].color ?? "9";
+    final tabColor = getQuizColor2(currentColorCode, context, 1, 0.65, 1);
 
     return AppAdScaffold(
       appBar: AppBar(title: Text(l10n(context, 'rankingTitle'))),
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (selectedModeIndex != 0)
-                          setState(() {
-                            selectedModeIndex = 0;
-                            _resetTabs();
-                          });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedModeIndex == 0
-                            ? bgColor2(context)
-                            : Colors.grey,
-                        foregroundColor: selectedModeIndex == 0
-                            ? Colors.blue
-                            : bgColor1(context),
-                        side: selectedModeIndex == 0
-                            ? BorderSide(
-                                color: Colors.blue, // 枠線の色
-                                width: 3, // 枠線の太さ
-                              )
-                            : null,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: Text(l10n(context, allData.mid[0].modeTitle!),
-                          style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (selectedModeIndex != 1)
-                          setState(() {
-                            selectedModeIndex = 1;
-                            _resetTabs();
-                          });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedModeIndex == 1
-                            ? bgColor2(context)
-                            : Colors.grey,
-                        foregroundColor: selectedModeIndex == 1
-                            ? Colors.red
-                            : bgColor1(context),
-                        side: selectedModeIndex == 1
-                            ? BorderSide(
-                                color: Colors.red, // 枠線の色
-                                width: 3, // 枠線の太さ
-                              )
-                            : null,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: Text(l10n(context, allData.mid[1].modeTitle!),
-                          style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_areTabsInitialized)
+            // モード選択ボタン（無制限 / 限定）
+            _buildModeSelector(context, selectedModeIndex),
+
+            // クイズ種別タブ (TabBar)
+            if (quizTabs.isNotEmpty)
               TabBar(
                 controller: quizTabController,
                 indicatorColor: tabColor,
@@ -244,183 +152,242 @@ class _CommonRankingPageState extends State<CommonRankingPage>
                 unselectedLabelColor: textColor2(context),
                 isScrollable: true,
                 tabs: quizTabs.map((tab) => Tab(text: tab.display)).toList(),
-                onTap: (index) {
-                  setState(() {
-                    selectedSubjectId = quizTabs[index].id;
-                    fetchAllRanking();
-                  });
-                },
+                onTap: (index) => selectedSubjectIndex.value = index,
               ),
-            if (_areTabsInitialized)
-              TabBar(
-                controller: periodTabController,
-                indicatorColor: tabColor,
-                labelColor: tabColor,
-                unselectedLabelColor: textColor2(context),
-                tabs: periodTabs.map((name) => Tab(text: name)).toList(),
-                onTap: (index) {
-                  setState(() {
-                    selectedPeriod = periodTabs[index];
-                    fetchAllRanking();
-                  });
-                },
-              ),
-            isLoading
-                ? const Expanded(
-                    child: Center(child: CircularProgressIndicator()))
-                : Expanded(
-                    child: TabBarView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      controller: quizTabController,
-                      children: quizTabs.map((quizTab) {
-                        final key = quizTab.id;
-                        List<RankingEntry> data = rankingData[key] ?? [];
-                        if (data.isEmpty)
-                          return Center(
-                              child: Text(l10n(context, 'noDataAvailable')));
 
-                        return ListView.builder(
-                          itemCount: data.length,
-                          itemBuilder: (context, index) {
-                            final entry = data[index];
+            // 期間選択タブ (TabBar)
+            TabBar(
+              controller: periodTabController,
+              indicatorColor: tabColor,
+              labelColor: tabColor,
+              unselectedLabelColor: textColor2(context),
+              tabs: periodTabs.map((tab) => Tab(text: tab.display)).toList(),
+              onTap: (index) => selectedPeriodIndex.value = index,
+            ),
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 10),
-                              child: Container(
-                                height: 110,
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: tabColor.withAlpha(100),
-                                      width: 1.5),
-                                  color: bgColor1(context),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        color:
-                                            Color.fromARGB(52, 158, 158, 158),
-                                        blurRadius: 5,
-                                        offset: Offset(0, 3))
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 20,
-                                      child: Container(
-                                        // 円の外側に少し余白が欲しい場合は margin を追加
-                                        margin: const EdgeInsets.all(8),
-                                        padding: const EdgeInsets.all(
-                                            8), // 円と文字の間の余白
-                                        decoration: BoxDecoration(
-                                          color: index == 0
-                                              ? Colors.amber
-                                              : index == 1
-                                                  ? Colors.grey
-                                                  : index == 2
-                                                      ? Colors.brown
-                                                      : Colors.grey
-                                                          .withAlpha(100),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            "${index + 1}",
-                                            style: TextStyle(
-                                              fontSize: 100,
-                                              fontWeight: FontWeight.bold,
-                                              // 背景色に合わせて文字色を調整（例: 白色）
-                                              color: Colors.white,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      flex: 50,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              entry.userName,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
-                                                  color: textColor1(context)),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              DateFormat('yyyy/MM/dd HH:mm')
-                                                  .format(entry.date),
-                                              style: TextStyle(
-                                                  color: textColor2(context)),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      flex: 35,
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.baseline,
-                                          textBaseline: TextBaseline.alphabetic,
-                                          children: [
-                                            Text(
-                                              entry.score >= 1 &&
-                                                      entry.score <= 9
-                                                  ? "      ${entry.score.toStringAsFixed(fix)}"
-                                                  : entry.score >= 10 &&
-                                                          entry.score <= 99
-                                                      ? "   ${entry.score.toStringAsFixed(fix)}"
-                                                      : entry.score
-                                                          .toStringAsFixed(fix),
-                                              style: TextStyle(
-                                                  fontSize: 100,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: tabColor),
-                                            ),
-                                            Text(l10n(context, unit),
-                                                style: TextStyle(
-                                                    fontSize: 50,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: tabColor)),
-                                            const SizedBox(width: 10),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      }).toList(),
+            // ランキングリスト表示エリア
+            Expanded(
+              child: isLoading.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildRankingList(
+                      context,
+                      rankingData
+                              .value[quizTabs[selectedSubjectIndex.value].id] ??
+                          [],
+                      tabColor,
+                      gameData,
                     ),
-                  ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  // --- 内部メソッド：モードセレクター ---
+  Widget _buildModeSelector(
+      BuildContext context, ValueNotifier<int> selectedModeIndex) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        children: List.generate(2, (i) {
+          final isSelected = selectedModeIndex.value == i;
+          final modeColor = i == 0 ? Colors.blue : Colors.red;
+          return Expanded(
+            child: Padding(
+              padding:
+                  EdgeInsets.only(left: i == 0 ? 0 : 8, right: i == 1 ? 0 : 8),
+              child: ElevatedButton(
+                onPressed: () => selectedModeIndex.value = i,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSelected ? bgColor2(context) : Colors.grey,
+                  foregroundColor: isSelected ? modeColor : bgColor1(context),
+                  side: isSelected
+                      ? BorderSide(color: modeColor, width: 3)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text(
+                  l10n(context, allData.mid[i].modeTitle!),
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // --- 内部メソッド：リスト構築 ---
+  Widget _buildRankingList(
+    BuildContext context,
+    List<RankingEntry> data,
+    Color tabColor,
+    dynamic gameData,
+  ) {
+    if (data.isEmpty) {
+      return Center(child: Text(l10n(context, 'noDataAvailable')));
+    }
+
+    return ListView.builder(
+      itemCount: data.length,
+      itemBuilder: (context, index) {
+        return _RankingCard(
+          entry: data[index],
+          index: index,
+          tabColor: tabColor,
+          fix: gameData.fix,
+          unit: gameData.unit,
+        );
+      },
+    );
+  }
+}
+
+// --- ランキング1行分のカードコンポーネント ---
+
+class _RankingCard extends StatelessWidget {
+  final RankingEntry entry;
+  final int index;
+  final Color tabColor;
+  final int fix;
+  final String unit;
+
+  const _RankingCard({
+    required this.entry,
+    required this.index,
+    required this.tabColor,
+    required this.fix,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeColor = index == 0
+        ? Colors.amber
+        : index == 1
+            ? Colors.grey
+            : index == 2
+                ? Colors.brown
+                : Colors.grey.withAlpha(100);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      child: Container(
+        height: 110,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: tabColor.withAlpha(100), width: 1.5),
+          color: bgColor1(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromARGB(52, 158, 158, 158),
+              blurRadius: 5,
+              offset: Offset(0, 3),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            // 順位表示
+            Expanded(
+              flex: 20,
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
+                decoration:
+                    BoxDecoration(color: badgeColor, shape: BoxShape.circle),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "${index + 1}",
+                    style: const TextStyle(
+                      fontSize: 100,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // ユーザー情報
+            Expanded(
+              flex: 50,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      entry.userName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: textColor1(context),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      DateFormat('yyyy/MM/dd HH:mm').format(entry.date),
+                      style: TextStyle(color: textColor2(context)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // スコア表示
+            Expanded(
+              flex: 35,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _formatScore(entry.score, fix),
+                      style: TextStyle(
+                        fontSize: 100,
+                        fontWeight: FontWeight.bold,
+                        color: tabColor,
+                      ),
+                    ),
+                    Text(
+                      l10n(context, unit),
+                      style: TextStyle(
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        color: tabColor,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatScore(double score, int fix) {
+    final s = score.toStringAsFixed(fix);
+    if (score >= 1 && score <= 9) return "      $s";
+    if (score >= 10 && score <= 99) return "   $s";
+    return s;
   }
 }

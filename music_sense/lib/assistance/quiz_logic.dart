@@ -2,7 +2,7 @@ import 'dart:math';
 
 List<String> prepareQuizDirectives(String selectedSortString) {
   int count = 20;
-  if (selectedSortString == "46") {
+  if (selectedSortString == "4867") {
     count = 10;
   }
   final quizTypes = selectedSortString.split('');

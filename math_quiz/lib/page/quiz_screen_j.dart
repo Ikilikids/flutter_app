@@ -12,13 +12,8 @@ import 'package:math_quiz/math_quiz.dart' hide QuizStateProvider;
 import '../providers/quiz_data_provider.dart';
 
 class Quizscreen extends ConsumerStatefulWidget {
-  final DetailConfig quizinfo;
-  final Map<int, List<PartData>> filteredMap;
-
   const Quizscreen({
     super.key,
-    required this.quizinfo,
-    required this.filteredMap,
   });
 
   @override
@@ -46,6 +41,8 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
       GlobalKey<LatexInputScreenState>();
   bool _initialized = false;
   late int qCount;
+  late DetailConfig activeConfig;
+  late Map<int, List<PartData>> filteredMap;
 
   @override
   void initState() {
@@ -58,7 +55,8 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
 
     if (!_initialized) {
       // 1. Provider から「今選ばれている設定」を直接取得
-      final activeConfig = ref.read(currentDetailConfigProvider);
+      activeConfig = ref.read(currentDetailConfigProvider);
+      filteredMap = ref.read(activeGameMapProvider);
 
       // 2. 問題数(qcount)の取得
       qCount = activeConfig.qcount;
@@ -91,8 +89,8 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
     // 素材(PartData)を1つ選ぶ
     ChooseQuizData chooseQuizData = ChooseQuizData(
       correctCount: correctCount,
-      quizinfo: widget.quizinfo,
-      filteredMapByScore: widget.filteredMap,
+      quizinfo: activeConfig,
+      filteredMapByScore: filteredMap,
     );
     PartData ct = chooseQuizData.chooseRandombyScoreRange();
 
@@ -139,10 +137,10 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
         isAnswerChecked = false;
       });
 
-      if (remainingTime > 0 && widget.quizinfo.modeData.isbattle == true) {
+      if (remainingTime > 0 && activeConfig.modeData.isbattle == true) {
         updateQuestion();
       }
-      if (widget.quizinfo.modeData.isbattle == false) {
+      if (activeConfig.modeData.isbattle == false) {
         marks[qcount] = result;
         plist.add(P);
         if (qcount == qCount - 1) {
@@ -152,7 +150,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => widget.quizinfo.modeData.isbattle
+              builder: (context) => activeConfig.modeData.isbattle
                   ? PipiScreen(totalScore: totalScore)
                   : PipiScreen(
                       totalScore: correctCount, originalData: [plist, marks]),
@@ -280,7 +278,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                 () => setState(() {
                   isGameOver = true;
                 }),
-                widget.quizinfo.modeData.islimited,
+                activeConfig.modeData.islimited,
               );
       },
       child: AppAdScaffold(
@@ -296,7 +294,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                     flex: 1,
                     child: Row(
                       children: [
-                        if (widget.quizinfo.modeData.isbattle == true)
+                        if (activeConfig.modeData.isbattle == true)
                           Expanded(
                             flex: 1,
                             child: Padding(
@@ -325,7 +323,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                             istap: !isGameOver,
                           ),
                         ),
-                        if (widget.quizinfo.modeData.isbattle == true)
+                        if (activeConfig.modeData.isbattle == true)
                           Expanded(
                             flex: 2,
                             child: pointwidget(
@@ -334,7 +332,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                               remainingTime: remainingTime,
                             ),
                           ),
-                        if (widget.quizinfo.modeData.isbattle == true)
+                        if (activeConfig.modeData.isbattle == true)
                           Expanded(
                             flex: 1,
                             child: increasewidget(
@@ -342,7 +340,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                               scoreIncrement2,
                             ),
                           ),
-                        if (widget.quizinfo.modeData.isbattle == false)
+                        if (activeConfig.modeData.isbattle == false)
                           Expanded(
                             flex: 4,
                             child: marupekelist(context, marks),
@@ -376,8 +374,6 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                         ),
                       ),
                     ),
-
-                  // ★こっちも！「もし P が OptionMakingData だったら、それを p と名付けて使う」
                   if (P case OptionMakingData p)
                     Expanded(
                       flex: 7,
