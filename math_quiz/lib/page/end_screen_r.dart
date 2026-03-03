@@ -388,6 +388,7 @@ class _ActionSection extends StatelessWidget {
             label: 'メニュー',
             onTap: () {
               InterstitialAdHelper.navigate(context, null);
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
           ),
         ],

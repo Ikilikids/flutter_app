@@ -6,26 +6,9 @@ part of 'quiz_data_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$quizDataHash() => r'8b597b14ef8db1b42dd7ae0daeb68522b0d0fbd2';
-
-/// ① CSVパース済みの全データを保持する（アプリ起動時に1回だけ実行）
-///
-/// Copied from [quizData].
-@ProviderFor(quizData)
-final quizDataProvider = FutureProvider<Map<int, List<PartData>>>.internal(
-  quizData,
-  name: r'quizDataProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$quizDataHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef QuizDataRef = FutureProviderRef<Map<int, List<PartData>>>;
 String _$activeGameMapHash() => r'edf455c5d453ea51f53617e170cccf8462311bd4';
 
+/// ① CSVパース済みの全データを保持する（アプリ起動時に1回だけ実行）
 /// ② 今プレイするゲームのために「フィルタリングされた」マップを保持する器
 ///
 /// Copied from [ActiveGameMap].

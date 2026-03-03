@@ -1,709 +1,363 @@
 import 'package:common/common.dart';
 import 'package:common/providers/app_sound.dart';
+import 'package:common/providers/ui_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:math_quiz/math_quiz.dart';
 
-class LatexInputScreen3 extends ConsumerStatefulWidget {
-  // 引数としてリストを受け取る
-  final String marusikaku;
-  final String shubetu;
-  final List<List<String>> alist;
-  final List<List<String>>? blist;
-
-  final List<String> button2;
-  final Function(String) pekepeke;
-  final Function(int) partpoint;
-  final List<int> ctscore;
-  final String categoly;
-  const LatexInputScreen3({
-    super.key,
-    required this.marusikaku,
-    required this.shubetu,
-    required this.alist,
-    required this.blist,
-    required this.button2,
-    required this.ctscore,
-    required this.pekepeke,
-    required this.partpoint,
-    required this.categoly,
-  });
+// --- 表示部分 ---
+class LatexDisplayView extends HookConsumerWidget {
+  const LatexDisplayView({super.key});
 
   @override
-  LatexInputScreenState createState() => LatexInputScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(quizSessionNotifierProvider);
+    final inputState = ref.watch(latexInputNotifierProvider);
+    final question = session.currentQuestion;
 
-class LatexInputScreenState extends ConsumerState<LatexInputScreen3> {
-  String latexInput = "";
-  final TextEditingController _controller = TextEditingController();
-  List<String> latexOutputs = [];
-  int selectedIndex = 0; // 現在編集中のインデックスを保持
-  String combinedLatex = "";
-  int i = 0;
-  int j = 0;
-  int p = 1;
-  List<String> genzailist = [];
-  List<String> falist = [];
-  List<String>? fblist;
-  int count = 0;
-  Map<String, bool> buttonVisibility = {
-    "+": true,
-    "-": true,
-    "l": true,
-    "s": true,
-    "c": true,
-    "t": true,
-    "e": true,
-    "p": true,
-    "7": true,
-    "8": true,
-    "9": true,
-    "r": true,
-    "4": true,
-    "5": true,
-    "6": true,
-    "f": false,
-    "^": false,
-    "1": true,
-    "2": true,
-    "3": true,
-    "0": true,
-    "i": true,
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    resetLatexOutputs(); // 最初の表示時に1回だけ初期化を実
-  }
-
-  @override
-  void didUpdateWidget(LatexInputScreen3 oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.marusikaku != widget.marusikaku) {
-      resetLatexOutputs(); // marusikakuが変わったら更新処理を実行
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  void resetLatexOutputs() {
-    List<String> resetList = [];
-    String abcdePart = widget.marusikaku;
-    List<String> button2 = widget.button2;
-
-    for (var i = 0; i < abcdePart.length; i++) {
-      String char = abcdePart[i];
-      if (RegExp("[◯□☆]").hasMatch(char)) {
-        resetList.add(char);
-      }
-    }
-    i = 0;
-    j = 0;
-    p = 1;
-    genzailist = [];
-    fblist = null;
-    count = RegExp("[◯□☆]").allMatches(widget.marusikaku).length - 1;
-    falist = widget.alist.expand((p) => p).toList();
-
-    if (widget.blist != null) {
-      fblist = widget.blist!.expand((p) => p).toList();
+    if (question is! LatexMakingData) {
+      return const SizedBox.shrink();
     }
 
-    setState(() {
-      resetplusminus(button2[0]);
-      latexOutputs = resetList;
-      selectedIndex = 0;
-      latexInput = "";
-      _controller.clear();
-    });
-  }
+    // ◯, ○, □, ☆ のすべてに対応
+    final colorMap = {'◯': 'red', '○': 'red', '□': 'blue', '☆': 'orange'};
+    final buffer = StringBuffer();
+    int outputIdx = 0;
 
-  void _onLatexInputChanged(String newText) {
-    latexInput = newText;
-    latexOutputs[selectedIndex] = latexInput;
-    setState(() {});
-  }
-
-  // 次のインデックスに移動
-  void moveToNextIndex() {
-    ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
-    List<String> button2 = widget.button2;
-    List<int> ctscore = widget.ctscore;
-    setState(() {
-      if (selectedIndex < latexOutputs.length - 1) {
-        selectedIndex++;
-        latexInput = "";
-        _controller.text = latexInput;
-      }
-      resetplusminus(button2[i]);
-      widget.partpoint(ctscore[i - 1]);
-    });
-  }
-
-  void _addToLatex(String value) {
-    int cursorPos = _controller.selection.baseOffset; // カーソル位置を取得
-    if (cursorPos == -1) {
-      cursorPos = latexInput.length; // カーソルが選択されていない場合、末尾に設定
-    }
-
-    // LaTeXの基本式が \frac{}{} の場合、入力を新しい値に置き換え
-    if (latexInput == "") {
-      latexInput = value;
-    } else {
-      // カーソル位置に入力値を追加
-      latexInput = latexInput.substring(0, cursorPos) +
-          value +
-          latexInput.substring(cursorPos);
-    }
-
-    // 新しいテキスト長さを取得
-    int newLength = latexInput.length;
-
-    // もしカーソル位置がテキスト長より大きい場合、テキスト長に設定
-    int newCursorPos = cursorPos + value.length;
-    if (newCursorPos > newLength) {
-      newCursorPos = newLength; // カーソル位置をテキストの末尾に設定
-    }
-
-    _controller.text = latexInput; // TextControllerを更新
-    _controller.selection = TextSelection.collapsed(
-      offset: newCursorPos,
-    ); // 正しいカーソル位置を設定
-
-    // 入力内容が変わったら、その内容をリアルタイムでlatexOutputsに反映
-  }
-
-  void _hidePlusMinusButtons(String value) {
-    final Map<String, Set<String>> hideMap = {
-      "j1": {"+", "-", "l", "s", "c", "t"},
-      "af": {}, // 全非表示の合図
-    };
-
-    // j=1のとき、対応するボタンを非表示
-    if (j == 1) {
-      for (var key in hideMap["j1"]!) {
-        buttonVisibility[key] = false;
-      }
-    }
-
-    // 数字や定数を押したとき、jが1〜3なら f を表示
-    if ("0123456789p".contains(value)) {
-      buttonVisibility["f"] = true;
-      buttonVisibility["^"] = true;
-      buttonVisibility["i"] = false;
-    }
-    if ("e".contains(value)) {
-      buttonVisibility["f"] = false;
-      buttonVisibility["^"] = true;
-      buttonVisibility["i"] = false;
-    }
-    // f を押したら r を表示、f を非表示
-    if (value == "f") {
-      buttonVisibility["f"] = false;
-      buttonVisibility["^"] = false;
-      buttonVisibility["r"] = true;
-    }
-
-    // r を押したら r を非表示
-    if (value == "r") {
-      buttonVisibility["r"] = false;
-      buttonVisibility["^"] = false;
-    }
-    if (value == "^") {
-      buttonVisibility["-"] = true;
-      buttonVisibility["f"] = false;
-      buttonVisibility["^"] = false;
-    }
-    // af のとき、すべてのボタンを非表示に
-    if (value == "af") {
-      for (var key in buttonVisibility.keys) {
-        buttonVisibility[key] = false;
-      }
-    }
-  }
-
-  void resetplusminus(String ppp) {
-    final allKeys = buttonVisibility.keys.toSet();
-    if (ppp == "a") {
-      for (var key in allKeys) {
-        buttonVisibility[key] = ['s', 'c', 't', 'l'].contains(key);
-      }
-    } else if (ppp == "[+-]") {
-      for (var key in allKeys) {
-        buttonVisibility[key] = ['+', '-'].contains(key);
-      }
-    } else {
-      final toHide = ppp.split('').toSet();
-      for (var key in allKeys) {
-        buttonVisibility[key] = !toHide.contains(key);
-      }
-    }
-    buttonVisibility["f"] = false; // 常に非表示
-    buttonVisibility["^"] = false;
-  }
-
-  void _seigo(String symbol) async {
-    bool containsDigit(String symbol) {
-      return symbol.contains(RegExp(r'\d'));
-    }
-
-    if (!containsDigit(symbol)) {
-      ref.read(appSoundProvider).requireValue.playSound('0.mp3');
-    } else {
-      ref.read(appSoundProvider).requireValue.playSound('$symbol.mp3');
-    }
-    if (symbol == "p") {
-      _addToLatex("\\pi");
-    } else if (symbol == "i") {
-      _addToLatex("\\infty");
-    } else if (symbol == "s") {
-      _addToLatex("\\sin");
-    } else if (symbol == "c") {
-      _addToLatex("\\cos");
-    } else if (symbol == "t") {
-      _addToLatex("\\tan");
-    } else if (symbol == "l") {
-      _addToLatex("\\log");
-    } else if (symbol == "r") {
-      _sqrtfunction();
-    } else if (symbol == "f") {
-      _insertFraction();
-    } else if (symbol == "^") {
-      _squarefunction();
-    } else {
-      _addToLatex(symbol);
-    }
-
-    genzailist.add(symbol);
-
-    if (p <= falist.length &&
-        p <= genzailist.length &&
-        falist.sublist(0, p).toString() ==
-            genzailist.sublist(0, p).toString()) {
-      if (j == widget.alist[i].length - 1 && i == count) {
-        String ddd = "maru";
-        _hidePlusMinusButtons("af");
-        _onLatexInputChanged(latexInput);
-        widget.pekepeke(ddd);
-      } else if (j == widget.alist[i].length - 1) {
-        j = 0;
-        i = i + 1;
-        p = p + 1;
-        _onLatexInputChanged(latexInput);
-        moveToNextIndex();
-      } else {
-        j = j + 1;
-        p = p + 1;
-        _hidePlusMinusButtons(symbol);
-        _onLatexInputChanged(latexInput);
-      }
-    } else if (fblist != null &&
-        p <= fblist!.length &&
-        p <= genzailist.length &&
-        fblist!.sublist(0, p).toString() ==
-            genzailist.sublist(0, p).toString()) {
-      if (j == widget.blist![i].length - 1 && i == count) {
-        String ddd = "maru";
-        _hidePlusMinusButtons("af");
-        _onLatexInputChanged(latexInput);
-        widget.pekepeke(ddd);
-      } else if (j == widget.blist![i].length - 1) {
-        j = 0;
-        i = i + 1;
-        p = p + 1;
-        _onLatexInputChanged(latexInput);
-        moveToNextIndex();
-      } else {
-        j = j + 1;
-        p = p + 1;
-        _hidePlusMinusButtons(symbol);
-        _onLatexInputChanged(latexInput);
-      }
-    } else {
-      String ddd = "peke";
-      _hidePlusMinusButtons("af");
-      _onLatexInputChanged(latexInput);
-      widget.pekepeke(ddd);
-    }
-  }
-
-  // 分数挿入
-  void _insertFraction() {
-    int cursorPos = _controller.selection.baseOffset;
-    if (cursorPos == -1) cursorPos = latexInput.length;
-
-    if (cursorPos > 0) {
-      int startOfNumber = cursorPos - 1;
-      startOfNumber = startOfNumber < 0 ? 0 : startOfNumber;
-
-      while (startOfNumber > 0) {
-        // 2文字手前から {- or {+ を見る
-        if (startOfNumber >= 2 &&
-            (latexInput.substring(startOfNumber - 2, startOfNumber) == '{-')) {
-          startOfNumber -= 2;
-          break;
+    for (int i = 0; i < question.initialLatexA.length; i++) {
+      final char = question.initialLatexA[i];
+      if (colorMap.containsKey(char)) {
+        if (outputIdx < inputState.latexOutputs.length) {
+          final color = colorMap[char]!;
+          final content = inputState.latexOutputs[outputIdx];
+          buffer.write(outputIdx == inputState.currentBoxIndex
+              ? '\\textcolor{$color}{$content}'
+              : '{$content}');
+        } else {
+          // 状態が追いついていない場合は記号自体を表示
+          buffer.write(char);
         }
-
-        // { の単体も考慮（{-以外の開始）
-        if (latexInput[startOfNumber - 1] == '{' &&
-            !latexInput
-                .substring(startOfNumber - 3, startOfNumber)
-                .contains("t{")) {
-          startOfNumber -= 1;
-          break;
-        }
-
-        // + や - の記号
-        if (latexInput[startOfNumber - 1] == '+' ||
-            latexInput[startOfNumber - 1] == '-') {
-          startOfNumber -= 1;
-          break;
-        }
-
-        startOfNumber--;
-      }
-
-      String number = latexInput.substring(startOfNumber, cursorPos);
-
-      String sign = "";
-      if (number.startsWith("{-")) {
-        sign = "{-";
-        number = number.substring(2);
-      } else if (number.startsWith("-")) {
-        sign = "-";
-        number = number.substring(1);
-      } else if (number.startsWith("+")) {
-        sign = "+";
-        number = number.substring(1);
-      } else if (number.startsWith("{")) {
-        sign = "{";
-        number = number.substring(1);
-      }
-
-      if (number.contains("sqrt") && sign.contains("{")) {
-        // ignore: prefer_interpolation_to_compose_strings
-        latexInput =
-            "${latexInput.substring(0, startOfNumber)}$sign\\frac{}{$number}}}";
-        _controller.text = latexInput;
-        _controller.selection = TextSelection.collapsed(
-          offset: startOfNumber + 6 + sign.length,
-        );
-      } else if (number.contains("sqrt") || sign.contains("{")) {
-        // ignore: prefer_interpolation_to_compose_strings
-        latexInput =
-            "${latexInput.substring(0, startOfNumber)}$sign\\frac{}{$number}}";
-        _controller.text = latexInput;
-        _controller.selection = TextSelection.collapsed(
-          offset: startOfNumber + 6 + sign.length,
-        );
-      } else if (number.isNotEmpty) {
-        // ignore: prefer_interpolation_to_compose_strings
-        latexInput =
-            "${latexInput.substring(0, startOfNumber)}$sign\\frac{}{$number}";
-
-        _controller.text = latexInput;
-        _controller.selection = TextSelection.collapsed(
-          offset: startOfNumber + 6 + sign.length,
-        );
-      }
-    }
-
-    // 入力が変わったらその内容をリアルタイムでlatexOutputsに反映
-  }
-
-  void _sqrtfunction() {
-    // LaTeXの平方根記法 \sqrt{} を追加
-    _addToLatex("\\sqrt{}");
-
-    // カーソル位置を取得
-    int cursorPos = _controller.selection.baseOffset;
-
-    // カーソル位置が -1 の場合、テキストの末尾にカーソルを設定
-    if (cursorPos == -1) cursorPos = _controller.text.length;
-
-    // 新しいカーソル位置を \sqrt{} の直後に設定（6は "\sqrt{" の文字数）
-    _controller.selection = TextSelection.collapsed(offset: cursorPos - 1);
-  }
-
-  void _squarefunction() {
-    // LaTeXの平方根記法 \sqrt{} を追加
-    _addToLatex("^{}");
-
-    // カーソル位置を取得
-    int cursorPos = _controller.selection.baseOffset;
-
-    // カーソル位置が -1 の場合、テキストの末尾にカーソルを設定
-    if (cursorPos == -1) cursorPos = _controller.text.length;
-
-    // 新しいカーソル位置を \sqrt{} の直後に設定（6は "\sqrt{" の文字数）
-    _controller.selection = TextSelection.collapsed(offset: cursorPos - 1);
-  }
-
-  // 数式ボックスのウィジェットを作成
-  // 編集中のLaTeX式をハイライトする
-  Widget _buildLatexBoxWithVariable(BuildContext context) {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    String abcdePart = widget.marusikaku;
-    StringBuffer modifiedString = StringBuffer();
-    int latexIndex = 0;
-
-    // 記号に対応する色マップ
-    Map<String, String> colorMap = isDark
-        ? {'◯': 'red', '□': 'blue', '☆': 'orange'}
-        : {'◯': 'red', '□': 'blue', '☆': 'orange'};
-
-    for (int j = 0; j < abcdePart.length; j++) {
-      String char = abcdePart[j];
-      if (colorMap.containsKey(char) && latexIndex < latexOutputs.length) {
-        final color = colorMap[char]!;
-        final content = latexOutputs[latexIndex];
-        final wrapped = (latexIndex == selectedIndex)
-            ? '\\textcolor{$color}{$content}'
-            : '{$content}';
-        modifiedString.write(wrapped);
-        latexIndex++;
+        outputIdx++;
       } else {
-        modifiedString.write(char);
+        buffer.write(char);
       }
     }
 
-    combinedLatex = modifiedString.toString();
+    final parts = buffer.toString().split(';');
 
-    List<String> parts = combinedLatex.split(';');
-
-    return GestureDetector(
-      child: Center(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: getQuizColor2(widget.categoly, context, 0.6, 0.2, 0.95),
-          ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (int i = 0; i < parts.length; i++) ...[
-                  if (parts[i].trim().isNotEmpty)
-                    Math.tex(
-                      parts[i],
-                      textStyle: TextStyle(
-                        fontSize: 30,
-                        color: textColor1(context),
-                      ),
-                    ),
-                  if (i != parts.length - 1) const SizedBox(height: 8),
-                ],
-              ],
-            ),
+    return Center(
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          color: getQuizColor2(question.subject, context, 0.6, 0.2, 0.95),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            children: [
+              for (var part in parts)
+                if (part.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Math.tex(part,
+                        textStyle: TextStyle(
+                            fontSize: 30, color: textColor1(context))),
+                  ),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  final Map<String, Map<String, dynamic>> buttonDefinitions = {
-    "e": {"label": "e"},
-    "p": {"label": "\\pi"},
-    "7": {"label": "7"},
-    "8": {"label": "8"},
-    "9": {"label": "9"},
-    "r": {"label": "\\surd{□}"},
-    "4": {"label": "4"},
-    "5": {"label": "5"},
-    "6": {"label": "6"},
-    "f": {"label": "分数"},
-    "1": {"label": "1"},
-    "2": {"label": "2"},
-    "3": {"label": "3"},
-    "-": {"label": "-"},
-    "0": {"label": "0"},
-    "+": {"label": "+"},
-    "l": {"label": "log"},
-    "s": {"label": "\\sin"},
-    "c": {"label": "\\cos"},
-    "t": {"label": "tan"},
-    "i": {"label": "\\infty"},
-    "^": {"label": "□^□"},
+// --- キーボード部分 ---
+class LatexKeyboardView extends HookConsumerWidget {
+  const LatexKeyboardView({super.key});
+
+  static const Map<String, String> _buttonLabels = {
+    "e": "e",
+    "p": "\\pi",
+    "7": "7",
+    "8": "8",
+    "9": "9",
+    "r": "\\surd{□}",
+    "4": "4",
+    "5": "5",
+    "6": "6",
+    "f": "分数",
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "-": "-",
+    "0": "0",
+    "+": "+",
+    "l": "log",
+    "s": "\\sin",
+    "c": "\\cos",
+    "t": "tan",
+    "i": "\\infty",
+    "^": "□^□",
   };
-  Widget _getButtonList(String shubetu) {
-    String symbol = shubetu;
-    var label = buttonDefinitions[symbol]?["label"] ?? symbol;
-    return _buildButton(label, symbol, _seigo, shubetu, context);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = useTextEditingController();
+    final question =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.currentQuestion));
+
+    if (question is! LatexMakingData) return const SizedBox.shrink();
+
+    ref.listen(quizSessionNotifierProvider.select((s) => s.currentQuestion),
+        (prev, next) {
+      if (next != null) controller.clear();
+    });
+
+    // 追加：ボックス（入力箇所）が変わった時もコントローラーをクリアする
+    ref.listen(latexInputNotifierProvider.select((s) => s.currentBoxIndex),
+        (prev, next) {
+      if (next != prev) controller.clear();
+    });
+
+    void processInput(String symbol) {
+      final notifier = ref.read(latexInputNotifierProvider.notifier);
+      final inputState = ref.read(latexInputNotifierProvider);
+      final sessionState = ref.read(quizSessionNotifierProvider);
+      final config = ref.read(currentDetailConfigProvider);
+
+      if (sessionState.isAnswerChecked || sessionState.isGameOver) return;
+
+      final sound = RegExp(r'\d').hasMatch(symbol) ? '$symbol.mp3' : '0.mp3';
+      ref.read(appSoundProvider).requireValue.playSound(sound);
+
+      _updateController(controller, symbol);
+
+      // 入力された値を Provider に通知しつつ、判定も委ねる
+      notifier.updateLatexOutput(inputState.currentBoxIndex, controller.text);
+      notifier.processSymbol(symbol, config);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: Row(
+        children: [
+          if (question.firstButton.isNotEmpty)
+            _buildSidePanel(question.firstButton, (s) => processInput(s)),
+          Expanded(flex: 3, child: _buildNumberPad((s) => processInput(s))),
+        ],
+      ),
+    );
   }
 
-  Widget _buildButton(
-    String label,
-    String symbol,
-    Function(String) onPressed1,
-    shubetu,
-    BuildContext context,
-  ) {
-    final bool isVisible = buttonVisibility[symbol] ?? true;
-    final bool sc = label == "\\cos" || label == "\\sin";
-    // 文字色
-    Color forecolor =
-        isVisible ? textColor1(context) : textColor1(context).withAlpha(50);
+  void _updateController(TextEditingController controller, String symbol) {
+    String textToInsert = symbol;
+    int cursorOffset = 0;
+    switch (symbol) {
+      case "p":
+        textToInsert = "\\pi";
+        break;
+      case "i":
+        textToInsert = "\\infty";
+        break;
+      case "s":
+        textToInsert = "\\sin";
+        break;
+      case "c":
+        textToInsert = "\\cos";
+        break;
+      case "t":
+        textToInsert = "\\tan";
+        break;
+      case "l":
+        textToInsert = "\\log";
+        break;
+      case "r":
+        textToInsert = "\\sqrt{}";
+        cursorOffset = -1;
+        break;
+      case "^":
+        textToInsert = "^{}";
+        cursorOffset = -1;
+        break;
+      case "f":
+        _handleFraction(controller);
+        return;
+    }
 
-    // 背景色
-    Color backcolor = isVisible
-        ? getQuizColor2(widget.categoly, context, 0.6, 0.2, 0.95)
-        : getQuizColor2(
-            widget.categoly,
-            context,
-            0.6,
-            0.2,
-            0.95,
-          ).withAlpha(30); // 透明にしたい場合
+    final text = controller.text;
+    final selection = controller.selection;
+    final start =
+        selection.baseOffset == -1 ? text.length : selection.baseOffset;
+    final end =
+        selection.extentOffset == -1 ? text.length : selection.extentOffset;
+
+    controller.text = text.replaceRange(start, end, textToInsert);
+    controller.selection = TextSelection.collapsed(
+        offset: (start + textToInsert.length + cursorOffset)
+            .clamp(0, controller.text.length));
+  }
+
+  void _handleFraction(TextEditingController controller) {
+    String current = controller.text;
+    int pos = controller.selection.baseOffset == -1
+        ? current.length
+        : controller.selection.baseOffset;
+    if (pos <= 0) return;
+
+    int start = pos - 1;
+    while (start > 0) {
+      if (start >= 2 && current.substring(start - 2, start) == '{-') {
+        start -= 2;
+        break;
+      }
+      if (current[start - 1] == '{' &&
+          (start < 3 || !current.substring(start - 3, start).contains("t{"))) {
+        start -= 1;
+        break;
+      }
+      if ("+-".contains(current[start - 1])) {
+        start -= 1;
+        break;
+      }
+      start--;
+    }
+
+    String extracted = current.substring(start, pos);
+    String sign = "";
+    String content = extracted;
+
+    if (content.startsWith("{-")) {
+      sign = "{-";
+      content = content.substring(2);
+    } else if (content.startsWith("-")) {
+      sign = "-";
+      content = content.substring(1);
+    } else if (content.startsWith("+")) {
+      sign = "+";
+      content = content.substring(1);
+    } else if (content.startsWith("{")) {
+      sign = "{";
+      content = content.substring(1);
+    }
+
+    String newPart;
+    if (content.contains("sqrt") && sign.contains("{")) {
+      newPart = "$sign\\frac{}{$content}}}";
+    } else if (content.contains("sqrt") || sign.contains("{")) {
+      newPart = "$sign\\frac{}{$content}}";
+    } else if (content.isNotEmpty) {
+      newPart = "$sign\\frac{}{$content}";
+    } else {
+      return;
+    }
+
+    controller.text = current.replaceRange(start, pos, newPart);
+    controller.selection =
+        TextSelection.collapsed(offset: start + sign.length + 6);
+  }
+
+  Widget _buildSidePanel(String type, Function(String) onTap) {
+    Widget k(String s) => _Key(symbol: s, onTap: onTap);
+    switch (type) {
+      case "s":
+        return Expanded(
+            flex: 2,
+            child: Column(children: [
+              Expanded(child: k("p")),
+              Expanded(child: k("r")),
+              Expanded(flex: 2, child: k("f"))
+            ]));
+      case "lsct":
+        return Expanded(
+            flex: 2,
+            child: Column(children: [
+              Expanded(child: k("s")),
+              Expanded(child: k("c")),
+              Expanded(flex: 2, child: k("f"))
+            ]));
+      case "m":
+        return Expanded(
+            flex: 2,
+            child: Column(children: [
+              Expanded(
+                  child: Row(children: [
+                Expanded(child: k("e")),
+                Expanded(child: k("^"))
+              ])),
+              Expanded(
+                  child: Row(children: [
+                Expanded(child: k("p")),
+                Expanded(child: k("r"))
+              ])),
+              Expanded(child: k("f")),
+              Expanded(child: k("i")),
+            ]));
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildNumberPad(Function(String) onTap) {
+    final rows = [
+      ["7", "8", "9"],
+      ["4", "5", "6"],
+      ["1", "2", "3"],
+      ["-", "0", "+"]
+    ];
+    return Column(
+        children: rows
+            .map((row) => Expanded(
+                child: Row(
+                    children: row
+                        .map((s) =>
+                            Expanded(child: _Key(symbol: s, onTap: onTap)))
+                        .toList())))
+            .toList());
+  }
+}
+
+class _Key extends HookConsumerWidget {
+  final String symbol;
+  final Function(String) onTap;
+  const _Key({required this.symbol, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isVisible = ref.watch(latexInputNotifierProvider
+        .select((s) => s.buttonVisibility[symbol] ?? true));
+    final label = LatexKeyboardView._buttonLabels[symbol] ?? symbol;
+    final isWide = label == "\\cos" || label == "\\sin";
+
+    final question =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.currentQuestion));
+    final category = question is LatexMakingData ? question.subject : "math";
+
+    final baseColor = getQuizColor2(category, context, 0.6, 0.2, 0.95);
+    final color = isVisible ? baseColor : baseColor.withAlpha(30);
+    final textColor =
+        isVisible ? textColor1(context) : textColor1(context).withAlpha(50);
 
     return Padding(
       padding: const EdgeInsets.all(2),
       child: InkWell(
-        onTap: isVisible ? () => onPressed1(symbol) : null,
-        borderRadius:
-            sc ? BorderRadius.circular(20) : BorderRadius.circular(40),
+        onTap: isVisible ? () => onTap(symbol) : null,
+        borderRadius: BorderRadius.circular(isWide ? 20 : 40),
         child: Container(
           decoration: BoxDecoration(
-            color: backcolor,
-            borderRadius:
-                sc ? BorderRadius.circular(20) : BorderRadius.circular(40),
-          ),
+              color: color,
+              borderRadius: BorderRadius.circular(isWide ? 20 : 40)),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(5),
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Math.tex(
-              label,
-              textStyle: TextStyle(fontSize: 30, color: forecolor),
-            ),
+            child: Math.tex(label,
+                textStyle: TextStyle(fontSize: 30, color: textColor)),
           ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // boxCountの設定
-
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        color: Colors.transparent,
-        child: Column(
-          children: [
-            Expanded(flex: 2, child: _buildLatexBoxWithVariable(context)),
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (widget.shubetu == "s")
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          children: [
-                            Expanded(flex: 1, child: _getButtonList("p")),
-                            Expanded(flex: 1, child: _getButtonList("r")),
-                            Expanded(flex: 2, child: _getButtonList("f")),
-                          ],
-                        ),
-                      ),
-                    if (widget.shubetu == "lsct")
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          children: [
-                            Expanded(flex: 1, child: _getButtonList("s")),
-                            Expanded(flex: 1, child: _getButtonList("c")),
-                            Expanded(flex: 2, child: _getButtonList("f")),
-                          ],
-                        ),
-                      ),
-                    if (widget.shubetu == "m")
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          children: [
-                            Expanded(
-                              flex: 1,
-                              child: Row(
-                                children: [
-                                  Expanded(flex: 1, child: _getButtonList("e")),
-                                  Expanded(flex: 1, child: _getButtonList("^")),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Row(
-                                children: [
-                                  Expanded(flex: 1, child: _getButtonList("p")),
-                                  Expanded(flex: 1, child: _getButtonList("r")),
-                                ],
-                              ),
-                            ),
-                            Expanded(flex: 1, child: _getButtonList("f")),
-                            Expanded(flex: 1, child: _getButtonList("i")),
-                          ],
-                        ),
-                      ),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("7")),
-                                Expanded(child: _getButtonList("8")),
-                                Expanded(child: _getButtonList("9")),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("4")),
-                                Expanded(child: _getButtonList("5")),
-                                Expanded(child: _getButtonList("6")),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("1")),
-                                Expanded(child: _getButtonList("2")),
-                                Expanded(child: _getButtonList("3")),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(child: _getButtonList("-")),
-                                Expanded(child: _getButtonList("0")),
-                                Expanded(child: _getButtonList("+")),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

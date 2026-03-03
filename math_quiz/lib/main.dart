@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:math_quiz/math_quiz.dart';
 
 import 'assistance/formula.dart';
-import 'providers/quiz_data_provider.dart';
 
 final List<DetailData> gameDetails = subjects.map((s) {
   return DetailData(
@@ -41,26 +40,11 @@ final _appConfig = AllData(
     loadGame:
         (BuildContext context, WidgetRef ref, DetailConfig quizinfo) async {
       // 1. パース済みの全データを取得
-      final allDataValue = await ref.read(quizDataProvider.future);
-      // 2. フィルタリングロジックを実行
-      final filtered = <int, List<PartData>>{};
-      allDataValue.forEach((score, partList) {
-        final newList = partList.where((part) {
-          if (!quizinfo.modeData.isbattle) {
-            return part.field == quizinfo.detail.displayLabel;
-          } else {
-            return quizinfo.detail.sort.contains(part.subject);
-          }
-        }).toList();
+      LoadQuiz(quizinfo: quizinfo).init(ref);
+    },
+    mainGame: (BuildContext context, DetailConfig quizinfo) =>
+        const Quizscreen(), // const を追加
 
-        if (newList.isNotEmpty) filtered[score] = newList;
-      });
-      // 3. Riverpod の状態を更新
-      ref.read(activeGameMapProvider.notifier).update(filtered);
-    },
-    mainGame: (BuildContext context, DetailConfig quizinfo) {
-      return const Quizscreen(); // const を追加
-    },
     endBuilder: (context, totalScore, originalData, quizinfo) {
       // 念のため、中身をキャストして渡す
       final List<MakingData> pData = List<MakingData>.from(originalData[0]);
@@ -120,7 +104,7 @@ final _appConfig = AllData(
           displayRank: "数Ⅱ・数B",
           resisterSub: "数Ⅱ・数B",
           resisterOrigin: "数Ⅱ・数B",
-          method: "数Ⅱ・数Bの全範囲(対数, 積分, 統計など)",
+          method: "数Ⅱ・数B de全範囲(対数, 積分, 統計など)",
           description: "高2向け! 60秒での点数で競おう!!",
           color: "B",
           circleColor: "2B",

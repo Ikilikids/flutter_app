@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:math_quiz/assistance/makingdata.dart';
+import 'package:math_quiz/assistance/makingdata_latex.dart';
 
 class Triangle extends StatelessWidget {
   final TriangleMakingData origin;

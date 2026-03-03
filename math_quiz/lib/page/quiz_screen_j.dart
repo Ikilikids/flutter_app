@@ -1,290 +1,84 @@
-import 'dart:async';
-import 'dart:math';
-
 import 'package:common/common.dart';
 import 'package:common/freezed/ui_config.dart';
 import 'package:common/providers/app_sound.dart';
 import 'package:common/providers/ui_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:math_quiz/math_quiz.dart' hide QuizStateProvider;
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:math_quiz/math_quiz.dart';
 
-import '../providers/quiz_data_provider.dart';
-
-class Quizscreen extends ConsumerStatefulWidget {
-  const Quizscreen({
-    super.key,
-  });
+class Quizscreen extends HookConsumerWidget {
+  const Quizscreen({super.key});
 
   @override
-  QuizScreenState createState() => QuizScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(quizSessionNotifierProvider);
+    final notifier = ref.read(quizSessionNotifierProvider.notifier);
+    final activeConfig = ref.read(currentDetailConfigProvider);
+    final filteredMap = ref.read(activeGameMapProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-class QuizScreenState extends ConsumerState<Quizscreen> {
-  DateTime? startTime;
-  late MakingData P;
-  String? selectedAnswer;
-  String result = '';
-  bool isAnswerChecked = false;
-  int correctCount = 0; // 正解数
-  bool isGameOver = false;
-  Timer? _timer;
-  int remainingTime = 60;
-  int totalScore = 0; // 現時点での獲得点数
-  String scoreIncrement1 = ''; // +点数表示のための変数
-  String scoreIncrement2 = ''; // +点数表示のための変数
-  int qcount = 0; // 問題数
-  late List<String> marks;
-  List<MakingData> plist = [];
-  // LateXInputScreenのキーを作成
-  final GlobalKey<LatexInputScreenState> _latexInputKey =
-      GlobalKey<LatexInputScreenState>();
-  bool _initialized = false;
-  late int qCount;
-  late DetailConfig activeConfig;
-  late Map<int, List<PartData>> filteredMap;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    if (!_initialized) {
-      // 1. Provider から「今選ばれている設定」を直接取得
-      activeConfig = ref.read(currentDetailConfigProvider);
-      filteredMap = ref.read(activeGameMapProvider);
-
-      // 2. 問題数(qcount)の取得
-      qCount = activeConfig.qcount;
-
-      // 3. marks の初期化
-      if (!activeConfig.modeData.isbattle) {
-        marks = List.filled(qCount, "");
-      } else {
-        marks = [];
-      }
-
-      // 4. タイマー開始判定
-      if (activeConfig.modeData.isbattle) {
-        startTimer();
-      }
-
-      // 5. 最初の問題を表示
-      updateQuestion().then((_) {
-        if (mounted) {
-          setState(() {
-            _initialized = true;
-          });
-        }
+    // 初期化
+    useEffect(() {
+      Future.microtask(() {
+        notifier.init(activeConfig);
+        _updateQuestion(ref, activeConfig, filteredMap, isInitial: true);
       });
-    }
-  }
+      return null;
+    }, []);
 
-  // 次の問題に移行する際にLatexInputScreenもリセット
-  Future<void> updateQuestion() async {
-    // 素材(PartData)を1つ選ぶ
-    ChooseQuizData chooseQuizData = ChooseQuizData(
-      correctCount: correctCount,
-      quizinfo: activeConfig,
-      filteredMapByScore: filteredMap,
-    );
-    PartData ct = chooseQuizData.chooseRandombyScoreRange();
+    // 正誤判定後の処理
+    ref.listen(quizSessionNotifierProvider.select((s) => s.isAnswerChecked),
+        (prev, checked) {
+      if (checked) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          final currentSession = ref.read(quizSessionNotifierProvider);
+          if (!context.mounted) return;
+          if (currentSession.isGameOver) return;
 
-    setState(() {
-      // ★ factoryを呼ぶだけ。これでPの中身は勝手にLatexMakingDataかOptionMakingDataになる
-      P = MakingData.fromPart(ct);
-
-      // 2. 共通の更新処理
-      result = '';
-      isAnswerChecked = false;
-      startTime = DateTime.now();
-    });
-
-    // LaTeX特有の表示リセットだけ 'is' で判定して実行
-    if (P is LatexMakingData) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _latexInputKey.currentState?.resetLatexOutputs();
-      });
-    }
-  }
-
-  void partpoints(int ctpoint) {
-    int lastScore = ctpoint;
-    lastScore = lastScore * 10;
-
-    setState(() {
-      totalScore += lastScore;
-      scoreIncrement1 = "+$lastScore点";
-      Future.delayed(const Duration(milliseconds: 300), () {
-        setState(() {
-          scoreIncrement1 = ''; // 点数表示を消す
+          if (activeConfig.modeData.isbattle) {
+            _updateQuestion(ref, activeConfig, filteredMap);
+          } else {
+            if (currentSession.currentIndex >= activeConfig.qcount - 1) {
+              _finishGame(context, ref, activeConfig, currentSession);
+            } else {
+              _updateQuestion(ref, activeConfig, filteredMap);
+            }
+          }
         });
-      });
-    });
-  }
-
-  void judge(String seigo) async {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (isGameOver) return;
-      setState(() {
-        scoreIncrement1 = '';
-        scoreIncrement2 = '';
-        selectedAnswer = null;
-        isAnswerChecked = false;
-      });
-
-      if (remainingTime > 0 && activeConfig.modeData.isbattle == true) {
-        updateQuestion();
-      }
-      if (activeConfig.modeData.isbattle == false) {
-        marks[qcount] = result;
-        plist.add(P);
-        if (qcount == qCount - 1) {
-          if (!mounted) return;
-
-          ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => activeConfig.modeData.isbattle
-                  ? PipiScreen(totalScore: totalScore)
-                  : PipiScreen(
-                      totalScore: correctCount, originalData: [plist, marks]),
-            ),
-          );
-          return;
-        } else {
-          qcount++;
-          updateQuestion();
-        }
       }
     });
-    if (isGameOver) return;
 
-    if (seigo == "peke") {
-      setState(() {
-        result = '×';
-        isAnswerChecked = true;
-        totalScore = max(0, totalScore - 10);
-        scoreIncrement1 = '-10点';
-      });
-      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
-    } else if (seigo == "maru") {
-      // ★ ここから修正：モードによってスコアの計算パーツを分ける
-      int lastScore = 0;
-      int soundLevel = 1;
-
-      if (P case LatexMakingData p) {
-        final List<int> ctScoreList =
-            p.holes.map((hole) => hole.score).toList();
-        lastScore = ctScoreList.last * 10;
-        soundLevel = ctScoreList.length;
-      } else {
-        // Optionモードのときは、holesがないのでトータルスコアを基礎点にする
-        lastScore = P.totalScore * 10;
-        soundLevel = 1;
+    // ゲームオーバー判定
+    ref.listen(quizSessionNotifierProvider.select((s) => s.isGameOver),
+        (prev, isOver) {
+      if (isOver && context.mounted) {
+        final currentSession = ref.read(quizSessionNotifierProvider);
+        _finishGame(context, ref, activeConfig, currentSession);
       }
+    });
 
-      // 共通のボーナス計算
-      int sumscore = P.totalScore * 10;
-      DateTime endTime = DateTime.now();
-      Duration elapsed = endTime.difference(startTime!);
-      int elapsedTenth = elapsed.inMilliseconds;
-      double decrease = elapsedTenth * 0.002 / sumscore;
-      double timebonus = max(0.0, 1 - decrease);
-
-      int bonuspoint = (sumscore * timebonus).round();
-
-      setState(() {
-        result = "◯";
-        isAnswerChecked = true;
-        totalScore += bonuspoint + lastScore;
-        scoreIncrement1 = '+$lastScore点';
-        scoreIncrement2 = '+$bonuspoint点';
-        correctCount += 1;
-      });
-
-      // ★ 音の出し分けも soundLevel で判定
-      if (soundLevel > 1) {
-        ref.read(appSoundProvider).requireValue.playSound('marumaru.mp3');
-      } else {
-        ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
-      }
+    if (session.currentQuestion == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-  }
 
-  void startTimer() {
-    setState(() {
-      remainingTime = 60;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (remainingTime > 1 && !isGameOver) {
-        ref.read(appSoundProvider).requireValue.playSound('ry.mp3');
-        setState(() {
-          remainingTime--;
-        });
-
-        // 🔔 ちょうど119秒（開始1秒後）で再生する
-      } else if (remainingTime == 1 && !isGameOver) {
-        setState(() {
-          isGameOver = true;
-        });
-        _timer?.cancel();
-
-        // 結果画面に遷移
-        if (!mounted) return;
-        ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PipiScreen(totalScore: totalScore),
-          ),
-        );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_initialized) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    Widget childWidget = buildChildWidget(context, P);
+    final P = session.currentQuestion!;
+    final childWidget = buildChildWidget(context, P);
 
     return PopScope(
-      canPop: false, // デフォルトの戻りはキャンセル
-      onPopInvokedWithResult: (didPop, result) async {
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        isGameOver
-            ? null
-            : showMenuDialog(
-                context,
-                () => setState(() {
-                  isGameOver = true;
-                }),
-                activeConfig.modeData.islimited,
-              );
+        if (!session.isGameOver) {
+          showMenuDialog(
+              context,
+              () => (), // null を渡して共通仕様に従う
+              activeConfig.modeData.islimited);
+        }
       },
       child: AppAdScaffold(
         body: Container(
           padding: const EdgeInsets.only(left: 20, right: 20, top: 40),
-          decoration: const BoxDecoration(),
           child: Stack(
             children: [
               Column(
@@ -294,121 +88,118 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                     flex: 1,
                     child: Row(
                       children: [
-                        if (activeConfig.modeData.isbattle == true)
+                        if (activeConfig.modeData.isbattle)
                           Expanded(
                             flex: 1,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 10),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: CustomPaint(
-                                  size: const Size(100, 100),
-                                  painter: TimeCirclePainter(
-                                    remainingTime: remainingTime,
-                                    isDark: isDark,
-                                  ),
-                                ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: CustomPaint(
+                                size: const Size(100, 100),
+                                painter: TimeCirclePainter(
+                                    remainingTime: session.remainingTime,
+                                    isDark: isDark),
                               ),
                             ),
                           ),
                         Expanded(flex: 2, child: quizInfo(context, P)),
                         Expanded(
                           flex: 1,
-                          child: menuButton(
-                            context,
-                            () => setState(() {
-                              isGameOver = true;
-                            }),
-                            false,
-                            istap: !isGameOver,
-                          ),
+                          child: menuButton(context, () => (), false,
+                              istap: !session.isGameOver),
                         ),
-                        if (activeConfig.modeData.isbattle == true)
+                        if (activeConfig.modeData.isbattle) ...[
                           Expanded(
-                            flex: 2,
-                            child: pointwidget(
-                              context,
-                              totalScore,
-                              remainingTime: remainingTime,
-                            ),
-                          ),
-                        if (activeConfig.modeData.isbattle == true)
+                              flex: 2,
+                              child: pointwidget(context, session.totalScore,
+                                  remainingTime: session.remainingTime)),
                           Expanded(
                             flex: 1,
                             child: increasewidget(
-                              scoreIncrement1,
-                              scoreIncrement2,
+                              session.scoreFeedback1,
+                              session.scoreFeedback2,
                             ),
                           ),
-                        if (activeConfig.modeData.isbattle == false)
+                        ] else
                           Expanded(
-                            flex: 4,
-                            child: marupekelist(context, marks),
-                          ),
+                              flex: 4,
+                              child: marupekelist(context, session.marks)),
                       ],
                     ),
                   ),
                   Expanded(
-                    flex: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: childWidget,
-                    ),
-                  ),
-                  if (P case LatexMakingData p)
-                    Expanded(
-                      flex: 7,
+                      flex: 4,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: LatexInputScreen3(
-                          key: _latexInputKey,
-                          shubetu: p.firstButton, // P ではなく p を使う
-                          marusikaku: p.initialLatexA, // ここで赤線が出ない！
-                          alist: p.indexDataA.map((e) => e.tokenList).toList(),
-                          blist: p.indexDataB.map((e) => e.tokenList).toList(),
-                          button2: p.indexDataA.map((e) => e.button).toList(),
-                          ctscore: p.indexDataA.map((e) => e.score).toList(),
-                          categoly: p.subject,
-                          pekepeke: (ddd) => judge(ddd),
-                          partpoint: (score) => partpoints(score),
-                        ),
-                      ),
-                    ),
-                  if (P case OptionMakingData p)
+                          padding: const EdgeInsets.only(top: 10),
+                          child: childWidget)),
+                  if (P is LatexMakingData) ...[
+                    const Expanded(flex: 2, child: LatexDisplayView()),
+                    const Expanded(flex: 5, child: LatexKeyboardView()),
+                  ],
+                  if (P is OptionMakingData)
                     Expanded(
-                      flex: 7,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 5),
+                        flex: 7,
                         child: QuizOptions(
-                          quizData: p, // p なので optionList にアクセス可能
-                          onCorrect: (ddd) => judge(ddd),
-                        ),
-                      ),
-                    ),
+                            quizData: P,
+                            onCorrect: (res) =>
+                                notifier.judge(res, activeConfig))),
                 ],
               ),
-              Center(
-                child: isAnswerChecked
-                    ? result == "◯"
-                        ? Image.asset(
-                            isDark
-                                ? 'assets/images/circle_dark.png'
-                                : 'assets/images/circle.png',
-                            height: 300,
-                          )
-                        : result == '×'
-                            ? Image.asset(
-                                isDark
-                                    ? 'assets/images/cross_dark.png'
-                                    : 'assets/images/cross.png',
-                                height: 300,
-                              )
-                            : Container()
-                    : Container(),
-              ),
+              if (session.isAnswerChecked)
+                Center(
+                  child: Image.asset(
+                    session.resultMark == "◯"
+                        ? (isDark
+                            ? 'assets/images/circle_dark.png'
+                            : 'assets/images/circle.png')
+                        : (isDark
+                            ? 'assets/images/cross_dark.png'
+                            : 'assets/images/cross.png'),
+                    height: 300,
+                  ),
+                ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _updateQuestion(
+      WidgetRef ref, DetailConfig config, Map<int, List<PartData>> map,
+      {bool isInitial = false}) {
+    final sessionNotifier = ref.read(quizSessionNotifierProvider.notifier);
+    final sessionState = ref.read(quizSessionNotifierProvider);
+
+    if (!isInitial) {
+      sessionNotifier.nextQuestionIndex();
+    }
+
+    final ct = ChooseQuizData(
+            correctCount: sessionState.correctCount,
+            quizinfo: config,
+            filteredMapByScore: map)
+        .chooseRandombyScoreRange();
+
+    final question = MakingData.fromPart(ct);
+    sessionNotifier.updateQuestion(question);
+  }
+
+  void _finishGame(BuildContext context, WidgetRef ref, DetailConfig config,
+      QuizSessionState session) {
+    ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
+    final solved = [
+      ...session.solvedQuestions,
+      if (session.currentQuestion != null) session.currentQuestion!
+    ];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => config.modeData.isbattle
+            ? PipiScreen(totalScore: session.totalScore)
+            : PipiScreen(
+                totalScore: session.correctCount,
+                originalData: [solved, session.marks]),
       ),
     );
   }
