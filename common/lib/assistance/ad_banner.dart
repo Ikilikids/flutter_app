@@ -35,10 +35,10 @@ class _NativeBannerAdWidgetState extends ConsumerState<_NativeBannerAdWidget> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final adUnitId = allData.appData.bannerId ??
-          'ca-app-pub-3940256099942544/6300978111'; // ← テスト広告ID
+      final adUnitId =
+          allData.appData.bannerId ?? 'ca-app-pub-3940256099942544/6300978111';
 
-      print('Loading Banner Ad: $adUnitId'); // ← ここで print
+      print('Loading Banner Ad: $adUnitId');
 
       _bannerAd = BannerAd(
         adUnitId: adUnitId,

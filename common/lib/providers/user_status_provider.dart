@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../common.dart';
-import '../freezed/user_status.dart';
 
 part 'user_status_provider.g.dart';
 

@@ -70,7 +70,7 @@ class ScoreManager {
     required String userName,
   }) async {
     if (score <= 0) return null;
-
+    print(resisterOrigin);
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return null;
 
@@ -78,8 +78,11 @@ class ScoreManager {
     final rounded = (score * fix).roundToDouble() / fix;
     final List<DocumentReference> targets = [];
 
-    final resisterTypes =
-        isBattle ? [resisterOrigin] : [resisterOrigin, resisterSub, "全合計"];
+    final resisterTypes = isBattle
+        ? [resisterOrigin]
+        : resisterOrigin == resisterSub
+            ? [resisterOrigin, "全合計"]
+            : [resisterOrigin, resisterSub, "全合計"];
 
     // ===== userスコア =====
 

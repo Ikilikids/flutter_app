@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common.dart';
-import '../providers/app_sound.dart';
 
 class CommonApp extends ConsumerWidget {
   final Widget home;
@@ -14,8 +13,8 @@ class CommonApp extends ConsumerWidget {
     // 1. SoundManager も追加で監視
     final themeAsync = ref.watch(appThemeProvider);
     final localeAsync = ref.watch(appLocaleProvider);
-    final uidAsync = ref.watch(appUidProvider);
-    final soundAsync = ref.watch(appSoundProvider);
+    ref.watch(appUidProvider);
+    ref.watch(appSoundProvider);
 
     // 2. 最低限必要なものだけチェック（テーマとロケールのみ）
     final bool isReady = themeAsync.hasValue && localeAsync.hasValue;

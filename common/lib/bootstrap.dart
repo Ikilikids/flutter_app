@@ -4,9 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'freezed/app_data.dart';
-import 'providers/app_sound.dart';
-
 class Bootstrap extends ConsumerStatefulWidget {
   final AllData appConfig;
   final FirebaseOptions firebaseOptions;
@@ -51,11 +48,11 @@ class _BootstrapState extends ConsumerState<Bootstrap> {
   void _initBackgroundServices() {
     // バージョンチェックをバックグラウンドで開始
     UpdateManager.checkUpdate();
-    final themeAsync = ref.read(appThemeProvider);
-    final localeAsync = ref.read(appLocaleProvider);
-    final uidAsync = ref.read(appUidProvider);
-    final soundAsync = ref.read(appSoundProvider);
-    final statusAsync = ref.read(userStatusNotifierProvider);
+    ref.read(appThemeProvider);
+    ref.read(appLocaleProvider);
+    ref.read(appUidProvider);
+    ref.read(appSoundProvider);
+    ref.read(userStatusNotifierProvider);
     if (!kIsWeb) {
       AdManager.initialize();
       InterstitialAdHelper.configure(widget.appConfig);

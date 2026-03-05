@@ -1,6 +1,4 @@
 import 'package:common/common.dart';
-import 'package:common/freezed/app_data.dart';
-import 'package:common/freezed/ui_config.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 

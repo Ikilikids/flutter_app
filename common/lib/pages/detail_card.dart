@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-// 新しいプロバイダーをインポート
-import '../freezed/app_data.dart';
-import '../freezed/ui_config.dart';
-import '../providers/ui_provider.dart';
-
 class CommonDetailCard extends ConsumerWidget {
   const CommonDetailCard({super.key});
 

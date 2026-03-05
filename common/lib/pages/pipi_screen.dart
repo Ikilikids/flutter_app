@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../providers/ui_provider.dart';
-
 class PipiScreen extends HookConsumerWidget {
   final num totalScore;
   final dynamic originalData;
@@ -28,13 +26,11 @@ class PipiScreen extends HookConsumerWidget {
         final endBuilder = allData.endBuilder;
         final startTime = DateTime.now();
 
-        // 1. UIDとユーザー名の取得
         final uid = await ref.read(appUidProvider.future);
         final userName =
             await ref.read(appUidProvider.notifier).loadUsername(uid);
 
         try {
-          // 2. Firebase更新とランキング取得
           await ScoreManager.updateAllScores(
             score: totalScore.toDouble(),
             resisterOrigin: quizinfo.detail.resisterOrigin,

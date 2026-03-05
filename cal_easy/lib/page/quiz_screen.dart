@@ -3,8 +3,6 @@ import 'dart:math';
 
 import 'package:cal_easy/assistance/latex_formatter.dart';
 import 'package:common/common.dart';
-import 'package:common/freezed/ui_config.dart';
-import 'package:common/providers/app_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 

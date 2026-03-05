@@ -11,6 +11,9 @@ export 'assistance/sound_manager.dart';
 export 'assistance/update_manager.dart';
 // bootstrap
 export 'bootstrap.dart';
+export 'freezed/app_data.dart';
+export 'freezed/ui_config.dart';
+export 'freezed/user_status.dart';
 //freezed
 
 //pages
@@ -26,8 +29,10 @@ export 'pages/settings_page.dart';
 // providers
 export 'providers/app_locale.dart';
 export 'providers/app_number.dart';
+export 'providers/app_sound.dart';
 export 'providers/app_theme.dart';
 export 'providers/app_uid.dart';
+export 'providers/ui_provider.dart';
 export 'providers/user_status_provider.dart';
 export 'src/generated/l10n/app_localizations.dart';
 // widgets

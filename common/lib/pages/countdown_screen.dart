@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart'; // flutter_hooks をインポート
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../providers/app_sound.dart';
-import '../providers/ui_provider.dart';
-
 class CommonCountdownScreen extends HookConsumerWidget {
   const CommonCountdownScreen({super.key});
 
@@ -59,7 +56,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
     }, const []); // 第2引数を空にすることで初回のみ実行
 
     return PopScope(
-      canPop: false,
+      canPop: true,
       child: AppAdScaffold(
         advisible: false,
         body: Center(

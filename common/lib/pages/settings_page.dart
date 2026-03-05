@@ -224,22 +224,24 @@ Widget _languageTile({
             content: StatefulBuilder(
               builder: (context, setState) {
                 return SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: AppLocalizations.supportedLocales.map((locale) {
-                      return RadioListTile<Locale>(
-                        title: Text(_getLanguageName(locale)),
-                        value: locale,
-                        groupValue: tempSelected,
-                        onChanged: (newLocale) {
-                          if (newLocale != null) {
-                            setState(() {
-                              tempSelected = newLocale; // ダイアログ内で更新
-                            });
-                          }
-                        },
-                      );
-                    }).toList(),
+                  child: RadioGroup<Locale>(
+                    groupValue: tempSelected,
+                    onChanged: (Locale? newLocale) {
+                      if (newLocale != null) {
+                        setState(() {
+                          tempSelected = newLocale;
+                        });
+                      }
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: AppLocalizations.supportedLocales.map((locale) {
+                        return RadioListTile<Locale>(
+                          title: Text(_getLanguageName(locale)),
+                          value: locale,
+                        );
+                      }).toList(),
+                    ),
                   ),
                 );
               },

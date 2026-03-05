@@ -14,6 +14,8 @@ dependencies:
     sdk: flutter # 追加
   common:
     path: ../common
+  quiz:
+    path: ../quiz
   shared_preferences: ^2.0.15
   cupertino_icons: ^1.0.8
   path_provider: ^2.0.11 # path_providerパッケージを追加
