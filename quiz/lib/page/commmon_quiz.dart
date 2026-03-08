@@ -4,7 +4,6 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import "package:quiz/quiz.dart";
 
-
 class ChooseQuizData {
   int correctCount;
   final DetailConfig quizinfo;
@@ -55,6 +54,10 @@ class ChooseQuizData {
       throw Exception("No quiz candidates found in score range");
     }
 
+    if (isEngMode) {
+      print(candidates.length);
+      return candidates[random.nextInt(candidates.length)];
+    }
     // 2️⃣ fieldごとにまとめる
     final fieldMap = <String, List<PartData>>{};
     for (var part in candidates) {

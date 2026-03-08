@@ -57,10 +57,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dailyLimitedModeSub2 => '集中して記録を狙おう！';
 
   @override
-  String get settingsButton => '⚙ 設定';
+  String get settingsButton => '設定';
 
   @override
-  String get rankingButton => '👑 ランキング';
+  String get rankingButton => 'ランキング';
 
   @override
   String get playableStatus => 'プレイ可能';
@@ -107,7 +107,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get allScores => '全合計';
 
   @override
-  String get settingsTitle => '⚙設定';
+  String get settingsTitle => '設定';
 
   @override
   String get currentUsernameLabel => '現在のユーザー名: ';
@@ -140,7 +140,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get okButton => 'OK';
 
   @override
-  String get rankingTitle => '👑ランキング👑';
+  String get rankingTitle => 'ランキング';
 
   @override
   String get allPeriod => '全期間';

@@ -17,7 +17,6 @@ class QuizStatus with _$QuizStatus {
 class ModeStatus with _$ModeStatus {
   const factory ModeStatus({
     required String modeType,
-    @Default('') String badgeText,
   }) = _ModeStatus;
 }
 

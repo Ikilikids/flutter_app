@@ -151,10 +151,9 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
 
     // 判定無効化
     setState(() => isReadyToAct = false);
-
-    showFlyingDialog(context, () {
-      if (mounted) startTrial();
-    }, widget.quizinfo.modeData.islimited);
+    isGameOver = false;
+    showMenuDialog(context,
+        isLimitedMode: widget.quizinfo.modeData.islimited, isFlying: true);
   }
 
   void handleSuccess(int elapsed) {
@@ -228,8 +227,8 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
                           : FontWeight.normal)),
             );
           }),
-          menuButton(context, () => setState(() {}),
-              widget.quizinfo.modeData.islimited,
+          menuButton(context,
+              isLimitedMode: widget.quizinfo.modeData.islimited,
               istap: !isGameOver),
         ],
       ),
@@ -281,8 +280,8 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || isGameOver) return;
-        showMenuDialog(context, () => setState(() => isGameOver = true),
-            widget.quizinfo.modeData.islimited);
+        showMenuDialog(context,
+            isLimitedMode: widget.quizinfo.modeData.islimited);
       },
       child: AppAdScaffold(
         body: SafeArea(

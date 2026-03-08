@@ -26,7 +26,7 @@ class LoadQuiz {
     }
 
     // 2. 英単語クイズの読み込み（新規）
-    else if (quizinfo.appData.appTitle == "とことん中学英単語") {
+    else if (quizinfo.appData.appTitle.contains("英単語")) {
       final engCsvString =
           await rootBundle.loadString("assets/csv/eng_data.csv");
       final engRows = const CsvToListConverter().convert(engCsvString);

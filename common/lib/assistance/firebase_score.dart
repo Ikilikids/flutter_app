@@ -212,4 +212,22 @@ class ScoreManager {
     return ranks;
     // [allRank, monthlyRank, weeklyRank]
   }
+
+  // 全スコアをMap形式で一括取得する
+  static Future<Map<String, double>> getAllScores() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return {};
+
+    final snap = await _firestore
+        .collection('users2')
+        .doc(user.uid)
+        .collection('scores')
+        .get(); // .doc()を指定せず、コレクション全体を取得
+
+    // {'resisterOrigin_modeType': score} の形でMapを作る
+    return {
+      for (var doc in snap.docs)
+        doc.id: (doc.data()['score'] as num?)?.toDouble() ?? 0.0
+    };
+  }
 }

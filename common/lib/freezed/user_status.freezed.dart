@@ -231,7 +231,6 @@ abstract class _QuizStatus implements QuizStatus {
 /// @nodoc
 mixin _$ModeStatus {
   String get modeType => throw _privateConstructorUsedError;
-  String get badgeText => throw _privateConstructorUsedError;
 
   /// Create a copy of ModeStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -246,7 +245,7 @@ abstract class $ModeStatusCopyWith<$Res> {
           ModeStatus value, $Res Function(ModeStatus) then) =
       _$ModeStatusCopyWithImpl<$Res, ModeStatus>;
   @useResult
-  $Res call({String modeType, String badgeText});
+  $Res call({String modeType});
 }
 
 /// @nodoc
@@ -265,16 +264,11 @@ class _$ModeStatusCopyWithImpl<$Res, $Val extends ModeStatus>
   @override
   $Res call({
     Object? modeType = null,
-    Object? badgeText = null,
   }) {
     return _then(_value.copyWith(
       modeType: null == modeType
           ? _value.modeType
           : modeType // ignore: cast_nullable_to_non_nullable
-              as String,
-      badgeText: null == badgeText
-          ? _value.badgeText
-          : badgeText // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -288,7 +282,7 @@ abstract class _$$ModeStatusImplCopyWith<$Res>
       __$$ModeStatusImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String modeType, String badgeText});
+  $Res call({String modeType});
 }
 
 /// @nodoc
@@ -305,16 +299,11 @@ class __$$ModeStatusImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? modeType = null,
-    Object? badgeText = null,
   }) {
     return _then(_$ModeStatusImpl(
       modeType: null == modeType
           ? _value.modeType
           : modeType // ignore: cast_nullable_to_non_nullable
-              as String,
-      badgeText: null == badgeText
-          ? _value.badgeText
-          : badgeText // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -323,17 +312,14 @@ class __$$ModeStatusImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$ModeStatusImpl implements _ModeStatus {
-  const _$ModeStatusImpl({required this.modeType, this.badgeText = ''});
+  const _$ModeStatusImpl({required this.modeType});
 
   @override
   final String modeType;
-  @override
-  @JsonKey()
-  final String badgeText;
 
   @override
   String toString() {
-    return 'ModeStatus(modeType: $modeType, badgeText: $badgeText)';
+    return 'ModeStatus(modeType: $modeType)';
   }
 
   @override
@@ -342,13 +328,11 @@ class _$ModeStatusImpl implements _ModeStatus {
         (other.runtimeType == runtimeType &&
             other is _$ModeStatusImpl &&
             (identical(other.modeType, modeType) ||
-                other.modeType == modeType) &&
-            (identical(other.badgeText, badgeText) ||
-                other.badgeText == badgeText));
+                other.modeType == modeType));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, modeType, badgeText);
+  int get hashCode => Object.hash(runtimeType, modeType);
 
   /// Create a copy of ModeStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -360,14 +344,11 @@ class _$ModeStatusImpl implements _ModeStatus {
 }
 
 abstract class _ModeStatus implements ModeStatus {
-  const factory _ModeStatus(
-      {required final String modeType,
-      final String badgeText}) = _$ModeStatusImpl;
+  const factory _ModeStatus({required final String modeType}) =
+      _$ModeStatusImpl;
 
   @override
   String get modeType;
-  @override
-  String get badgeText;
 
   /// Create a copy of ModeStatus
   /// with the given fields replaced by the non-null parameter values.

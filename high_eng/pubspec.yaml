@@ -1,0 +1,60 @@
+name: music_sense
+description: "A new Flutter project."
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations: # 追加
+    sdk: flutter # 追加
+  common:
+    path: ../common
+  quiz:
+    path: ../quiz
+  shared_preferences:
+  cupertino_icons:
+  path_provider:
+  flutter_math_fork:
+  csv:
+  logger:
+  fl_chart:
+  math_expressions:
+  petitparser:
+  firebase_core:
+  firebase_auth:
+  cloud_firestore:
+  provider:
+  google_mobile_ads:
+  firebase_crashlytics:
+  flutter_launcher_icons:
+  intl:
+  flutter_hooks:
+  flutter_riverpod:
+  riverpod_annotation:
+  hooks_riverpod:
+  freezed_annotation:
+  package_info_plus:
+  url_launcher:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:
+  rename:
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/sounds/
+    - assets/images/
+    - assets/csv/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"

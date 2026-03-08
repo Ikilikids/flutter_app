@@ -11,7 +11,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
     // useState でカウントダウンの状態を管理
     final countdown = useState(2);
 
-    // クイズデータの取得
+    // クイズデータの取得 (同期)
     final quizData = ref.watch(currentDetailConfigProvider);
     final color = getQuizColor2(quizData.detail.color, context, 1, 0.35, 0.95);
 
@@ -21,7 +21,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
       final loadBuilder = allData.loadGame;
       final sound = ref.read(appSoundProvider).requireValue;
 
-      // ゲームのロード処理 (旧 _isLoadGameCalled の代わり)
+      // ゲームのロード処理
       if (loadBuilder != null) {
         loadBuilder(context, ref, quizData);
       }
@@ -53,7 +53,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
 
       startTimer();
       return null;
-    }, const []); // 第2引数を空にすることで初回のみ実行
+    }, const []);
 
     return PopScope(
       canPop: true,

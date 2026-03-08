@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import "package:quiz/quiz.dart";
 import 'package:common/common.dart';
+import "package:quiz/quiz.dart";
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'quiz_session_provider.g.dart';
@@ -132,7 +132,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   }
 
   void handlePartPoint(int points) {
-    final added = points * 10;
+    final added = points;
     state = state.copyWith(
       totalScore: state.totalScore + added,
       scoreFeedback1: '+$added点',
@@ -166,11 +166,11 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       int bonus = 0;
 
       if (p is EngMakingData) {
-        bonus = p.totalScore * 10;
+        bonus = p.totalScore * 2;
         if (isHintUsed) {
           bonus = 0;
         }
-        lastScore = 10; // スピードボーナスなし
+        lastScore = p.word.length;
         soundLevel = 2;
       } else if (p is LatexMakingData && p.indexDataA.isNotEmpty) {
         lastScore = p.indexDataA.last.score * 10;
@@ -406,7 +406,7 @@ class LatexInputNotifier extends _$LatexInputNotifier {
         } else {
           ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
           sessionNotifier
-              .handlePartPoint(currentPath[state.currentBoxIndex].score);
+              .handlePartPoint(currentPath[state.currentBoxIndex].score * 10);
           moveToNextBox(currentPath[state.currentBoxIndex + 1].button);
         }
       } else {
@@ -498,7 +498,7 @@ class EngInputNotifier extends Notifier<EngInputState> {
         sessionNotifier.judge("maru", config, isHintUsed: state.isHintUsed);
       } else {
         // 途中の正解入力：部分点10点
-        sessionNotifier.handlePartPoint(1);
+        sessionNotifier.handlePartPoint(nextText.length);
         ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
       }
     } else {

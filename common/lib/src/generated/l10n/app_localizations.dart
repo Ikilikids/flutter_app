@@ -203,13 +203,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsButton.
   ///
   /// In en, this message translates to:
-  /// **'⚙ Settings'**
+  /// **'Settings'**
   String get settingsButton;
 
   /// No description provided for @rankingButton.
   ///
   /// In en, this message translates to:
-  /// **'👑 Ranking'**
+  /// **'Ranking'**
   String get rankingButton;
 
   /// No description provided for @playableStatus.
@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
-  /// **'⚙ Settings'**
+  /// **'Settings'**
   String get settingsTitle;
 
   /// No description provided for @currentUsernameLabel.
@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @rankingTitle.
   ///
   /// In en, this message translates to:
-  /// **'👑 Ranking 👑'**
+  /// **'Ranking'**
   String get rankingTitle;
 
   /// No description provided for @allPeriod.

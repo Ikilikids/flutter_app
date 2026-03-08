@@ -60,7 +60,7 @@ Widget pointwidget(BuildContext context, int totalScore, {int? remainingTime}) {
               alignment: Alignment.center,
               fit: BoxFit.scaleDown,
               child: Text(
-                (remainingTime ?? 21) > 20 ? '$totalScore' : '??',
+                (remainingTime ?? 21) > 15 ? '$totalScore' : '??',
                 style: TextStyle(
                   fontSize: 100,
                   fontWeight: FontWeight.bold,

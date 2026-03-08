@@ -208,10 +208,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
               ? null
               : showMenuDialog(
                   context,
-                  () => setState(() {
-                    isGameOver = true;
-                  }),
-                  quizinfo.modeData.islimited,
+                  isLimitedMode: quizinfo.modeData.islimited,
                 );
         },
         child: AppAdScaffold(
@@ -243,10 +240,7 @@ class QuizScreenState extends ConsumerState<Quizscreen> {
                             flex: 2,
                             child: menuButton(
                               context,
-                              () => setState(() {
-                                isGameOver = true;
-                              }),
-                              quizinfo.modeData.islimited,
+                              isLimitedMode: quizinfo.modeData.islimited,
                               istap: !isGameOver,
                             ),
                           ),

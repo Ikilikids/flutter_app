@@ -11,7 +11,6 @@ class MidConfig with _$MidConfig {
     required AppData appData,
     required ModeData modeData,
     required List<DetailConfig> details, // 原本と成績を合体させたリスト
-    required String badgeText,
   }) = _MidConfig;
 }
 

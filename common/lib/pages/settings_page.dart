@@ -48,83 +48,77 @@ class SettingsPage extends HookConsumerWidget {
     }, const []);
 
     // ---------- UI ----------
-    return AppAdScaffold(
-      advisible: false,
-      appBar: AppBar(
-        title: Text(l10n(context, 'settingsTitle')),
-      ),
-      body: themeAsync.when(
-        data: (currentTheme) => localeAsync.when(
-          data: (currentLocale) => numberAsync.when(
-            data: (currentNumber) {
-              final isDarkMode = currentTheme == ThemeMode.dark;
+    return themeAsync.when(
+      data: (currentTheme) => localeAsync.when(
+        data: (currentLocale) => numberAsync.when(
+          data: (currentNumber) {
+            final isDarkMode = currentTheme == ThemeMode.dark;
 
-              return ListView(
-                children: [
-                  /// Username
-                  _sectionHeader(
-                    context,
-                    l10n(context, 'accountSectionTitle'),
-                  ),
-                  _userNameTile(
-                    context,
-                    controller: nameController,
-                    focusNode: nameFocusNode,
-                    currentUserName: currentUserName,
-                    isEditingName: isEditingName,
-                  ),
+            return ListView(
+              children: [
+                /// Username
+                _sectionHeader(
+                  context,
+                  l10n(context, 'accountSectionTitle'),
+                ),
+                _userNameTile(
+                  context,
+                  controller: nameController,
+                  focusNode: nameFocusNode,
+                  currentUserName: currentUserName,
+                  isEditingName: isEditingName,
+                ),
+                const Divider(height: 1),
+
+                /// Theme
+                _sectionHeader(
+                    context, l10n(context, 'appearanceSectionTitle')),
+                SwitchListTile(
+                  title: Text(l10n(context, 'darkModeLabel')),
+                  secondary:
+                      Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                  value: isDarkMode,
+                  onChanged: (newValue) {
+                    onThemeChanged(
+                        newValue ? ThemeMode.dark : ThemeMode.light);
+                  },
+                ),
+
+                /// Language
+                if (allData.appTitle != "とことん高校数学") ...[
                   const Divider(height: 1),
-
-                  /// Theme
                   _sectionHeader(
-                      context, l10n(context, 'appearanceSectionTitle')),
-                  SwitchListTile(
-                    title: Text(l10n(context, 'darkModeLabel')),
-                    secondary:
-                        Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-                    value: isDarkMode,
-                    onChanged: (newValue) {
-                      onThemeChanged(
-                          newValue ? ThemeMode.dark : ThemeMode.light);
-                    },
-                  ),
-
-                  /// Language
-                  if (allData.appTitle != "とことん高校数学") ...[
-                    const Divider(height: 1),
-                    _sectionHeader(
-                        context, l10n(context, 'languageSectionTitle')),
-                    _languageTile(
-                      context: context,
-                      currentLocale: currentLocale,
-                      onSelect: onLocaleChanged,
-                    ),
-                  ],
-
-                  /// Other
-                  ...?allData.settingWidgets
-                      ?.call(context, currentNumber, onNumberChanged),
-
-                  const Divider(height: 1),
-
-                  /// About
-                  _sectionHeader(context, l10n(context, 'aboutSectionTitle')),
-                  ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: Text(l10n(context, 'contactLabel')),
+                      context, l10n(context, 'languageSectionTitle')),
+                  _languageTile(
+                    context: context,
+                    currentLocale: currentLocale,
+                    onSelect: onLocaleChanged,
                   ),
                 ],
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Number Error: $e')),
-          ),
+
+                /// Other
+                ...?allData.settingWidgets
+                    ?.call(context, currentNumber, onNumberChanged),
+
+                const Divider(height: 1),
+
+                /// About
+                _sectionHeader(context, l10n(context, 'aboutSectionTitle')),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: Text(l10n(context, 'contactLabel')),
+                ),
+              ],
+            );
+          },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Locale Error: $e')),
+          error: (e, _) => Center(child: Text('Number Error: $e')),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Theme Error: $e')),
+        error: (e, _) => Center(child: Text('Locale Error: $e')),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Theme Error: $e')),
     );
   }
 }

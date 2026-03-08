@@ -7,61 +7,49 @@ import 'user_status_provider.dart'; // UserStatusNotifier
 
 part 'ui_provider.g.dart';
 
+/// ① 今どのタブ（モード）を選択しているか (0:無制限, 1:1日限定, 2:ランキング, 3:設定)
+@riverpod
+class SelectedModeIndex extends _$SelectedModeIndex {
+  @override
+  int build() => 0;
+
+  void update(int index) => state = index;
+}
+
 /// ② 原本と成績を合体させた「現在のモード」の全データ
 @riverpod
 MidConfig currentMidConfig(Ref ref) {
-  // ユーザー状態（成績 ＋ 選択中のID）を監視
-  final statusAsync = ref.watch(userStatusNotifierProvider);
+  // ユーザー状態を監視 (同期)
+  final status = ref.watch(userStatusNotifierProvider);
+  // 現在のタブIndexを監視
+  final selectedIndex = ref.watch(selectedModeIndexProvider);
 
-  // データのロードが終わっていない場合の初期表示（空データ）
-  final initialMid = MidConfig(
+  // タブIndexに基づいて、原本から該当するモードを取得
+  final masterMid = allData.mid[selectedIndex < 2 ? selectedIndex : 0];
+  final selectedModeId = masterMid.modeData.modeType;
+
+  // 高速化：クイズのステータスをIDをキーにしたMapに変換しておく
+  final quizMap = {for (var q in status.quizzes) q.id: q};
+
+  // 個別のクイズ原本に成績を合体させる
+  final details = masterMid.detail.map((d) {
+    final targetId = "${d.resisterOrigin}_$selectedModeId";
+    final qStatus = quizMap[targetId];
+
+    return DetailConfig(
+      appData: allData.appData,
+      modeData: masterMid.modeData,
+      detail: d,
+      highScore: qStatus?.highScore ?? 0.0,
+      buttonText: qStatus?.buttonText ?? 'playButton',
+      qcount: qStatus?.qCount ?? 5,
+    );
+  }).toList();
+
+  return MidConfig(
     appData: allData.appData,
-    modeData: allData.mid.first.modeData,
-    details: [],
-    badgeText: '',
-  );
-
-  return statusAsync.maybeWhen(
-    data: (status) {
-      // UserStatus 内に保存されている「選択中のモードID」を取得
-      final selectedModeId = status.selectedModeId;
-
-      // 原本(allData)から該当するモードを探す
-      final masterMid = allData.mid.firstWhere(
-        (m) => m.modeData.modeType == selectedModeId,
-        orElse: () => allData.mid.first,
-      );
-
-      // モードの成績(バッジなど)を取得
-      final mStatus = status.modes.firstWhere(
-        (m) => m.modeType == selectedModeId,
-        orElse: () => status.modes.first,
-      );
-
-      // 個別のクイズ原本に成績を合体させる
-      final details = masterMid.detail.map((d) {
-        final qStatus = status.quizzes.firstWhere(
-          (q) => q.id == "${d.resisterOrigin}_$selectedModeId",
-        );
-
-        return DetailConfig(
-          appData: allData.appData,
-          modeData: masterMid.modeData,
-          detail: d,
-          highScore: qStatus.highScore,
-          buttonText: qStatus.buttonText,
-          qcount: qStatus.qCount, // 状態から取得
-        );
-      }).toList();
-
-      return MidConfig(
-        appData: allData.appData,
-        modeData: masterMid.modeData,
-        details: details,
-        badgeText: mStatus.badgeText,
-      );
-    },
-    orElse: () => initialMid,
+    modeData: masterMid.modeData,
+    details: details,
   );
 }
 
@@ -69,14 +57,10 @@ MidConfig currentMidConfig(Ref ref) {
 @riverpod
 DetailConfig currentDetailConfig(Ref ref) {
   final midConfig = ref.watch(currentMidConfigProvider);
-  final status = ref.watch(userStatusNotifierProvider).value;
+  final status = ref.watch(userStatusNotifierProvider);
 
-  // 統合された UserStatus から「選択中のクイズID」を取得
-  // 非NULL(String)で統一したので、空文字チェックだけで済む
-  final selectedDetailId = status?.selectedDetailId ?? '';
+  final selectedDetailId = status.selectedDetailId;
 
-  // 選択されたIDに一致する合体済みデータを1件だけ返す
-  // 初期値で allData.mid.first.detail.first.resisterOrigin を入れているので必ず見つかる
   return midConfig.details.firstWhere(
     (d) => d.detail.resisterOrigin == selectedDetailId,
     orElse: () => midConfig.details.first,

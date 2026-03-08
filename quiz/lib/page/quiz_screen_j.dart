@@ -1,8 +1,8 @@
-import "package:quiz/quiz.dart";
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import "package:quiz/quiz.dart";
 
 class Quizscreen extends HookConsumerWidget {
   const Quizscreen({super.key});
@@ -68,10 +68,10 @@ class Quizscreen extends HookConsumerWidget {
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (!session.isGameOver) {
-          showMenuDialog(
-              context,
-              () => ref.read(quizSessionNotifierProvider.notifier).endGame(),
-              activeConfig.modeData.islimited);
+          showMenuDialog(context,
+              onTap: () =>
+                  ref.read(quizSessionNotifierProvider.notifier).endGame(),
+              isLimitedMode: activeConfig.modeData.islimited);
         }
       },
       child: AppAdScaffold(
@@ -102,12 +102,11 @@ class Quizscreen extends HookConsumerWidget {
                         Expanded(flex: 2, child: quizInfo(context, P)),
                         Expanded(
                           flex: 1,
-                          child: menuButton(
-                              context,
-                              () => ref
+                          child: menuButton(context,
+                              onTap: () => ref
                                   .read(quizSessionNotifierProvider.notifier)
                                   .endGame(),
-                              false,
+                              isLimitedMode: activeConfig.modeData.islimited,
                               istap: !session.isGameOver),
                         ),
                         if (activeConfig.modeData.isbattle) ...[

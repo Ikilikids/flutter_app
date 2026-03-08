@@ -62,10 +62,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dailyLimitedModeSub2 => 'Concentre-se e almeje um recorde!';
 
   @override
-  String get settingsButton => '⚙ Configurações';
+  String get settingsButton => 'Configurações';
 
   @override
-  String get rankingButton => '👑 Ranking';
+  String get rankingButton => 'Ranking';
 
   @override
   String get playableStatus => 'Jogável';
@@ -114,7 +114,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get allScores => 'Pontuações Totais';
 
   @override
-  String get settingsTitle => '⚙ Configurações';
+  String get settingsTitle => 'Configurações';
 
   @override
   String get currentUsernameLabel => 'Nome de usuário atual: ';
@@ -147,7 +147,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get okButton => 'OK';
 
   @override
-  String get rankingTitle => '👑 Ranking 👑';
+  String get rankingTitle => 'Ranking';
 
   @override
   String get allPeriod => 'Todo o período';

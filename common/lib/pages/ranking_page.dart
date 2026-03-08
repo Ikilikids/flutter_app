@@ -135,51 +135,48 @@ class CommonRankingPage extends HookConsumerWidget {
     final currentColorCode = quizTabs[selectedSubjectIndex.value].color ?? "9";
     final tabColor = getQuizColor2(currentColorCode, context, 1, 0.65, 1);
 
-    return AppAdScaffold(
-      appBar: AppBar(title: Text(l10n(context, 'rankingTitle'))),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // モード選択ボタン（無制限 / 限定）
-            _buildModeSelector(context, selectedModeIndex),
+    return SafeArea(
+      child: Column(
+        children: [
+          // モード選択ボタン（無制限 / 限定）
+          _buildModeSelector(context, selectedModeIndex),
 
-            // クイズ種別タブ (TabBar)
-            if (quizTabs.isNotEmpty)
-              TabBar(
-                controller: quizTabController,
-                indicatorColor: tabColor,
-                labelColor: tabColor,
-                unselectedLabelColor: textColor2(context),
-                isScrollable: true,
-                tabs: quizTabs.map((tab) => Tab(text: tab.display)).toList(),
-                onTap: (index) => selectedSubjectIndex.value = index,
-              ),
-
-            // 期間選択タブ (TabBar)
+          // クイズ種別タブ (TabBar)
+          if (quizTabs.isNotEmpty)
             TabBar(
-              controller: periodTabController,
+              controller: quizTabController,
               indicatorColor: tabColor,
               labelColor: tabColor,
               unselectedLabelColor: textColor2(context),
-              tabs: periodTabs.map((tab) => Tab(text: tab.display)).toList(),
-              onTap: (index) => selectedPeriodIndex.value = index,
+              isScrollable: true,
+              tabs: quizTabs.map((tab) => Tab(text: tab.display)).toList(),
+              onTap: (index) => selectedSubjectIndex.value = index,
             ),
 
-            // ランキングリスト表示エリア
-            Expanded(
-              child: isLoading.value
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildRankingList(
-                      context,
-                      rankingData
-                              .value[quizTabs[selectedSubjectIndex.value].id] ??
-                          [],
-                      tabColor,
-                      gameData,
-                    ),
-            ),
-          ],
-        ),
+          // 期間選択タブ (TabBar)
+          TabBar(
+            controller: periodTabController,
+            indicatorColor: tabColor,
+            labelColor: tabColor,
+            unselectedLabelColor: textColor2(context),
+            tabs: periodTabs.map((tab) => Tab(text: tab.display)).toList(),
+            onTap: (index) => selectedPeriodIndex.value = index,
+          ),
+
+          // ランキングリスト表示エリア
+          Expanded(
+            child: isLoading.value
+                ? const Center(child: CircularProgressIndicator())
+                : _buildRankingList(
+                    context,
+                    rankingData
+                            .value[quizTabs[selectedSubjectIndex.value].id] ??
+                        [],
+                    tabColor,
+                    gameData,
+                  ),
+          ),
+        ],
       ),
     );
   }

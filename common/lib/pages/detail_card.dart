@@ -3,13 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class CommonDetailCard extends ConsumerWidget {
-  const CommonDetailCard({super.key});
+class CommonDetailCard extends ConsumerStatefulWidget {
+  final int modeIndex;
+  const CommonDetailCard({super.key, required this.modeIndex});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // 現在のモードの合体済みパックを監視
+  ConsumerState<CommonDetailCard> createState() => _CommonDetailCardState();
+}
+
+class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
+  bool _isNavigating = false; // 連打防止用フラグ
+
+  @override
+  Widget build(BuildContext context) {
+    // 現在のモードの合体済みパックを監視 (同期)
     final midConfig = ref.watch(currentMidConfigProvider);
+
+    // モード切り替え時の一致チェック
+    final expectedModeType = allData.mid[widget.modeIndex].modeData.modeType;
+    if (midConfig.modeData.modeType != expectedModeType) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     if (midConfig.details.isEmpty) {
       return Scaffold(
         body: Center(
@@ -24,57 +39,60 @@ class CommonDetailCard extends ConsumerWidget {
         ),
       );
     }
-    return AppAdScaffold(
-      appBar: AppBar(
-          title: Text(l10n(context, midConfig.modeData.modeTitle ?? ''))),
-      body: ListView.builder(
-        itemCount: midConfig.details.length,
-        itemBuilder: (context, index) {
-          final detailConfig = midConfig.details[index];
 
-          return SizedBox(
-            height: 200,
-            child: _CommonSubjectCard(
-              detailConfig: detailConfig,
-              // カード内部から Notifier を叩くためのコールバック
-              onPlay: (qcount) =>
-                  _handlePlay(context, ref, detailConfig, qcount),
-              onWatchAd: () =>
-                  _handleWatchAd(ref, detailConfig.detail.resisterOrigin),
-            ),
-          );
-        },
-      ),
+    return ListView.builder(
+      itemCount: midConfig.details.length,
+      itemBuilder: (context, index) {
+        final detailConfig = midConfig.details[index];
+
+        return SizedBox(
+          height: 200,
+          child: _CommonSubjectCard(
+            detailConfig: detailConfig,
+            onPlay: _isNavigating
+                ? null
+                : (qcount) => _handlePlay(context, ref, detailConfig, qcount),
+            onWatchAd: _isNavigating
+                ? null
+                : () => _handleWatchAd(ref, detailConfig.detail.resisterOrigin),
+          ),
+        );
+      },
     );
   }
 
   /// プレイ開始処理
   void _handlePlay(BuildContext context, WidgetRef ref, DetailConfig config,
       int? qcount) async {
-    final notifier = ref.read(userStatusNotifierProvider.notifier);
+    if (_isNavigating) return;
 
-    // このカードが持っている固有のIDとモードを抽出
-    final String resisterOrigin = config.detail.resisterOrigin;
-    final String modeType = config.modeData.modeType;
+    setState(() => _isNavigating = true);
 
-    // 1. 選択状態を更新（これは画面表示用）
-    notifier.selectDetail(resisterOrigin);
+    try {
+      final notifier = ref.read(userStatusNotifierProvider.notifier);
+      final String resisterOrigin = config.detail.resisterOrigin;
+      final String modeType = config.modeData.modeType;
 
-    // 2. 問題数を更新（IDとモードを指名して叩く）
-    if (qcount != null) {
-      notifier.updateQcount(resisterOrigin, modeType, qcount);
-    }
+      notifier.selectDetail(resisterOrigin);
 
-    // 3. 限定モードならプレイ記録をつける（IDを指名して叩く）
-    if (config.modeData.islimited) {
-      await notifier.recordPlay(resisterOrigin);
-    }
+      if (qcount != null) {
+        notifier.updateQcount(resisterOrigin, modeType, qcount);
+      }
 
-    if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const CommonCountdownScreen()),
-      );
+      if (config.modeData.islimited) {
+        await notifier.recordPlay(resisterOrigin);
+      }
+
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CommonCountdownScreen()),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isNavigating = false);
+      }
     }
   }
 
@@ -82,7 +100,6 @@ class CommonDetailCard extends ConsumerWidget {
   void _handleWatchAd(WidgetRef ref, String resisterOrigin) {
     if (RewardedAdManager.isAdReady) {
       RewardedAdManager.showAd(onReward: () async {
-        // ★ ここ！「今押されたカードのID」を直接渡す
         await ref
             .read(userStatusNotifierProvider.notifier)
             .grantReward(resisterOrigin);
@@ -95,8 +112,8 @@ class CommonDetailCard extends ConsumerWidget {
 
 class _CommonSubjectCard extends StatelessWidget {
   final DetailConfig detailConfig;
-  final void Function(int? qcount) onPlay;
-  final VoidCallback onWatchAd;
+  final void Function(int? qcount)? onPlay;
+  final VoidCallback? onWatchAd;
 
   const _CommonSubjectCard({
     required this.detailConfig,
@@ -109,6 +126,10 @@ class _CommonSubjectCard extends StatelessWidget {
     final detail = detailConfig.detail;
     final mode = detailConfig.modeData;
 
+    final mainColor = getQuizColor2(detail.color, context, 0.7, 0.55, 0.95);
+    final accentColor = getQuizColor2(detail.color, context, 1, 0.55, 0.95);
+    final scoreIconColor = getQuizColor2(detail.color, context, 1, 0.35, 0.95);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       child: Container(
@@ -116,9 +137,7 @@ class _CommonSubjectCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor1(context),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-              color: getQuizColor2(detail.color, context, 0.7, 0.55, 0.95),
-              width: 2),
+          border: Border.all(color: mainColor, width: 2),
           boxShadow: const [
             BoxShadow(
                 color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
@@ -130,9 +149,19 @@ class _CommonSubjectCard extends StatelessWidget {
               flex: 4,
               child: Row(
                 children: [
-                  _buildCircleIcon(context, detail, mode.islimited),
-                  _buildCardTitle(
-                      context, detail, detailConfig.appData.appTitle),
+                  _CircleIcon(
+                    circleColor: detail.circleColor,
+                    method: detail.method,
+                    isLimited: mode.islimited,
+                  ),
+                  _CardTitle(
+                    displayLabel: detail.displayLabel,
+                    method: detail.method,
+                    description: detail.description,
+                    appTitle: detailConfig.appData.appTitle,
+                    accentColor: accentColor,
+                    quizColor: detail.color,
+                  ),
                 ],
               ),
             ),
@@ -140,11 +169,40 @@ class _CommonSubjectCard extends StatelessWidget {
               flex: 2,
               child: Row(
                 children: [
-                  _buildScoreDisplay(context, detail, mode.unit, mode.fix),
-                  if (mode.isbattle) _buildPlayButton(context, detail),
+                  _ScoreDisplay(
+                    highScore: detailConfig.highScore,
+                    unit: mode.unit,
+                    fix: mode.fix,
+                    iconColor: scoreIconColor,
+                  ),
+                  if (mode.isbattle)
+                    _PlayButton(
+                      buttonTextKey: detailConfig.buttonText,
+                      accentColor: accentColor,
+                      onPressed: onPlay != null
+                          ? () => _handleOnPressed(
+                              context, detailConfig.buttonText, null)
+                          : null,
+                    ),
                   if (!mode.isbattle) ...[
-                    _buildPlayButton(context, detail, qcount: 5),
-                    _buildPlayButton(context, detail, qcount: 10),
+                    _PlayButton(
+                      buttonTextKey: detailConfig.buttonText,
+                      accentColor: accentColor,
+                      qcount: 5,
+                      onPressed: onPlay != null
+                          ? () => _handleOnPressed(
+                              context, detailConfig.buttonText, 5)
+                          : null,
+                    ),
+                    _PlayButton(
+                      buttonTextKey: detailConfig.buttonText,
+                      accentColor: accentColor,
+                      qcount: 10,
+                      onPressed: onPlay != null
+                          ? () => _handleOnPressed(
+                              context, detailConfig.buttonText, 10)
+                          : null,
+                    ),
                   ],
                 ],
               ),
@@ -155,21 +213,86 @@ class _CommonSubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCircleIcon(
-      BuildContext context, DetailData detail, bool isLimited) {
+  void _handleOnPressed(BuildContext context, String btnKey, int? qcount) {
+    if (btnKey == 'watchAdToPlayButton') {
+      _showAdDialog(context);
+    } else if (btnKey != 'playedTodayButton') {
+      onPlay!(qcount);
+    }
+  }
+
+  void _showAdDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n(context, 'challengeAgainDialogTitle')),
+        content: Text(l10n(context, 'challengeAgainDialogContent')),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n(context, 'cancelButton'))),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (onWatchAd != null) onWatchAd!();
+            },
+            child: Text(l10n(context, 'watchAdButton')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleIcon extends StatelessWidget {
+  final String circleColor;
+  final String method;
+  final bool isLimited;
+
+  const _CircleIcon({
+    required this.circleColor,
+    required this.method,
+    required this.isLimited,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       flex: 1,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return buildCircleWidget(detail.circleColor.split(''), context,
-              constraints.maxHeight, detail.method, isLimited);
+          return buildCircleWidget(
+            circleColor.split(''),
+            context,
+            constraints.maxHeight,
+            method,
+            isLimited,
+          );
         },
       ),
     );
   }
+}
 
-  Widget _buildCardTitle(
-      BuildContext context, DetailData detail, String appTitle) {
+class _CardTitle extends StatelessWidget {
+  final String displayLabel;
+  final String method;
+  final String description;
+  final String appTitle;
+  final Color accentColor;
+  final String quizColor;
+
+  const _CardTitle({
+    required this.displayLabel,
+    required this.method,
+    required this.description,
+    required this.appTitle,
+    required this.accentColor,
+    required this.quizColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       flex: 5,
       child: Padding(
@@ -182,7 +305,7 @@ class _CommonSubjectCard extends StatelessWidget {
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  l10n(context, detail.displayLabel),
+                  l10n(context, displayLabel),
                   style: TextStyle(fontSize: 100, color: textColor1(context)),
                 ),
               ),
@@ -191,7 +314,7 @@ class _CommonSubjectCard extends StatelessWidget {
               flex: 3,
               child: FittedBox(
                 alignment: Alignment.centerLeft,
-                child: Text("-${l10n(context, detail.method)}-",
+                child: Text("-${l10n(context, method)}-",
                     style:
                         TextStyle(fontSize: 100, color: textColor2(context))),
               ),
@@ -202,17 +325,14 @@ class _CommonSubjectCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    Icon(Icons.circle_outlined,
-                        size: 80,
-                        color: getQuizColor2(
-                            detail.color, context, 1, 0.55, 0.95)),
+                    Icon(Icons.circle_outlined, size: 80, color: accentColor),
                     const SizedBox(width: 8),
                     if (appTitle == "とことん高校数学")
-                      Math.tex(l10n(context, detail.description),
+                      Math.tex(l10n(context, description),
                           textStyle: TextStyle(
                               fontSize: 100, color: textColor2(context)))
                     else
-                      Text(l10n(context, detail.description),
+                      Text(l10n(context, description),
                           style: TextStyle(
                               fontSize: 100, color: textColor2(context))),
                   ],
@@ -224,24 +344,35 @@ class _CommonSubjectCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildScoreDisplay(
-      BuildContext context, DetailData detail, String unit, int fix) {
-    final score = detailConfig.highScore;
+class _ScoreDisplay extends StatelessWidget {
+  final num highScore;
+  final String unit;
+  final int fix;
+  final Color iconColor;
+
+  const _ScoreDisplay({
+    required this.highScore,
+    required this.unit,
+    required this.fix,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: FittedBox(
         child: Row(
           children: [
-            Icon(Icons.emoji_events,
-                color: getQuizColor2(detail.color, context, 1, 0.35, 0.95),
-                size: 100),
+            Icon(Icons.emoji_events, color: iconColor, size: 100),
             const SizedBox(width: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  score == 0.0 ? "--" : score.toStringAsFixed(fix),
+                  highScore == 0.0 ? "--" : highScore.toStringAsFixed(fix),
                   style: TextStyle(
                       fontSize: 100,
                       fontWeight: FontWeight.bold,
@@ -260,21 +391,28 @@ class _CommonSubjectCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildPlayButton(BuildContext context, DetailData detail,
-      {int? qcount}) {
-    final btnKey = detailConfig.buttonText;
+class _PlayButton extends StatelessWidget {
+  final String buttonTextKey;
+  final Color accentColor;
+  final int? qcount;
+  final VoidCallback? onPressed;
 
-    String buttonText = (qcount != null && btnKey == 'playButton')
-        ? AppLocalizations.of(context)!.playButtonWithCount(qcount)
-        : l10n(context, btnKey);
+  const _PlayButton({
+    required this.buttonTextKey,
+    required this.accentColor,
+    this.qcount,
+    this.onPressed,
+  });
 
-    VoidCallback? onPressed;
-    if (btnKey == 'watchAdToPlayButton') {
-      onPressed = () => _showAdDialog(context);
-    } else if (btnKey != 'playedTodayButton') {
-      onPressed = () => onPlay(qcount);
-    }
+  @override
+  Widget build(BuildContext context) {
+    String buttonText = (qcount != null && buttonTextKey == 'playButton')
+        ? AppLocalizations.of(context)!.playButtonWithCount(qcount!)
+        : l10n(context, buttonTextKey);
+
+    final isPlayedToday = buttonTextKey == 'playedTodayButton';
 
     return Expanded(
       child: Padding(
@@ -283,52 +421,26 @@ class _CommonSubjectCard extends StatelessWidget {
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, double.infinity),
-            backgroundColor: (btnKey == 'playedTodayButton')
+            backgroundColor: isPlayedToday
                 ? Colors.grey
-                : (qcount == 10
-                    ? bgColor1(context)
-                    : getQuizColor2(detail.color, context, 1, 0.55, 0.95)),
-            foregroundColor: (qcount == 10 && btnKey != 'playedTodayButton')
-                ? getQuizColor2(detail.color, context, 1, 0.55, 0.95)
-                : (btnKey == 'playedTodayButton'
-                    ? Colors.white
-                    : bgColor1(context)),
+                : (qcount == 10 ? bgColor1(context) : accentColor),
+            foregroundColor: (qcount == 10 && !isPlayedToday)
+                ? accentColor
+                : (isPlayedToday ? Colors.white : bgColor1(context)),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            side: (qcount == 10 && btnKey != 'playedTodayButton')
-                ? BorderSide(
-                    color: getQuizColor2(detail.color, context, 1, 0.55, 0.95),
-                    width: 2)
+            side: (qcount == 10 && !isPlayedToday)
+                ? BorderSide(color: accentColor, width: 2)
                 : null,
           ),
           child: FittedBox(
-            child: Text(buttonText,
-                style: const TextStyle(
-                    fontSize: 100, fontWeight: FontWeight.bold)),
+            child: Text(
+              buttonText,
+              style:
+                  const TextStyle(fontSize: 100, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _showAdDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n(context, 'challengeAgainDialogTitle')),
-        content: Text(l10n(context, 'challengeAgainDialogContent')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n(context, 'cancelButton'))),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onWatchAd();
-            },
-            child: Text(l10n(context, 'watchAdButton')),
-          ),
-        ],
       ),
     );
   }

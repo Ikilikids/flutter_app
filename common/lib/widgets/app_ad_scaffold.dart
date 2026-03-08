@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class AppAdScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
   final Widget body;
+  final Widget? bottomNavigationBar; // ← 追加：ナビゲーションバーを受け取る
   final double adHeight;
   final Color? color;
   final bool advisible;
@@ -12,6 +13,7 @@ class AppAdScaffold extends StatelessWidget {
     super.key,
     this.appBar,
     required this.body,
+    this.bottomNavigationBar, // ← 追加
     this.adHeight = 60,
     this.color,
     this.advisible = true,
@@ -21,23 +23,28 @@ class AppAdScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar,
-      resizeToAvoidBottomInset: false, // ← ここ追加
-      body: MathBackground(
-        child: body,
-      ),
+      resizeToAvoidBottomInset: false,
+      body: MathBackground(child: body),
 
-      // ★ ここが重要
-      bottomNavigationBar: advisible
-          ? SafeArea(
-              child: Container(
+      // Column全体をSafeAreaで包むことで、OSの干渉を防ぐ
+      bottomNavigationBar: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 広告エリア
+            if (advisible)
+              Container(
                 color: color,
                 height: adHeight,
                 width: double.infinity,
                 alignment: Alignment.center,
                 child: const BannerAdWidget(),
               ),
-            )
-          : null,
+            // ナビゲーションバーがある場合は表示
+            if (bottomNavigationBar != null) bottomNavigationBar!,
+          ],
+        ),
+      ),
     );
   }
 }

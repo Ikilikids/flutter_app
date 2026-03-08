@@ -18,9 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$MidConfig {
   AppData get appData => throw _privateConstructorUsedError;
   ModeData get modeData => throw _privateConstructorUsedError;
-  List<DetailConfig> get details =>
-      throw _privateConstructorUsedError; // 原本と成績を合体させたリスト
-  String get badgeText => throw _privateConstructorUsedError;
+  List<DetailConfig> get details => throw _privateConstructorUsedError;
 
   /// Create a copy of MidConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -34,11 +32,7 @@ abstract class $MidConfigCopyWith<$Res> {
   factory $MidConfigCopyWith(MidConfig value, $Res Function(MidConfig) then) =
       _$MidConfigCopyWithImpl<$Res, MidConfig>;
   @useResult
-  $Res call(
-      {AppData appData,
-      ModeData modeData,
-      List<DetailConfig> details,
-      String badgeText});
+  $Res call({AppData appData, ModeData modeData, List<DetailConfig> details});
 
   $AppDataCopyWith<$Res> get appData;
   $ModeDataCopyWith<$Res> get modeData;
@@ -62,7 +56,6 @@ class _$MidConfigCopyWithImpl<$Res, $Val extends MidConfig>
     Object? appData = null,
     Object? modeData = null,
     Object? details = null,
-    Object? badgeText = null,
   }) {
     return _then(_value.copyWith(
       appData: null == appData
@@ -77,10 +70,6 @@ class _$MidConfigCopyWithImpl<$Res, $Val extends MidConfig>
           ? _value.details
           : details // ignore: cast_nullable_to_non_nullable
               as List<DetailConfig>,
-      badgeText: null == badgeText
-          ? _value.badgeText
-          : badgeText // ignore: cast_nullable_to_non_nullable
-              as String,
     ) as $Val);
   }
 
@@ -113,11 +102,7 @@ abstract class _$$MidConfigImplCopyWith<$Res>
       __$$MidConfigImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {AppData appData,
-      ModeData modeData,
-      List<DetailConfig> details,
-      String badgeText});
+  $Res call({AppData appData, ModeData modeData, List<DetailConfig> details});
 
   @override
   $AppDataCopyWith<$Res> get appData;
@@ -141,7 +126,6 @@ class __$$MidConfigImplCopyWithImpl<$Res>
     Object? appData = null,
     Object? modeData = null,
     Object? details = null,
-    Object? badgeText = null,
   }) {
     return _then(_$MidConfigImpl(
       appData: null == appData
@@ -156,10 +140,6 @@ class __$$MidConfigImplCopyWithImpl<$Res>
           ? _value._details
           : details // ignore: cast_nullable_to_non_nullable
               as List<DetailConfig>,
-      badgeText: null == badgeText
-          ? _value.badgeText
-          : badgeText // ignore: cast_nullable_to_non_nullable
-              as String,
     ));
   }
 }
@@ -170,8 +150,7 @@ class _$MidConfigImpl implements _MidConfig {
   const _$MidConfigImpl(
       {required this.appData,
       required this.modeData,
-      required final List<DetailConfig> details,
-      required this.badgeText})
+      required final List<DetailConfig> details})
       : _details = details;
 
   @override
@@ -186,13 +165,9 @@ class _$MidConfigImpl implements _MidConfig {
     return EqualUnmodifiableListView(_details);
   }
 
-// 原本と成績を合体させたリスト
-  @override
-  final String badgeText;
-
   @override
   String toString() {
-    return 'MidConfig(appData: $appData, modeData: $modeData, details: $details, badgeText: $badgeText)';
+    return 'MidConfig(appData: $appData, modeData: $modeData, details: $details)';
   }
 
   @override
@@ -203,14 +178,12 @@ class _$MidConfigImpl implements _MidConfig {
             (identical(other.appData, appData) || other.appData == appData) &&
             (identical(other.modeData, modeData) ||
                 other.modeData == modeData) &&
-            const DeepCollectionEquality().equals(other._details, _details) &&
-            (identical(other.badgeText, badgeText) ||
-                other.badgeText == badgeText));
+            const DeepCollectionEquality().equals(other._details, _details));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, appData, modeData,
-      const DeepCollectionEquality().hash(_details), badgeText);
+      const DeepCollectionEquality().hash(_details));
 
   /// Create a copy of MidConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -225,17 +198,14 @@ abstract class _MidConfig implements MidConfig {
   const factory _MidConfig(
       {required final AppData appData,
       required final ModeData modeData,
-      required final List<DetailConfig> details,
-      required final String badgeText}) = _$MidConfigImpl;
+      required final List<DetailConfig> details}) = _$MidConfigImpl;
 
   @override
   AppData get appData;
   @override
   ModeData get modeData;
   @override
-  List<DetailConfig> get details; // 原本と成績を合体させたリスト
-  @override
-  String get badgeText;
+  List<DetailConfig> get details;
 
   /// Create a copy of MidConfig
   /// with the given fields replaced by the non-null parameter values.

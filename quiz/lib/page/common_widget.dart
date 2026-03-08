@@ -51,13 +51,48 @@ Widget buildChildWidget(BuildContext context, MakingData P) {
             for (int i = 0; i < P.questionList.length; i++) ...[
               if (i != 0) const SizedBox(height: 5),
               if (P is EngMakingData)
-                Text(
-                  P.questionList[i],
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: textColor1(context),
-                  ),
+                Builder(
+                  builder: (context) {
+                    final text = P.questionList[i];
+                    final match = RegExp(r'\((.*?)\)').firstMatch(text);
+
+                    if (match == null) {
+                      return Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: textColor1(context),
+                        ),
+                      );
+                    }
+
+                    return Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: text.substring(0, match.start),
+                          ),
+                          TextSpan(
+                            text: match.group(0), // ()含む
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: textColor1(context).withAlpha(150),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          TextSpan(
+                            text: text.substring(match.end),
+                          ),
+                        ],
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: textColor1(context),
+                        ),
+                      ),
+                    );
+                  },
                 )
               else
                 Math.tex(

@@ -57,10 +57,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dailyLimitedModeSub2 => '집중해서 기록을 노리세요!';
 
   @override
-  String get settingsButton => '⚙ 설정';
+  String get settingsButton => '설정';
 
   @override
-  String get rankingButton => '👑 랭킹';
+  String get rankingButton => '랭킹';
 
   @override
   String get playableStatus => '플레이 가능';
@@ -108,7 +108,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get allScores => '모든 점수';
 
   @override
-  String get settingsTitle => '⚙ 설정';
+  String get settingsTitle => '설정';
 
   @override
   String get currentUsernameLabel => '현재 사용자 이름: ';
@@ -141,7 +141,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get okButton => '확인';
 
   @override
-  String get rankingTitle => '👑 랭킹 👑';
+  String get rankingTitle => '랭킹';
 
   @override
   String get allPeriod => '전체 기간';

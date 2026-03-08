@@ -76,7 +76,7 @@ final _appConfig = AllData(
         isSmallerBetter: true,
         modeType: "g",
         modeTitle: "dailyLimitedModeTitle",
-        modeIcon: Icons.all_inclusive,
+        modeIcon: Icons.timer,
         sub1: "dailyLimitedModeSub1",
         sub2: "dailyLimitedModeSub2",
       ),

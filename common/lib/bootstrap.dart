@@ -35,6 +35,9 @@ class _BootstrapState extends ConsumerState<Bootstrap> {
       await Firebase.initializeApp(options: widget.firebaseOptions);
     }
 
+    // ユーザーデータの読み込み (これを待つことで起動時に全て揃う)
+    await ref.read(userStatusNotifierProvider.notifier).initializeData();
+
     // 他の初期化（広告やアップデートチェック）はバックグラウンドで開始 (待たない)
     _initBackgroundServices();
 
