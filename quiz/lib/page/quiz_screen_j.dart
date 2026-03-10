@@ -12,15 +12,13 @@ class Quizscreen extends HookConsumerWidget {
     final session = ref.watch(quizSessionNotifierProvider);
     final notifier = ref.read(quizSessionNotifierProvider.notifier);
     final activeConfig = ref.read(currentDetailConfigProvider);
-    final filteredMap = ref.read(activeGameMapProvider);
-    print("filteredMap: ${filteredMap.length}"); // デバッグ用：フィルタされたクイズの数を表示
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 初期化
     useEffect(() {
       Future.microtask(() {
         notifier.init(activeConfig);
-        _updateQuestion(ref, activeConfig, filteredMap, isInitial: true);
+        _updateQuestion(ref, isInitial: true);
       });
       return null;
     }, []);
@@ -29,18 +27,23 @@ class Quizscreen extends HookConsumerWidget {
     ref.listen(quizSessionNotifierProvider.select((s) => s.isAnswerChecked),
         (prev, checked) {
       if (checked) {
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 150), () {
           final currentSession = ref.read(quizSessionNotifierProvider);
           if (!context.mounted) return;
           if (currentSession.isGameOver) return;
-
-          if (activeConfig.modeData.isbattle) {
-            _updateQuestion(ref, activeConfig, filteredMap);
+          if (activeConfig.appData.appTitle == "appTitle") {
+            if (currentSession.correctCount >= activeConfig.qcount) {
+              _finishGame(context, ref, activeConfig, currentSession);
+            } else {
+              _updateQuestion(ref);
+            }
+          } else if (activeConfig.modeData.isbattle) {
+            _updateQuestion(ref);
           } else {
             if (currentSession.currentIndex >= activeConfig.qcount - 1) {
               _finishGame(context, ref, activeConfig, currentSession);
             } else {
-              _updateQuestion(ref, activeConfig, filteredMap);
+              _updateQuestion(ref);
             }
           }
         });
@@ -83,51 +86,83 @@ class Quizscreen extends HookConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    flex: 1,
-                    child: Row(
-                      children: [
-                        if (activeConfig.modeData.isbattle)
-                          Expanded(
-                            flex: 1,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: CustomPaint(
-                                size: const Size(100, 100),
-                                painter: TimeCirclePainter(
-                                    remainingTime: session.remainingTime,
-                                    isDark: isDark),
+                      flex: 1,
+                      child: Row(
+                        children: [
+                          if (activeConfig.appData.appTitle == "appTitle") ...[
+                            // appTotleの場合
+                            Expanded(
+                              flex: 3,
+                              child: timewidget(
+                                activeConfig.detail.sort,
+                                session.elapsedTime,
+                                session.correctCount,
+                                context,
                               ),
                             ),
-                          ),
-                        Expanded(flex: 2, child: quizInfo(context, P)),
-                        Expanded(
-                          flex: 1,
-                          child: menuButton(context,
-                              onTap: () => ref
-                                  .read(quizSessionNotifierProvider.notifier)
-                                  .endGame(),
-                              isLimitedMode: activeConfig.modeData.islimited,
-                              istap: !session.isGameOver),
-                        ),
-                        if (activeConfig.modeData.isbattle) ...[
-                          Expanded(
+                            Expanded(
                               flex: 2,
-                              child: pointwidget(context, session.totalScore,
-                                  remainingTime: session.remainingTime)),
-                          Expanded(
-                            flex: 1,
-                            child: increasewidget(
-                              session.scoreFeedback1,
-                              session.scoreFeedback2,
+                              child: menuButton(context,
+                                  onTap: () => ref
+                                      .read(
+                                          quizSessionNotifierProvider.notifier)
+                                      .endGame(),
+                                  isLimitedMode:
+                                      activeConfig.modeData.islimited,
+                                  istap: !session.isGameOver),
                             ),
-                          ),
-                        ] else
-                          Expanded(
-                              flex: 4,
-                              child: marupekelist(context, session.marks)),
-                      ],
-                    ),
-                  ),
+                            Expanded(
+                                flex: 3,
+                                child: pointwidget(
+                                    context, session.correctCount,
+                                    remainingTime: session.remainingTime)),
+                          ] else ...[
+                            // それ以外の場合
+                            if (activeConfig.modeData.isbattle)
+                              Expanded(
+                                flex: 1,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: CustomPaint(
+                                    size: const Size(100, 100),
+                                    painter: TimeCirclePainter(
+                                        remainingTime: session.remainingTime,
+                                        isDark: isDark),
+                                  ),
+                                ),
+                              ),
+                            Expanded(flex: 2, child: quizInfo(context, P)),
+                            Expanded(
+                              flex: 1,
+                              child: menuButton(context,
+                                  onTap: () => ref
+                                      .read(
+                                          quizSessionNotifierProvider.notifier)
+                                      .endGame(),
+                                  isLimitedMode:
+                                      activeConfig.modeData.islimited,
+                                  istap: !session.isGameOver),
+                            ),
+                            if (activeConfig.modeData.isbattle) ...[
+                              Expanded(
+                                  flex: 2,
+                                  child: pointwidget(
+                                      context, session.totalScore,
+                                      remainingTime: session.remainingTime)),
+                              Expanded(
+                                flex: 1,
+                                child: increasewidget(
+                                  session.scoreFeedback1,
+                                  session.scoreFeedback2,
+                                ),
+                              ),
+                            ] else
+                              Expanded(
+                                  flex: 4,
+                                  child: marupekelist(context, session.marks)),
+                          ],
+                        ],
+                      )),
                   Expanded(
                       flex: 4,
                       child: Padding(
@@ -170,43 +205,43 @@ class Quizscreen extends HookConsumerWidget {
     );
   }
 
-  void _updateQuestion(
-      WidgetRef ref, DetailConfig config, Map<int, List<PartData>> map,
-      {bool isInitial = false}) {
+  void _updateQuestion(WidgetRef ref, {bool isInitial = false}) {
     final sessionNotifier = ref.read(quizSessionNotifierProvider.notifier);
-    final sessionState = ref.read(quizSessionNotifierProvider);
 
     if (!isInitial) {
       sessionNotifier.nextQuestionIndex();
     }
 
-    final ct = ChooseQuizData(
-            correctCount: sessionState.correctCount,
-            quizinfo: config,
-            filteredMapByScore: map)
-        .chooseRandombyScoreRange();
+    final ct = ChooseQuizData(ref: ref).chooseRandombyScoreRange();
 
     final question = MakingData.fromPart(ct);
+    print("New Question: ${question} ");
     sessionNotifier.updateQuestion(question);
   }
 
   void _finishGame(BuildContext context, WidgetRef ref, DetailConfig config,
       QuizSessionState session) {
-    ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
-    final solved = [
-      ...session.solvedQuestions,
-      if (session.currentQuestion != null) session.currentQuestion!
-    ];
+    ref.read(quizSessionNotifierProvider.notifier).endGame();
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => config.modeData.isbattle
-            ? PipiScreen(totalScore: session.totalScore)
-            : PipiScreen(
-                totalScore: session.correctCount,
-                originalData: [solved, session.marks]),
-      ),
-    );
+    Future.delayed(const Duration(milliseconds: 200), () {
+      ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
+      final solved = [
+        ...session.solvedQuestions,
+        if (session.currentQuestion != null) session.currentQuestion!
+      ];
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => config.appData.appTitle == "appTitle"
+              ? PipiScreen(totalScore: session.elapsedTime)
+              : config.modeData.isbattle
+                  ? PipiScreen(totalScore: session.totalScore)
+                  : PipiScreen(
+                      totalScore: session.correctCount,
+                      originalData: [solved, session.marks]),
+        ),
+      );
+    });
   }
 }

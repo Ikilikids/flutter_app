@@ -14,14 +14,19 @@ class LoadQuiz {
   Future<void> init(WidgetRef ref) async {
     await loadAllQuizData();
     loadFilterdQuizData();
+    if (quizinfo.appData.appTitle == "appTitle") {
+      expandAndShuffle(ref);
+    }
     ref.read(activeGameMapProvider.notifier).update(filterdQuizData);
   }
 
   Future<void> loadAllQuizData() async {
     // 1. 数学クイズの読み込み（既存）
-    if (quizinfo.appData.appTitle == "とことん高校数学") {
+    if (quizinfo.appData.appTitle == "とことん高校数学" ||
+        quizinfo.appData.appTitle == "appTitle") {
       final csvString = await rootBundle.loadString("assets/csv/quizdata.csv");
       final rows = const CsvToListConverter().convert(csvString);
+      print(rows);
       _processMathRows(rows);
     }
 
@@ -175,6 +180,31 @@ class LoadQuiz {
       );
       map.putIfAbsent(currentTotal, () => []).add(p);
     }
+  }
+
+  /// リストを倍増させ、シャッフルして指定数取り出す関数
+  void expandAndShuffle(WidgetRef ref) {
+    final targetList = filterdQuizData[1];
+    print(targetList);
+    if (targetList == null || targetList.isEmpty) return;
+
+    // 20個ちょうどになるコピー回数
+    int qCount = quizinfo.detail.sort == "4867" ? 10 : 20;
+    // quizの総数を更新
+    ref.read(userStatusNotifierProvider.notifier).updateQcount(
+        quizinfo.detail.resisterOrigin, quizinfo.modeData.modeType, qCount);
+    final countPerItem = qCount ~/ targetList.length;
+
+    List<PartData> expanded = [];
+
+    for (var item in targetList) {
+      for (int i = 0; i < countPerItem; i++) {
+        expanded.add(item);
+      }
+    }
+
+    // シャッフルしてそのまま代入
+    filterdQuizData[1] = expanded..shuffle();
   }
 }
 

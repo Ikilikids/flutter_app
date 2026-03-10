@@ -1,11 +1,10 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz/quiz.dart';
 
-import 'assistance/quiz_logic.dart';
 import 'firebase_options.dart';
-import 'page/quiz_screen.dart';
-import 'page/setting_widgets.dart';
+import 'setting_widgets.dart';
 
 final _appConfig = AllData(
   appData: AppData(
@@ -17,9 +16,13 @@ final _appConfig = AllData(
       bannerId: "ca-app-pub-1440692612851416/5101110710",
       interId: "ca-app-pub-1440692612851416/6696946185",
       rewardId: "ca-app-pub-1440692612851416/5939549664",
-      mainGame: (BuildContext context, DetailConfig quizinfo) => Quizscreen(
-          quizDirectives: prepareQuizDirectives(quizinfo.detail.sort),
-          quizinfo: quizinfo),
+      loadGame:
+          (BuildContext context, WidgetRef ref, DetailConfig quizinfo) async {
+        // 1. パース済みの全データを取得
+        LoadQuiz(quizinfo: quizinfo).init(ref);
+      },
+      mainGame: (BuildContext context, DetailConfig quizinfo) =>
+          const Quizscreen(), // const を追加
       settingWidgets:
           (BuildContext context, String currentNumber, Function function) => [
                 const Divider(height: 1),

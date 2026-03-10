@@ -2,23 +2,32 @@ import 'dart:math';
 
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:quiz/quiz.dart";
 
 class ChooseQuizData {
-  int correctCount;
-  final DetailConfig quizinfo;
-  final Map<int, List<PartData>> filteredMapByScore;
+  final WidgetRef ref; // refをフィールドに持つ
 
   ChooseQuizData({
-    required this.correctCount,
-    required this.quizinfo,
-    required this.filteredMapByScore,
+    required this.ref, // コンストラクタでrefを受け取る
   });
 
-  // スコア範囲から素早く選ぶ
   PartData chooseRandombyScoreRange() {
+    int currentIndex = ref.read(quizSessionNotifierProvider).currentIndex;
+    int correctCount = ref.read(quizSessionNotifierProvider).correctCount;
+    DetailConfig quizinfo = ref.read(currentDetailConfigProvider);
+    Map<int, List<PartData>> filteredMapByScore =
+        ref.read(activeGameMapProvider);
     final random = Random();
-
+    if (quizinfo.appData.appTitle == ("appTitle")) {
+      print(currentIndex);
+      if (filteredMapByScore[1]!.length >= currentIndex + 1) {
+        return filteredMapByScore[1]![currentIndex];
+      } else {
+        return filteredMapByScore[1]![
+            random.nextInt(filteredMapByScore[1]!.length)];
+      }
+    }
     // 1️⃣ スコア範囲で抽出
     final candidates = <PartData>[];
 

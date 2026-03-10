@@ -15,6 +15,174 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
+mixin _$AdditionalPageConfig {
+  String get title => throw _privateConstructorUsedError;
+  IconData get icon => throw _privateConstructorUsedError;
+  AdditionalPageBuilder get builder => throw _privateConstructorUsedError;
+
+  /// Create a copy of AdditionalPageConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $AdditionalPageConfigCopyWith<AdditionalPageConfig> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AdditionalPageConfigCopyWith<$Res> {
+  factory $AdditionalPageConfigCopyWith(AdditionalPageConfig value,
+          $Res Function(AdditionalPageConfig) then) =
+      _$AdditionalPageConfigCopyWithImpl<$Res, AdditionalPageConfig>;
+  @useResult
+  $Res call({String title, IconData icon, AdditionalPageBuilder builder});
+}
+
+/// @nodoc
+class _$AdditionalPageConfigCopyWithImpl<$Res,
+        $Val extends AdditionalPageConfig>
+    implements $AdditionalPageConfigCopyWith<$Res> {
+  _$AdditionalPageConfigCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of AdditionalPageConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? title = null,
+    Object? icon = null,
+    Object? builder = null,
+  }) {
+    return _then(_value.copyWith(
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      icon: null == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as IconData,
+      builder: null == builder
+          ? _value.builder
+          : builder // ignore: cast_nullable_to_non_nullable
+              as AdditionalPageBuilder,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$AdditionalPageConfigImplCopyWith<$Res>
+    implements $AdditionalPageConfigCopyWith<$Res> {
+  factory _$$AdditionalPageConfigImplCopyWith(_$AdditionalPageConfigImpl value,
+          $Res Function(_$AdditionalPageConfigImpl) then) =
+      __$$AdditionalPageConfigImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String title, IconData icon, AdditionalPageBuilder builder});
+}
+
+/// @nodoc
+class __$$AdditionalPageConfigImplCopyWithImpl<$Res>
+    extends _$AdditionalPageConfigCopyWithImpl<$Res, _$AdditionalPageConfigImpl>
+    implements _$$AdditionalPageConfigImplCopyWith<$Res> {
+  __$$AdditionalPageConfigImplCopyWithImpl(_$AdditionalPageConfigImpl _value,
+      $Res Function(_$AdditionalPageConfigImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of AdditionalPageConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? title = null,
+    Object? icon = null,
+    Object? builder = null,
+  }) {
+    return _then(_$AdditionalPageConfigImpl(
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      icon: null == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as IconData,
+      builder: null == builder
+          ? _value.builder
+          : builder // ignore: cast_nullable_to_non_nullable
+              as AdditionalPageBuilder,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$AdditionalPageConfigImpl implements _AdditionalPageConfig {
+  const _$AdditionalPageConfigImpl(
+      {required this.title, required this.icon, required this.builder});
+
+  @override
+  final String title;
+  @override
+  final IconData icon;
+  @override
+  final AdditionalPageBuilder builder;
+
+  @override
+  String toString() {
+    return 'AdditionalPageConfig(title: $title, icon: $icon, builder: $builder)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AdditionalPageConfigImpl &&
+            (identical(other.title, title) || other.title == title) &&
+            (identical(other.icon, icon) || other.icon == icon) &&
+            (identical(other.builder, builder) || other.builder == builder));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, title, icon, builder);
+
+  /// Create a copy of AdditionalPageConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AdditionalPageConfigImplCopyWith<_$AdditionalPageConfigImpl>
+      get copyWith =>
+          __$$AdditionalPageConfigImplCopyWithImpl<_$AdditionalPageConfigImpl>(
+              this, _$identity);
+}
+
+abstract class _AdditionalPageConfig implements AdditionalPageConfig {
+  const factory _AdditionalPageConfig(
+          {required final String title,
+          required final IconData icon,
+          required final AdditionalPageBuilder builder}) =
+      _$AdditionalPageConfigImpl;
+
+  @override
+  String get title;
+  @override
+  IconData get icon;
+  @override
+  AdditionalPageBuilder get builder;
+
+  /// Create a copy of AdditionalPageConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$AdditionalPageConfigImplCopyWith<_$AdditionalPageConfigImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$AllData {
   AppData get appData => throw _privateConstructorUsedError;
   List<MidData> get mid => throw _privateConstructorUsedError;
@@ -193,6 +361,8 @@ mixin _$AppData {
   EndBuilder? get endBuilder => throw _privateConstructorUsedError;
   SettingWidgetsBuilder? get settingWidgets =>
       throw _privateConstructorUsedError;
+  AdditionalPageConfig? get additionalPage =>
+      throw _privateConstructorUsedError;
   String? get bannerId => throw _privateConstructorUsedError;
   String? get interId => throw _privateConstructorUsedError;
   String? get rewardId => throw _privateConstructorUsedError;
@@ -218,9 +388,12 @@ abstract class $AppDataCopyWith<$Res> {
       LoadBuilder? loadGame,
       EndBuilder? endBuilder,
       SettingWidgetsBuilder? settingWidgets,
+      AdditionalPageConfig? additionalPage,
       String? bannerId,
       String? interId,
       String? rewardId});
+
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage;
 }
 
 /// @nodoc
@@ -247,6 +420,7 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
     Object? loadGame = freezed,
     Object? endBuilder = freezed,
     Object? settingWidgets = freezed,
+    Object? additionalPage = freezed,
     Object? bannerId = freezed,
     Object? interId = freezed,
     Object? rewardId = freezed,
@@ -288,6 +462,10 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
               as SettingWidgetsBuilder?,
+      additionalPage: freezed == additionalPage
+          ? _value.additionalPage
+          : additionalPage // ignore: cast_nullable_to_non_nullable
+              as AdditionalPageConfig?,
       bannerId: freezed == bannerId
           ? _value.bannerId
           : bannerId // ignore: cast_nullable_to_non_nullable
@@ -301,6 +479,20 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
           : rewardId // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
+  }
+
+  /// Create a copy of AppData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage {
+    if (_value.additionalPage == null) {
+      return null;
+    }
+
+    return $AdditionalPageConfigCopyWith<$Res>(_value.additionalPage!, (value) {
+      return _then(_value.copyWith(additionalPage: value) as $Val);
+    });
   }
 }
 
@@ -321,9 +513,13 @@ abstract class _$$AppDataImplCopyWith<$Res> implements $AppDataCopyWith<$Res> {
       LoadBuilder? loadGame,
       EndBuilder? endBuilder,
       SettingWidgetsBuilder? settingWidgets,
+      AdditionalPageConfig? additionalPage,
       String? bannerId,
       String? interId,
       String? rewardId});
+
+  @override
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage;
 }
 
 /// @nodoc
@@ -348,6 +544,7 @@ class __$$AppDataImplCopyWithImpl<$Res>
     Object? loadGame = freezed,
     Object? endBuilder = freezed,
     Object? settingWidgets = freezed,
+    Object? additionalPage = freezed,
     Object? bannerId = freezed,
     Object? interId = freezed,
     Object? rewardId = freezed,
@@ -389,6 +586,10 @@ class __$$AppDataImplCopyWithImpl<$Res>
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
               as SettingWidgetsBuilder?,
+      additionalPage: freezed == additionalPage
+          ? _value.additionalPage
+          : additionalPage // ignore: cast_nullable_to_non_nullable
+              as AdditionalPageConfig?,
       bannerId: freezed == bannerId
           ? _value.bannerId
           : bannerId // ignore: cast_nullable_to_non_nullable
@@ -418,6 +619,7 @@ class _$AppDataImpl implements _AppData {
       this.loadGame,
       this.endBuilder,
       this.settingWidgets,
+      this.additionalPage,
       this.bannerId,
       this.interId,
       this.rewardId})
@@ -448,6 +650,8 @@ class _$AppDataImpl implements _AppData {
   @override
   final SettingWidgetsBuilder? settingWidgets;
   @override
+  final AdditionalPageConfig? additionalPage;
+  @override
   final String? bannerId;
   @override
   final String? interId;
@@ -456,7 +660,7 @@ class _$AppDataImpl implements _AppData {
 
   @override
   String toString() {
-    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, endBuilder: $endBuilder, settingWidgets: $settingWidgets, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
+    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, endBuilder: $endBuilder, settingWidgets: $settingWidgets, additionalPage: $additionalPage, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
   }
 
   @override
@@ -479,6 +683,8 @@ class _$AppDataImpl implements _AppData {
                 other.endBuilder == endBuilder) &&
             (identical(other.settingWidgets, settingWidgets) ||
                 other.settingWidgets == settingWidgets) &&
+            (identical(other.additionalPage, additionalPage) ||
+                other.additionalPage == additionalPage) &&
             (identical(other.bannerId, bannerId) ||
                 other.bannerId == bannerId) &&
             (identical(other.interId, interId) || other.interId == interId) &&
@@ -498,6 +704,7 @@ class _$AppDataImpl implements _AppData {
       loadGame,
       endBuilder,
       settingWidgets,
+      additionalPage,
       bannerId,
       interId,
       rewardId);
@@ -522,6 +729,7 @@ abstract class _AppData implements AppData {
       final LoadBuilder? loadGame,
       final EndBuilder? endBuilder,
       final SettingWidgetsBuilder? settingWidgets,
+      final AdditionalPageConfig? additionalPage,
       final String? bannerId,
       final String? interId,
       final String? rewardId}) = _$AppDataImpl;
@@ -544,6 +752,8 @@ abstract class _AppData implements AppData {
   EndBuilder? get endBuilder;
   @override
   SettingWidgetsBuilder? get settingWidgets;
+  @override
+  AdditionalPageConfig? get additionalPage;
   @override
   String? get bannerId;
   @override

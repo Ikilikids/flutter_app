@@ -12,6 +12,7 @@ class QuizSessionState {
   final int totalScore;
   final int correctCount;
   final int remainingTime;
+  final double elapsedTime;
   final bool isGameOver;
   final String resultMark;
   final bool isAnswerChecked;
@@ -27,6 +28,7 @@ class QuizSessionState {
     this.totalScore = 0,
     this.correctCount = 0,
     this.remainingTime = 60,
+    this.elapsedTime = 0,
     this.isGameOver = false,
     this.resultMark = '',
     this.isAnswerChecked = false,
@@ -43,6 +45,7 @@ class QuizSessionState {
     int? totalScore,
     int? correctCount,
     int? remainingTime,
+    double? elapsedTime,
     bool? isGameOver,
     String? resultMark,
     bool? isAnswerChecked,
@@ -58,6 +61,7 @@ class QuizSessionState {
       totalScore: totalScore ?? this.totalScore,
       correctCount: correctCount ?? this.correctCount,
       remainingTime: remainingTime ?? this.remainingTime,
+      elapsedTime: elapsedTime ?? this.elapsedTime,
       isGameOver: isGameOver ?? this.isGameOver,
       resultMark: resultMark ?? this.resultMark,
       isAnswerChecked: isAnswerChecked ?? this.isAnswerChecked,
@@ -84,26 +88,38 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   void init(DetailConfig config) {
     state = QuizSessionState(
       remainingTime: config.modeData.isbattle ? 60 : 0,
+      elapsedTime: 0,
       marks: List.filled(config.qcount, ""),
       solvedQuestions: [],
       currentIndex: 0,
     );
     if (config.modeData.isbattle) {
-      _startTimer();
+      _startTimer(config);
     }
   }
 
-  void _startTimer() {
+  void _startTimer(DetailConfig config) {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (state.remainingTime > 1) {
-        state = state.copyWith(remainingTime: state.remainingTime - 1);
-        ref.read(appSoundProvider).requireValue.playSound('ry.mp3');
-      } else {
-        state = state.copyWith(remainingTime: 0, isGameOver: true);
-        timer.cancel();
-      }
-    });
+    if (config.appData.appTitle == "appTitle") {
+      final startAt = DateTime.now();
+
+      _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+        final now = DateTime.now();
+        final double diff = now.difference(startAt).inMilliseconds / 1000.0;
+
+        state = state.copyWith(elapsedTime: diff);
+      });
+    } else {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (state.remainingTime > 1) {
+          state = state.copyWith(remainingTime: state.remainingTime - 1);
+          ref.read(appSoundProvider).requireValue.playSound('ry.mp3');
+        } else {
+          state = state.copyWith(remainingTime: 0, isGameOver: true);
+          timer.cancel();
+        }
+      });
+    }
   }
 
   // ★ 追加：ゲームを即座に終了させる（バツ判定なし）

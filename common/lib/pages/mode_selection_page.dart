@@ -9,6 +9,7 @@ class CommonModeSelectionPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // グローバルな状態（現在のタブIndex）を監視
     final selectedIndex = ref.watch(selectedModeIndexProvider);
+    final additionalPage = allData.additionalPage;
 
     return PopScope(
       canPop: false,
@@ -22,6 +23,7 @@ class CommonModeSelectionPage extends HookConsumerWidget {
             const CommonDetailCard(modeIndex: 1),
             const CommonRankingPage(),
             const SettingsPage(),
+            if (additionalPage != null) additionalPage.builder(context),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -44,6 +46,11 @@ class CommonModeSelectionPage extends HookConsumerWidget {
               icon: const Icon(Icons.settings),
               label: l10n(context, 'settingsButton'),
             ),
+            if (additionalPage != null)
+              BottomNavigationBarItem(
+                icon: Icon(additionalPage.icon), // クラスで定義したアイコン
+                label: additionalPage.title, // クラスで定義したタイトル
+              ),
           ],
         ),
       ),
@@ -62,9 +69,12 @@ class CommonModeSelectionPage extends HookConsumerWidget {
     } else if (index == 2) {
       title = l10n(context, 'rankingTitle');
       icon = Icons.emoji_events;
-    } else {
+    } else if (index == 3) {
       title = l10n(context, 'settingsTitle');
       icon = Icons.settings;
+    } else if (index == 4 && allData.additionalPage != null) {
+      title = allData.additionalPage!.title;
+      icon = allData.additionalPage!.icon;
     }
 
     return AppBar(
@@ -113,6 +123,8 @@ class CommonModeSelectionPage extends HookConsumerWidget {
         return Colors.orange;
       case 3:
         return Colors.green;
+      case 4:
+        return Colors.purple;
       default:
         return Colors.grey;
     }

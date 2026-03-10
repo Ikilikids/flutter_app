@@ -239,8 +239,83 @@ LatexMakingData makingLatexData(LatexPartData ct) {
   String q2 = "";
   String q3 = "";
   String q4 = "";
-
-  if (ct.making[0] == "sekimen") {
+  if (ct.making[0] == "3") {
+    // plus
+    int a, b;
+    a = randomint(1, 9);
+    b = randomint(1, 9);
+    ss1 = "\\Large[${a + b}]";
+    q1 = "\\Large$a + $b = ？";
+  } else if (ct.making[0] == "2") {
+    // minus_e
+    int a, b;
+    b = randomint(1, 19);
+    a = randomint(b, 19);
+    ss1 = "\\Large[${a - b}]";
+    q1 = "\\Large$a - $b = ？";
+  } else if (ct.making[0] == "5") {
+    // times
+    int a, b;
+    a = randomint(1, 9);
+    b = randomint(1, 9);
+    ss1 = "\\Large[${a * b}]";
+    q1 = "\\Large$a × $b = ？";
+  } else if (ct.making[0] == "1") {
+    // div
+    int a, b;
+    b = randomint(1, 9);
+    a = b * randomint(1, 9);
+    ss1 = "\\Large[${a ~/ b}]";
+    q1 = "\\Large$a ÷ $b = ？";
+  } else if (ct.making[0] == "6") {
+    // plus2
+    int a, b, c, d, x, y, f;
+    b = randomint(2, 9);
+    d = randomint(11 - b, 9);
+    a = randomint(1, 7);
+    c = randomint(1, 8 - a);
+    x = 10 * a + b;
+    y = 10 * c + d;
+    f = x + y;
+    ss1 = "\\Large[${f}]";
+    q1 = "\\Large$x + $y = ？";
+  } else if (ct.making[0] == "8") {
+    // plus2
+    int a, b, c, d, x, y, f;
+    b = randomint(1, 8);
+    d = randomint(1, 9 - b);
+    a = randomint(1, 8);
+    c = randomint(1, 9 - a);
+    x = 10 * a + b;
+    y = 10 * c + d;
+    f = x + y;
+    ss1 = "\\Large[${f}]";
+    q1 = "\\Large$x + $y = ？";
+  } else if (ct.making[0] == "4") {
+    // plus2
+    int a, b, c, d, x, y, f;
+    b = randomint(1, 8);
+    d = randomint(b + 1, 9);
+    a = randomint(3, 9);
+    c = randomint(1, a - 2);
+    x = 10 * a + b;
+    y = 10 * c + d;
+    f = x - y;
+    ss1 = "\\Large[${f}]";
+    q1 = "\\Large$x - $y = ？";
+  } else if (ct.making[0] == "7") {
+    // plus2
+    int a, b, c, d, x, y, f;
+    b = randomint(2, 9);
+    d = randomint(1, b - 1);
+    a = randomint(2, 9);
+    c = randomint(1, a - 1);
+    x = 10 * a + b;
+    y = 10 * c + d;
+    f = x - y;
+    ss1 = "\\Large[${f}]";
+    q1 = "\\Large$x - $y = ？";
+  } else if (ct.making[0] == "sekimen") {
     List<List<double>> generatePairs(List<double> numbers,
         {bool skipSame = false}) {
       List<List<double>> result = [];

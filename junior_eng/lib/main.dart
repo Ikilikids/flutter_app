@@ -29,6 +29,10 @@ final _appConfig = AllData(
         marks: markData,
       );
     },
+    additionalPage: AdditionalPageConfig(
+        builder: (BuildContext context) => const WordListPage(),
+        title: "単語リスト",
+        icon: Icons.style),
   ),
   mid: [
     MidData(

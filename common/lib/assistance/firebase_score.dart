@@ -210,7 +210,6 @@ class ScoreManager {
     }
 
     return ranks;
-    // [allRank, monthlyRank, weeklyRank]
   }
 
   // 全スコアをMap形式で一括取得する

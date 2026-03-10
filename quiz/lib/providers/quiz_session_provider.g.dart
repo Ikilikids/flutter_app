@@ -7,7 +7,7 @@ part of 'quiz_session_provider.dart';
 // **************************************************************************
 
 String _$quizSessionNotifierHash() =>
-    r'a99e844f3d3f9181078cf678e3bdf607b40bc5ce';
+    r'267c25eab4f730355c5a7c5b4f779812ffdb1912';
 
 /// See also [QuizSessionNotifier].
 @ProviderFor(QuizSessionNotifier)
@@ -24,7 +24,7 @@ final quizSessionNotifierProvider =
 
 typedef _$QuizSessionNotifier = AutoDisposeNotifier<QuizSessionState>;
 String _$latexInputNotifierHash() =>
-    r'0d4e3e5acc5875a1d30b2d3d252ac7582aa7bd9b';
+    r'569a617f89715a0fac91e111ee04c3365932f0e2';
 
 /// See also [LatexInputNotifier].
 @ProviderFor(LatexInputNotifier)
