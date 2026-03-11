@@ -74,6 +74,16 @@ class EngKeyboardView extends HookConsumerWidget {
     final config = ref.read(currentDetailConfigProvider);
     final notifier = ref.read(engInputNotifierProvider.notifier);
 
+    // ヒントボタンの有効化判定
+    final targetWord = question.word.toLowerCase();
+    final currentLen = inputState.enteredText.length;
+    final maxHintLen = config.modeData.isbattle
+        ? 1
+        : (targetWord.length - 2).clamp(1, targetWord.length);
+    final isHintDisabled = session.isAnswerChecked ||
+        session.isGameOver ||
+        currentLen >= maxHintLen;
+
     // 状態から最新のボタンリストを取得
     final buttons = inputState.availableButtons;
     final halfLength = (buttons.length / 2).ceil();
@@ -133,16 +143,14 @@ class EngKeyboardView extends HookConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: ElevatedButton.icon(
-                  onPressed: session.isAnswerChecked ||
-                          session.isGameOver ||
-                          inputState.enteredText.isNotEmpty
-                      ? null
-                      : () => notifier.giveHint(config),
+                  onPressed: isHintDisabled ? null : () => notifier.giveHint(config),
                   icon: const Icon(Icons.lightbulb_outline),
                   label: const Text("ヒント"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange.withAlpha(200),
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.withAlpha(100),
+                    disabledForegroundColor: Colors.white.withAlpha(100),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),

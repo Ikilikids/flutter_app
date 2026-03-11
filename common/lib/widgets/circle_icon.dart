@@ -1,50 +1,12 @@
 import 'package:common/widgets/color.dart';
 import 'package:flutter/material.dart';
 
-Widget buildCircleWidget(
-  List<String> parts,
-  BuildContext context,
-  double circleSize,
-  String main,
-  bool isLimitedMode,
-) {
-  return SizedBox(
-    width: circleSize,
-    height: circleSize,
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        // 背景円
-
-        // 塗りつぶし部分
-        CustomPaint(
-          size: Size(circleSize, circleSize),
-          painter: _FilledCirclePartsPainter(parts: parts, context: context),
-        ),
-        // 中央アイコン
-        SizedBox(
-          width: circleSize * 0.4,
-          height: circleSize * 0.4,
-          child: FittedBox(
-            fit: BoxFit.contain,
-            child: Icon(
-              getIconForCategory(main) ??
-                  (isLimitedMode ? Icons.timer : Icons.all_inclusive),
-              color: bgColor1(context),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 // 塗りつぶし扇型を描く CustomPainter
-class _FilledCirclePartsPainter extends CustomPainter {
+class FilledCirclePartsPainter extends CustomPainter {
   final List<String> parts;
   final BuildContext context;
 
-  _FilledCirclePartsPainter({required this.parts, required this.context});
+  FilledCirclePartsPainter({required this.parts, required this.context});
 
   @override
   void paint(Canvas canvas, Size size) {

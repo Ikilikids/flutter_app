@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:common/common.dart';
 import "package:quiz/quiz.dart";
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'quiz_session_provider.g.dart';
 
@@ -161,6 +162,12 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   void judge(String result, DetailConfig config, {bool isHintUsed = false}) {
     if (state.isGameOver) return;
 
+    // 英単語の場合、統計情報を保存
+    final currentQ = state.currentQuestion;
+    if (currentQ is EngMakingData) {
+      _saveStats(currentQ, result, isHintUsed);
+    }
+
     final updatedMarks = List<String>.from(state.marks);
     if (state.currentIndex < updatedMarks.length) {
       updatedMarks[state.currentIndex] = result == "maru" ? "◯" : "×";
@@ -224,6 +231,48 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       } else {
         ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
       }
+    }
+  }
+
+  Future<void> _saveStats(
+      EngMakingData question, String result, bool isHintUsed) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // キーを小文字に統一して保存・読み込みの不一致を解消
+      final statsKey = question.word.toLowerCase();
+      String key;
+      String currentMark;
+      if (result == "maru") {
+        if (isHintUsed) {
+          key = 'stats_${statsKey}_h';
+          currentMark = "△";
+        } else {
+          key = 'stats_${statsKey}_c';
+          currentMark = "○";
+        }
+      } else {
+        key = 'stats_${statsKey}_i';
+        currentMark = "×";
+      }
+      final current = prefs.getInt(key) ?? 0;
+      await prefs.setInt(key, current + 1);
+
+      // 直近5回の履歴を更新
+      final recentKey = 'stats_${statsKey}_r';
+      final recentRaw = prefs.getString(recentKey) ?? "";
+      List<String> recentList = recentRaw.isEmpty ? [] : recentRaw.split(",");
+      // 先頭に追加
+      recentList.insert(0, currentMark);
+      // 最大5件に制限
+      if (recentList.length > 5) {
+        recentList = recentList.sublist(0, 5);
+      }
+      await prefs.setString(recentKey, recentList.join(","));
+
+      print(
+          "Saved stats: $key = ${current + 1}, recent = ${recentList.join(",")}");
+    } catch (e) {
+      print("Error saving stats: $e");
     }
   }
 }
@@ -486,7 +535,7 @@ class EngInputNotifier extends Notifier<EngInputState> {
         enteredText: "", availableButtons: [], isHintUsed: false);
   }
 
-  void processLetter(int index, DetailConfig config) {
+  void processLetter(int index, DetailConfig config, {bool isHint = false}) {
     final sessionState = ref.read(quizSessionNotifierProvider);
     final sessionNotifier = ref.read(quizSessionNotifierProvider.notifier);
     final question = sessionState.currentQuestion;
@@ -510,12 +559,15 @@ class EngInputNotifier extends Notifier<EngInputState> {
 
     if (targetWord.startsWith(nextText)) {
       if (nextText.length == targetWord.length) {
-        // 完成時は judge でボーナス加算（最後の1文字の部分点もここで出すなら追加可能）
+        // 完成時は judge でボーナス加算
         sessionNotifier.judge("maru", config, isHintUsed: state.isHintUsed);
       } else {
-        // 途中の正解入力：部分点10点
-        sessionNotifier.handlePartPoint(nextText.length);
-        ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
+        // 途中の正解入力：部分点（手動入力時のみ）
+        if (!isHint) {
+          sessionNotifier.handlePartPoint(nextText.length);
+        }
+        final sound = isHint ? 'pi.mp3' : 'maru.mp3';
+        ref.read(appSoundProvider).requireValue.playSound(sound);
       }
     } else {
       sessionNotifier.judge("peke", config);
@@ -526,15 +578,27 @@ class EngInputNotifier extends Notifier<EngInputState> {
     final sessionState = ref.read(quizSessionNotifierProvider);
     final question = sessionState.currentQuestion;
     if (question is! EngMakingData) return;
-    if (state.enteredText.isNotEmpty) return; // 1文字目のみ
+
+    final targetWord = question.word.toLowerCase();
+    final currentLen = state.enteredText.length;
+
+    // トレーニングモード（!isbattle）なら n-2 文字目までヒント可。
+    // バトルモードなら最初の1文字目のみ。
+    final maxHintLen = config.modeData.isbattle
+        ? 1
+        : (targetWord.length - 2).clamp(1, targetWord.length);
+
+    if (currentLen >= maxHintLen) return;
 
     state = state.copyWith(isHintUsed: true);
 
-    final firstChar = question.word[0].toLowerCase();
-    // 未使用のボタンの中から、最初の1文字目を探す
-    final index = state.availableButtons.indexWhere((b) => b == firstChar);
+    // 次に必要な文字
+    final nextChar = targetWord[currentLen];
+
+    // 未使用のボタン（末尾に '*' が付いていない完全一致のもの）から探す
+    final index = state.availableButtons.indexWhere((b) => b == nextChar);
     if (index != -1) {
-      processLetter(index, config);
+      processLetter(index, config, isHint: true);
     }
   }
 

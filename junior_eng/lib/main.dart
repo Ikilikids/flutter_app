@@ -1,6 +1,7 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz/providers/word_stats_provider.dart';
 import 'package:quiz/quiz.dart';
 
 import 'firebase_options.dart';
@@ -33,6 +34,9 @@ final _appConfig = AllData(
         builder: (BuildContext context) => const WordListPage(),
         title: "単語リスト",
         icon: Icons.style),
+    registeredCount: (WidgetRef ref, String sort) {
+      return ref.watch(registeredCountProvider(sort));
+    },
   ),
   mid: [
     MidData(
@@ -195,7 +199,7 @@ final _appConfig = AllData(
           method: "★1~★3レベルの全種類、1200単語",
           description: "60秒での点数で競おう!!",
           color: "6",
-          circleColor: "6",
+          circleColor: "12345",
         ),
         DetailData(
           sort: "3;123",
@@ -232,6 +236,44 @@ final _appConfig = AllData(
         ),
       ],
     ),
+    MidData(
+      modeData: ModeData(
+        unit: "問",
+        fix: 0,
+        islimited: false,
+        isbattle: false,
+        modeIcon: Icons.find_replace,
+        modeType: "z",
+        modeTitle: "復習モード",
+        sub1: "60秒で何単語解けるか挑戦！",
+        sub2: "ハイスコアを目指そう!!",
+        isSmallerBetter: false,
+      ),
+      detail: [
+        DetailData(
+          sort: "star",
+          displayLabel: "登録した単語帳(★)",
+          displayRank: "★に登録されている単語",
+          resisterSub: "",
+          resisterOrigin: "",
+          method: "★に登録されている単語",
+          description: "オリジナル単語帳で復習しよう！",
+          color: "1",
+          circleColor: "1",
+        ),
+        DetailData(
+          sort: "heart",
+          displayLabel: "登録した単語帳(♪)",
+          displayRank: "♪に登録されている単語",
+          resisterSub: "",
+          resisterOrigin: "",
+          method: "♪に登録されている単語",
+          description: "オリジナル単語帳で復習しよう！",
+          color: "3",
+          circleColor: "3",
+        ),
+      ],
+    )
   ],
 );
 

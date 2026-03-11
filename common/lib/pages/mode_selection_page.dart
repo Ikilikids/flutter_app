@@ -19,8 +19,10 @@ class CommonModeSelectionPage extends HookConsumerWidget {
         body: IndexedStack(
           index: selectedIndex,
           children: [
-            const CommonDetailCard(modeIndex: 0),
-            const CommonDetailCard(modeIndex: 1),
+            ...allData.mid
+                .asMap()
+                .entries
+                .map((e) => CommonDetailCard(modeIndex: e.key)),
             const CommonRankingPage(),
             const SettingsPage(),
             if (additionalPage != null) additionalPage.builder(context),
@@ -34,10 +36,10 @@ class CommonModeSelectionPage extends HookConsumerWidget {
           selectedItemColor: _getTabColor(selectedIndex),
           unselectedItemColor: Colors.grey,
           items: [
-            // インデックスを固定で渡さず、必要な情報を直接渡すか
-            // allData.mid の範囲内であることを保証して呼ぶ
-            _buildGameNavItem(context, 0),
-            _buildGameNavItem(context, 1),
+            ...allData.mid
+                .asMap()
+                .entries
+                .map((e) => _buildGameNavItem(context, e.key)),
             BottomNavigationBarItem(
               icon: const Icon(Icons.emoji_events),
               label: l10n(context, 'rankingButton'),
@@ -66,13 +68,14 @@ class CommonModeSelectionPage extends HookConsumerWidget {
       final midData = allData.mid[index];
       title = l10n(context, midData.modeData.modeTitle ?? '');
       icon = midData.modeData.modeIcon;
-    } else if (index == 2) {
+    } else if (index == allData.mid.length) {
       title = l10n(context, 'rankingTitle');
       icon = Icons.emoji_events;
-    } else if (index == 3) {
+    } else if (index == allData.mid.length + 1) {
       title = l10n(context, 'settingsTitle');
       icon = Icons.settings;
-    } else if (index == 4 && allData.additionalPage != null) {
+    } else if (index == allData.mid.length + 2 &&
+        allData.additionalPage != null) {
       title = allData.additionalPage!.title;
       icon = allData.additionalPage!.icon;
     }
@@ -114,19 +117,37 @@ class CommonModeSelectionPage extends HookConsumerWidget {
   }
 
   Color _getTabColor(int index) {
-    switch (index) {
-      case 0:
-        return Colors.blue;
-      case 1:
-        return Colors.red;
-      case 2:
-        return Colors.orange;
-      case 3:
-        return Colors.green;
-      case 4:
-        return Colors.purple;
-      default:
-        return Colors.grey;
+    final midLength = allData.mid.length;
+
+    // ゲームモード
+    if (index < midLength) {
+      switch (index) {
+        case 0:
+          return Colors.blue;
+        case 1:
+          return Colors.red;
+        case 2:
+          return Colors.indigo;
+        default:
+          return Colors.blueGrey;
+      }
     }
+
+    // ランキング
+    if (index == midLength) {
+      return Colors.amber; // 黄色
+    }
+
+    // 設定
+    if (index == midLength + 1) {
+      return Colors.green;
+    }
+
+    // 追加ページ
+    if (index == midLength + 2) {
+      return Colors.purple;
+    }
+
+    return Colors.grey;
   }
 }

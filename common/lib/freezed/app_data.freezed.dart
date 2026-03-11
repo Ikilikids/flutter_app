@@ -361,6 +361,8 @@ mixin _$AppData {
   EndBuilder? get endBuilder => throw _privateConstructorUsedError;
   SettingWidgetsBuilder? get settingWidgets =>
       throw _privateConstructorUsedError;
+  RegisteredCountBuilder? get registeredCount =>
+      throw _privateConstructorUsedError;
   AdditionalPageConfig? get additionalPage =>
       throw _privateConstructorUsedError;
   String? get bannerId => throw _privateConstructorUsedError;
@@ -388,6 +390,7 @@ abstract class $AppDataCopyWith<$Res> {
       LoadBuilder? loadGame,
       EndBuilder? endBuilder,
       SettingWidgetsBuilder? settingWidgets,
+      RegisteredCountBuilder? registeredCount,
       AdditionalPageConfig? additionalPage,
       String? bannerId,
       String? interId,
@@ -420,6 +423,7 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
     Object? loadGame = freezed,
     Object? endBuilder = freezed,
     Object? settingWidgets = freezed,
+    Object? registeredCount = freezed,
     Object? additionalPage = freezed,
     Object? bannerId = freezed,
     Object? interId = freezed,
@@ -462,6 +466,10 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
               as SettingWidgetsBuilder?,
+      registeredCount: freezed == registeredCount
+          ? _value.registeredCount
+          : registeredCount // ignore: cast_nullable_to_non_nullable
+              as RegisteredCountBuilder?,
       additionalPage: freezed == additionalPage
           ? _value.additionalPage
           : additionalPage // ignore: cast_nullable_to_non_nullable
@@ -513,6 +521,7 @@ abstract class _$$AppDataImplCopyWith<$Res> implements $AppDataCopyWith<$Res> {
       LoadBuilder? loadGame,
       EndBuilder? endBuilder,
       SettingWidgetsBuilder? settingWidgets,
+      RegisteredCountBuilder? registeredCount,
       AdditionalPageConfig? additionalPage,
       String? bannerId,
       String? interId,
@@ -544,6 +553,7 @@ class __$$AppDataImplCopyWithImpl<$Res>
     Object? loadGame = freezed,
     Object? endBuilder = freezed,
     Object? settingWidgets = freezed,
+    Object? registeredCount = freezed,
     Object? additionalPage = freezed,
     Object? bannerId = freezed,
     Object? interId = freezed,
@@ -586,6 +596,10 @@ class __$$AppDataImplCopyWithImpl<$Res>
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
               as SettingWidgetsBuilder?,
+      registeredCount: freezed == registeredCount
+          ? _value.registeredCount
+          : registeredCount // ignore: cast_nullable_to_non_nullable
+              as RegisteredCountBuilder?,
       additionalPage: freezed == additionalPage
           ? _value.additionalPage
           : additionalPage // ignore: cast_nullable_to_non_nullable
@@ -619,6 +633,7 @@ class _$AppDataImpl implements _AppData {
       this.loadGame,
       this.endBuilder,
       this.settingWidgets,
+      this.registeredCount,
       this.additionalPage,
       this.bannerId,
       this.interId,
@@ -650,6 +665,8 @@ class _$AppDataImpl implements _AppData {
   @override
   final SettingWidgetsBuilder? settingWidgets;
   @override
+  final RegisteredCountBuilder? registeredCount;
+  @override
   final AdditionalPageConfig? additionalPage;
   @override
   final String? bannerId;
@@ -660,7 +677,7 @@ class _$AppDataImpl implements _AppData {
 
   @override
   String toString() {
-    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, endBuilder: $endBuilder, settingWidgets: $settingWidgets, additionalPage: $additionalPage, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
+    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, endBuilder: $endBuilder, settingWidgets: $settingWidgets, registeredCount: $registeredCount, additionalPage: $additionalPage, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
   }
 
   @override
@@ -683,6 +700,8 @@ class _$AppDataImpl implements _AppData {
                 other.endBuilder == endBuilder) &&
             (identical(other.settingWidgets, settingWidgets) ||
                 other.settingWidgets == settingWidgets) &&
+            (identical(other.registeredCount, registeredCount) ||
+                other.registeredCount == registeredCount) &&
             (identical(other.additionalPage, additionalPage) ||
                 other.additionalPage == additionalPage) &&
             (identical(other.bannerId, bannerId) ||
@@ -704,6 +723,7 @@ class _$AppDataImpl implements _AppData {
       loadGame,
       endBuilder,
       settingWidgets,
+      registeredCount,
       additionalPage,
       bannerId,
       interId,
@@ -729,6 +749,7 @@ abstract class _AppData implements AppData {
       final LoadBuilder? loadGame,
       final EndBuilder? endBuilder,
       final SettingWidgetsBuilder? settingWidgets,
+      final RegisteredCountBuilder? registeredCount,
       final AdditionalPageConfig? additionalPage,
       final String? bannerId,
       final String? interId,
@@ -752,6 +773,8 @@ abstract class _AppData implements AppData {
   EndBuilder? get endBuilder;
   @override
   SettingWidgetsBuilder? get settingWidgets;
+  @override
+  RegisteredCountBuilder? get registeredCount;
   @override
   AdditionalPageConfig? get additionalPage;
   @override

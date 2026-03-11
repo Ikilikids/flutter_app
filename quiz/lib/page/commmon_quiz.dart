@@ -19,17 +19,6 @@ class ChooseQuizData {
     Map<int, List<PartData>> filteredMapByScore =
         ref.read(activeGameMapProvider);
     final random = Random();
-    if (quizinfo.appData.appTitle == ("appTitle")) {
-      print(currentIndex);
-      if (filteredMapByScore[1]!.length >= currentIndex + 1) {
-        return filteredMapByScore[1]![currentIndex];
-      } else {
-        return filteredMapByScore[1]![
-            random.nextInt(filteredMapByScore[1]!.length)];
-      }
-    }
-    // 1️⃣ スコア範囲で抽出
-    final candidates = <PartData>[];
 
     // 全データが英単語モードかどうかをチェック（最初の要素で判定）
     bool isEngMode = false;
@@ -39,6 +28,22 @@ class ChooseQuizData {
         isEngMode = true;
       }
     }
+
+    // 事前にシャッフルされたリスト（キー:1）を使用するモード
+    if (quizinfo.appData.appTitle == "appTitle" || isEngMode) {
+      final list = filteredMapByScore[1];
+      if (list != null && list.isNotEmpty) {
+        if (list.length > currentIndex) {
+          return list[currentIndex];
+        } else {
+          // リストを使い切った場合はランダムに返す（タイムアタック等のフォールバック）
+          return list[random.nextInt(list.length)];
+        }
+      }
+    }
+
+    // 1️⃣ スコア範囲で抽出
+    final candidates = <PartData>[];
 
     // 🔥 バトルじゃないとき、または英単語モードのときは全件対象
     if (!quizinfo.modeData.isbattle || isEngMode) {

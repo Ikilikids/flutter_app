@@ -6,7 +6,7 @@ part of 'ui_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentMidConfigHash() => r'91ca0ffd0c54cc01372e9846a6fb8b27a34b9085';
+String _$currentMidConfigHash() => r'322c9fbaa8de6906f8b26f3d5ed78b35c6879553';
 
 /// ② 原本と成績を合体させた「現在のモード」の全データ
 ///

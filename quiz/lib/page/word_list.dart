@@ -4,9 +4,18 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import '../providers/word_stats_provider.dart';
+
 // --- メインWidget ---
 
-enum WordSortOption { field, word }
+enum WordSortOption {
+  field,
+  word,
+  correctCount,
+  hintCount,
+  incorrectCount,
+  accuracyRate
+}
 
 class WordListPage extends HookConsumerWidget {
   const WordListPage({super.key});
@@ -20,33 +29,45 @@ class WordListPage extends HookConsumerWidget {
     final sortOption = useState(WordSortOption.field);
     final isAscending = useState(true);
 
+    // マーカー絞り込み用State
+    final showOnlyStar = useState(false);
+    final showOnlyHeart = useState(false);
+
     // 絞り込み用State
     final selectedDomains = useState<Set<String>>({});
     final selectedLevels = useState<Set<int>>({});
 
     // --- データ取得ロジック (Fetch) ---
-    useEffect(() {
-      Future<void> fetch() async {
-        isLoading.value = true;
-        final activeConfig = ref.read(currentDetailConfigProvider);
-        final loader = LoadQuiz(quizinfo: activeConfig);
+    final fetch = useCallback(() async {
+      isLoading.value = true;
+      final activeConfig = ref.read(currentDetailConfigProvider);
+      final loader = LoadQuiz(quizinfo: activeConfig);
 
-        await loader.loadAllQuizData();
+      await loader.init(ref);
 
-        final List<PartData> allItems = [];
-        loader.allQuizData.forEach((key, value) {
-          allItems.addAll(value);
-        });
+      final List<PartData> allItems = [];
+      loader.allQuizData.forEach((key, value) {
+        allItems.addAll(value);
+      });
 
-        if (context.mounted) {
-          wordListData.value = allItems;
-          isLoading.value = false;
-        }
+      if (context.mounted) {
+        wordListData.value = allItems;
+        isLoading.value = false;
       }
-
-      fetch();
-      return null;
     }, []);
+
+    // 画面が現在アクティブかどうかを監視
+    final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+
+    useEffect(() {
+      if (isCurrent) {
+        fetch();
+      }
+      return null;
+    }, [fetch, isCurrent]);
+
+    // 統計情報の最新状態を監視 (★/♥ の絞り込みや表示更新に必要)
+    final statsMap = ref.watch(wordStatsNotifierProvider).value ?? {};
 
     // カテゴリ（domain）とレベル（totalScore）のユニークな値を取得
     final filterOptions = useMemoized(() {
@@ -75,6 +96,20 @@ class WordListPage extends HookConsumerWidget {
             .toList();
       }
 
+      // 2.5 マーカー絞り込み (プロバイダーの最新状態を使用)
+      if (showOnlyStar.value) {
+        list = list.where((item) {
+          final key = (item as EngPartData).word.toLowerCase();
+          return statsMap[key]?.star ?? false;
+        }).toList();
+      }
+      if (showOnlyHeart.value) {
+        list = list.where((item) {
+          final key = (item as EngPartData).word.toLowerCase();
+          return statsMap[key]?.heart ?? false;
+        }).toList();
+      }
+
       // 3. 検索フィルタリング
       if (searchQuery.value.isNotEmpty) {
         final query = searchQuery.value.toLowerCase();
@@ -89,6 +124,11 @@ class WordListPage extends HookConsumerWidget {
 
       // 4. ソート
       list.sort((a, b) {
+        final keyA = (a as EngPartData).word.toLowerCase();
+        final keyB = (b as EngPartData).word.toLowerCase();
+        final statsA = statsMap[keyA] ?? const WordStats();
+        final statsB = statsMap[keyB] ?? const WordStats();
+
         int cmp;
         switch (sortOption.value) {
           case WordSortOption.field:
@@ -101,9 +141,19 @@ class WordListPage extends HookConsumerWidget {
             }
             break;
           case WordSortOption.word:
-            final wa = a.making.isNotEmpty ? a.making[0] : "";
-            final wb = b.making.isNotEmpty ? b.making[0] : "";
-            cmp = wa.compareTo(wb);
+            cmp = a.word.compareTo(b.word);
+            break;
+          case WordSortOption.correctCount:
+            cmp = statsA.correctCount.compareTo(statsB.correctCount);
+            break;
+          case WordSortOption.hintCount:
+            cmp = statsA.hintCount.compareTo(statsB.hintCount);
+            break;
+          case WordSortOption.incorrectCount:
+            cmp = statsA.incorrectCount.compareTo(statsB.incorrectCount);
+            break;
+          case WordSortOption.accuracyRate:
+            cmp = statsA.accuracyRate.compareTo(statsB.accuracyRate);
             break;
         }
         return isAscending.value ? cmp : -cmp;
@@ -115,8 +165,11 @@ class WordListPage extends HookConsumerWidget {
       searchQuery.value,
       sortOption.value,
       isAscending.value,
+      showOnlyStar.value,
+      showOnlyHeart.value,
       selectedDomains.value,
-      selectedLevels.value
+      selectedLevels.value,
+      statsMap // 統計情報が変わった時も再計算
     ]);
 
     // ベースとなるカラーを取得
@@ -131,6 +184,8 @@ class WordListPage extends HookConsumerWidget {
             searchQuery,
             sortOption,
             isAscending,
+            showOnlyStar,
+            showOnlyHeart,
             filterOptions,
             selectedDomains,
             selectedLevels,
@@ -159,6 +214,8 @@ class WordListPage extends HookConsumerWidget {
     ValueNotifier<String> searchQuery,
     ValueNotifier<WordSortOption> sortOption,
     ValueNotifier<bool> isAscending,
+    ValueNotifier<bool> showOnlyStar,
+    ValueNotifier<bool> showOnlyHeart,
     ({List<String> domains, List<int> levels}) options,
     ValueNotifier<Set<String>> selectedDomains,
     ValueNotifier<Set<int>> selectedLevels,
@@ -211,6 +268,18 @@ class WordListPage extends HookConsumerWidget {
                   DropdownMenuItem(
                       value: WordSortOption.word,
                       child: Text("単語", style: TextStyle(fontSize: 13))),
+                  DropdownMenuItem(
+                      value: WordSortOption.correctCount,
+                      child: Text("正解数", style: TextStyle(fontSize: 13))),
+                  DropdownMenuItem(
+                      value: WordSortOption.hintCount,
+                      child: Text("△数", style: TextStyle(fontSize: 13))),
+                  DropdownMenuItem(
+                      value: WordSortOption.incorrectCount,
+                      child: Text("不正解数", style: TextStyle(fontSize: 13))),
+                  DropdownMenuItem(
+                      value: WordSortOption.accuracyRate,
+                      child: Text("正解率", style: TextStyle(fontSize: 13))),
                 ],
                 onChanged: (value) =>
                     {if (value != null) sortOption.value = value},
@@ -225,12 +294,40 @@ class WordListPage extends HookConsumerWidget {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
+              const SizedBox(width: 12),
+              // 星フィルタボタン
+              IconButton(
+                icon: Icon(
+                  showOnlyStar.value ? Icons.star : Icons.star_border,
+                  color: showOnlyStar.value ? Colors.orange : null,
+                  size: 20,
+                ),
+                onPressed: () => showOnlyStar.value = !showOnlyStar.value,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 8),
+              // ハートフィルタボタン
+              IconButton(
+                icon: Icon(
+                  showOnlyHeart.value
+                      ? Icons.music_note
+                      : Icons.music_note_outlined,
+                  color: showOnlyHeart.value ? Colors.red : null,
+                  size: 20,
+                ),
+                onPressed: () => showOnlyHeart.value = !showOnlyHeart.value,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
               const Spacer(),
               Text("$hitCount件",
                   style: const TextStyle(
                       fontSize: 12, fontWeight: FontWeight.bold)),
               if (selectedDomains.value.isNotEmpty ||
                   selectedLevels.value.isNotEmpty ||
+                  showOnlyStar.value ||
+                  showOnlyHeart.value ||
                   searchQuery.value.isNotEmpty)
                 TextButton(
                   onPressed: () {
@@ -238,6 +335,8 @@ class WordListPage extends HookConsumerWidget {
                     searchController.clear();
                     selectedDomains.value = {};
                     selectedLevels.value = {};
+                    showOnlyStar.value = false;
+                    showOnlyHeart.value = false;
                   },
                   child: const Text("リセット", style: TextStyle(fontSize: 12)),
                 ),
@@ -373,18 +472,16 @@ String _formatMeaning(String rawMeaning) {
     }
   }
 
-  // 3. カッコ閉じだけがある等のイレギュラー対応
-  if (rawMeaning.contains(")")) {
-    final closeIdx = rawMeaning.indexOf(")");
-    if (closeIdx != -1 && closeIdx < rawMeaning.length - 1) {
-      return "${rawMeaning.substring(0, closeIdx + 1)}\n${rawMeaning.substring(closeIdx + 1)}";
-    }
+  // 4. 文字数が長い場合に分割 (7文字以上)
+  if (rawMeaning.length >= 7) {
+    final splitIndex = (rawMeaning.length / 2).ceil();
+    return "${rawMeaning.substring(0, splitIndex)}\n${rawMeaning.substring(splitIndex)}";
   }
 
   return rawMeaning;
 }
 
-class _WordCard extends StatelessWidget {
+class _WordCard extends HookConsumerWidget {
   final PartData part;
   final int index;
   final Color themeColor;
@@ -396,15 +493,30 @@ class _WordCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 順位（field）に応じたバッジカラーをテーマカラーに変更
+  Widget build(BuildContext context, WidgetRef ref) {
+    // WordListは英単語(eng)でしか使わないため、EngPartDataにキャスト
+    final p = part as EngPartData;
     final badgeColor = themeColor;
 
+    // プロバイダーからこの単語の最新統計を取得
+    final stats = ref.watch(wordStatsNotifierProvider.select(
+      (s) => s.value?[p.word.toLowerCase()] ?? const WordStats(),
+    ));
+
+    final toggleMarker = useCallback((String type) async {
+      final notifier = ref.read(wordStatsNotifierProvider.notifier);
+      if (type == 'star') {
+        await notifier.toggleStar(p.word);
+      } else {
+        await notifier.toggleHeart(p.word);
+      }
+    }, [p.word]);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: Container(
-        height: 80,
-        padding: const EdgeInsets.all(8),
+        height: 90, // 高さを90に固定
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           border: Border.all(color: themeColor.withAlpha(100), width: 1.5),
           color: bgColor1(context),
@@ -419,12 +531,12 @@ class _WordCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // fieldを表示（順位部分）
+            // 1. fieldを表示（順位部分） - Ratio 20
             Expanded(
               flex: 20,
               child: Container(
-                margin: const EdgeInsets.all(4), // ← 円の外側の余白
-                padding: const EdgeInsets.all(8), // ← 円の内側の余白（文字が縁に当たらない用）
+                margin: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: badgeColor,
@@ -433,7 +545,7 @@ class _WordCard extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    part.field,
+                    p.field,
                     style: const TextStyle(
                       fontSize: 100,
                       fontWeight: FontWeight.bold,
@@ -443,31 +555,147 @@ class _WordCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            // 単語情報 (making[0])
+            const SizedBox(width: 8),
+
+            // 2. 単語情報エリア - Ratio 50
             Expanded(
               flex: 50,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      part.making[0],
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
-                        color: textColor1(context),
+                  // 単語
+                  Expanded(
+                    flex: 2,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        p.making[0],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          color: textColor1(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 直近5回の履歴
+                  Expanded(
+                    flex: 1,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(children: [
+                        const Text(
+                          "直近5回",
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        const SizedBox(width: 4),
+                        ...List.generate(
+                          5,
+                          (index) {
+                            String mark = "？";
+                            Color color = Colors.grey.withAlpha(100);
+                            if (index < stats.recentResults.length) {
+                              mark = stats.recentResults[index];
+                              if (mark == "○") color = Colors.red;
+                              if (mark == "△") color = Colors.green;
+                              if (mark == "×") color = Colors.blue;
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Text(
+                                mark,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // 通算統計
+                  Expanded(
+                    flex: 1,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Text("○:${stats.correctCount}",
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 6),
+                          Text("△:${stats.hintCount}",
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 6),
+                          Text("×:${stats.incorrectCount}",
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 6),
+                          Text("${stats.accuracyRate.toStringAsFixed(1)}%",
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey)),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            // 意味表示 (making[1])
+            const SizedBox(width: 4),
+
+            // 3. マーカーエリア - Ratio 25
+            Expanded(
+              flex: 25,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        stats.star ? Icons.star : Icons.star_border,
+                        color: stats.star ? Colors.orange : Colors.grey,
+                        size: 32,
+                      ),
+                      onPressed: () => toggleMarker('star'),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 2),
+                    IconButton(
+                      icon: Icon(
+                        stats.heart
+                            ? Icons.music_note
+                            : Icons.music_note_outlined,
+                        color: stats.heart ? Colors.red : Colors.grey,
+                        size: 32,
+                      ),
+                      onPressed: () => toggleMarker('heart'),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+
+            // 4. 意味表示エリア - Ratio 40
             Expanded(
               flex: 40,
               child: FittedBox(
@@ -475,8 +703,7 @@ class _WordCard extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Builder(
                   builder: (context) {
-                    final rawMeaning =
-                        part.making.length > 1 ? part.making[1] : "";
+                    final rawMeaning = p.making.length > 1 ? p.making[1] : "";
                     final displayMeaning = _formatMeaning(rawMeaning);
 
                     return Text(

@@ -79,13 +79,13 @@ class SettingsPage extends HookConsumerWidget {
                       Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
                   value: isDarkMode,
                   onChanged: (newValue) {
-                    onThemeChanged(
-                        newValue ? ThemeMode.dark : ThemeMode.light);
+                    onThemeChanged(newValue ? ThemeMode.dark : ThemeMode.light);
                   },
                 ),
 
                 /// Language
-                if (allData.appTitle != "とことん高校数学") ...[
+                if (allData.appTitle == "とことん四則演算" ||
+                    allData.appTitle == "とことん反射神経") ...[
                   const Divider(height: 1),
                   _sectionHeader(
                       context, l10n(context, 'languageSectionTitle')),

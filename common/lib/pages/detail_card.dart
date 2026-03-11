@@ -19,6 +19,13 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
     // 現在のモードの合体済みパックを監視 (同期)
     final midConfig = ref.watch(currentMidConfigProvider);
 
+    // インデックスの安全チェック
+    if (widget.modeIndex >= allData.mid.length) {
+      return const Scaffold(
+        body: Center(child: Text("モードが見つかりません")),
+      );
+    }
+
     // モード切り替え時の一致チェック
     final expectedModeType = allData.mid[widget.modeIndex].modeData.modeType;
     if (midConfig.modeData.modeType != expectedModeType) {
@@ -110,7 +117,7 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
   }
 }
 
-class _CommonSubjectCard extends StatelessWidget {
+class _CommonSubjectCard extends HookConsumerWidget {
   final DetailConfig detailConfig;
   final void Function(int? qcount)? onPlay;
   final VoidCallback? onWatchAd;
@@ -122,13 +129,18 @@ class _CommonSubjectCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final detail = detailConfig.detail;
     final mode = detailConfig.modeData;
 
     final mainColor = getQuizColor2(detail.color, context, 0.7, 0.55, 0.95);
     final accentColor = getQuizColor2(detail.color, context, 1, 0.55, 0.95);
     final scoreIconColor = getQuizColor2(detail.color, context, 1, 0.35, 0.95);
+
+    // モードが "z" の場合、登録単語数を取得（リアクティブ）
+    final registeredCount = (mode.modeType == "z")
+        ? detailConfig.appData.registeredCount?.call(ref, detail.sort)
+        : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
@@ -150,9 +162,8 @@ class _CommonSubjectCard extends StatelessWidget {
               child: Row(
                 children: [
                   _CircleIcon(
-                    circleColor: detail.circleColor,
-                    method: detail.method,
-                    isLimited: mode.islimited,
+                    mode: mode,
+                    detail: detail,
                   ),
                   _CardTitle(
                     displayLabel: detail.displayLabel,
@@ -174,6 +185,9 @@ class _CommonSubjectCard extends StatelessWidget {
                     unit: mode.unit,
                     fix: mode.fix,
                     iconColor: scoreIconColor,
+                    modeType: mode.modeType,
+                    config: detailConfig,
+                    currentRegisteredCount: registeredCount,
                   ),
                   if (mode.isbattle)
                     _PlayButton(
@@ -189,7 +203,9 @@ class _CommonSubjectCard extends StatelessWidget {
                       buttonTextKey: detailConfig.buttonText,
                       accentColor: accentColor,
                       qcount: 5,
-                      onPressed: onPlay != null
+                      onPressed: onPlay != null &&
+                              (mode.modeType != "z" ||
+                                  (registeredCount ?? 0) >= 5)
                           ? () => _handleOnPressed(
                               context, detailConfig.buttonText, 5)
                           : null,
@@ -198,7 +214,9 @@ class _CommonSubjectCard extends StatelessWidget {
                       buttonTextKey: detailConfig.buttonText,
                       accentColor: accentColor,
                       qcount: 10,
-                      onPressed: onPlay != null
+                      onPressed: onPlay != null &&
+                              (mode.modeType != "z" ||
+                                  (registeredCount ?? 0) >= 10)
                           ? () => _handleOnPressed(
                               context, detailConfig.buttonText, 10)
                           : null,
@@ -245,14 +263,12 @@ class _CommonSubjectCard extends StatelessWidget {
 }
 
 class _CircleIcon extends StatelessWidget {
-  final String circleColor;
-  final String method;
-  final bool isLimited;
+  final ModeData mode;
+  final DetailData detail;
 
   const _CircleIcon({
-    required this.circleColor,
-    required this.method,
-    required this.isLimited,
+    required this.mode,
+    required this.detail,
   });
 
   @override
@@ -261,12 +277,34 @@ class _CircleIcon extends StatelessWidget {
       flex: 1,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return buildCircleWidget(
-            circleColor.split(''),
-            context,
-            constraints.maxHeight,
-            method,
-            isLimited,
+          return SizedBox(
+            width: constraints.maxHeight,
+            height: constraints.maxHeight,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 背景円
+
+                // 塗りつぶし部分
+                CustomPaint(
+                  size: Size(constraints.maxHeight, constraints.maxHeight),
+                  painter: FilledCirclePartsPainter(
+                      parts: detail.circleColor.split(""), context: context),
+                ),
+                // 中央アイコン
+                SizedBox(
+                  width: constraints.maxHeight * 0.4,
+                  height: constraints.maxHeight * 0.4,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: Icon(
+                      getIconForCategory(detail.method) ?? (mode.modeIcon),
+                      color: bgColor1(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -346,40 +384,58 @@ class _CardTitle extends StatelessWidget {
   }
 }
 
-class _ScoreDisplay extends StatelessWidget {
+class _ScoreDisplay extends HookConsumerWidget {
   final num highScore;
   final String unit;
   final int fix;
   final Color iconColor;
+  final String modeType;
+  final DetailConfig config;
+  final int? currentRegisteredCount;
 
   const _ScoreDisplay({
     required this.highScore,
     required this.unit,
     required this.fix,
     required this.iconColor,
+    required this.modeType,
+    required this.config,
+    this.currentRegisteredCount,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isbattle = config.modeData.isbattle;
+    final isReviewMode = modeType == "z";
+    final displayValue = isReviewMode
+        ? (currentRegisteredCount?.toString() ?? "--")
+        : (highScore == 0.0 ? "--" : highScore.toStringAsFixed(fix));
+    final icon = isbattle
+        ? Icons.emoji_events
+        : isReviewMode
+            ? Icons.collections_bookmark
+            : Icons.workspace_premium;
+    final displayUnit = l10n(context, unit);
+
     return Expanded(
       child: FittedBox(
         child: Row(
           children: [
-            Icon(Icons.emoji_events, color: iconColor, size: 100),
+            Icon(icon, color: iconColor, size: 100),
             const SizedBox(width: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  highScore == 0.0 ? "--" : highScore.toStringAsFixed(fix),
+                  displayValue,
                   style: TextStyle(
                       fontSize: 100,
                       fontWeight: FontWeight.bold,
                       color: textColor1(context)),
                 ),
                 const SizedBox(width: 8),
-                Text(l10n(context, unit),
+                Text(displayUnit,
                     style: TextStyle(
                         fontSize: 50,
                         fontWeight: FontWeight.bold,

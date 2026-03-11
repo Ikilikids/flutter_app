@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import 'word_stats_provider.dart';
+
 class LoadQuiz {
   final DetailConfig quizinfo;
   Map<int, List<PartData>> allQuizData = {};
@@ -12,21 +14,32 @@ class LoadQuiz {
   LoadQuiz({required this.quizinfo});
 
   Future<void> init(WidgetRef ref) async {
-    await loadAllQuizData();
+    // 統計情報のロードを待機
+    await ref.read(wordStatsNotifierProvider.future);
+
+    await loadAllQuizData(ref);
     loadFilterdQuizData();
     if (quizinfo.appData.appTitle == "appTitle") {
       expandAndShuffle(ref);
+    } else if (quizinfo.appData.appTitle.contains("英単語")) {
+      // 全てのフィルタ済み単語を1つのリストにまとめ、シャッフルして [1] に格納
+      List<PartData> allCandidates = [];
+      filterdQuizData.values.forEach((list) => allCandidates.addAll(list));
+      allCandidates.shuffle();
+      filterdQuizData = {1: allCandidates};
     }
     ref.read(activeGameMapProvider.notifier).update(filterdQuizData);
   }
 
-  Future<void> loadAllQuizData() async {
+  Future<void> loadAllQuizData(WidgetRef ref) async {
+    // 統計情報をプロバイダーから取得
+    final statsMap = ref.read(wordStatsNotifierProvider).value ?? {};
+
     // 1. 数学クイズの読み込み（既存）
     if (quizinfo.appData.appTitle == "とことん高校数学" ||
         quizinfo.appData.appTitle == "appTitle") {
       final csvString = await rootBundle.loadString("assets/csv/quizdata.csv");
       final rows = const CsvToListConverter().convert(csvString);
-      print(rows);
       _processMathRows(rows);
     }
 
@@ -35,7 +48,7 @@ class LoadQuiz {
       final engCsvString =
           await rootBundle.loadString("assets/csv/eng_data.csv");
       final engRows = const CsvToListConverter().convert(engCsvString);
-      _processEngRows(engRows);
+      _processEngRows(engRows, statsMap);
     }
 
     allQuizData = scoreIndexMap;
@@ -71,13 +84,18 @@ class LoadQuiz {
     }
   }
 
-  void _processEngRows(List<List<dynamic>> rows) {
+  void _processEngRows(
+      List<List<dynamic>> rows, Map<String, WordStats> statsMap) {
     for (var row in rows) {
       if (row.length < 3) continue;
 
       final word = row[1].toString();
       final meaning = row[2].toString();
       final totalScore = ((row[0] ~/ 400) + 1).clamp(1, 8);
+
+      // 統計情報の取得 (プロバイダーから)
+      final statsKey = word.toLowerCase();
+      final stats = statsMap[statsKey] ?? const WordStats();
 
       final p = PartData.create(
         mode: "eng",
@@ -86,6 +104,12 @@ class LoadQuiz {
         domain: row[3].toString(),
         field: row[0].toString(),
         totalScore: totalScore,
+        correctCount: stats.correctCount,
+        incorrectCount: stats.incorrectCount,
+        hintCount: stats.hintCount,
+        star: stats.star,
+        heart: stats.heart,
+        recentResults: stats.recentResults,
       );
       scoreIndexMap.putIfAbsent(totalScore, () => []).add(p);
     }
@@ -95,6 +119,14 @@ class LoadQuiz {
     allQuizData.forEach((score, partList) {
       final newList = partList.where((part) {
         if (part.mode == "eng") {
+          // 復習モード（star/heart）の判定
+          if (quizinfo.detail.sort == "star") {
+            return (part as EngPartData).star;
+          }
+          if (quizinfo.detail.sort == "heart") {
+            return (part as EngPartData).heart;
+          }
+
           final parts = quizinfo.detail.sort.split(';');
 
           final subjectPart = parts.isNotEmpty ? parts[0] : '';
@@ -218,7 +250,7 @@ abstract class PartData {
   final String field;
   final int totalScore;
 
-  const PartData({
+  PartData({
     required this.mode,
     required this.making,
     required this.subject,
@@ -237,6 +269,12 @@ abstract class PartData {
     required int totalScore,
     List<HoleData>? holes,
     String? firstButton,
+    int correctCount = 0,
+    int incorrectCount = 0,
+    int hintCount = 0,
+    bool star = false,
+    bool heart = false,
+    List<String> recentResults = const [],
   }) {
     if (mode == "latex") {
       return LatexPartData(
@@ -257,6 +295,12 @@ abstract class PartData {
         domain: domain,
         field: field,
         totalScore: totalScore,
+        correctCount: correctCount,
+        incorrectCount: incorrectCount,
+        hintCount: hintCount,
+        star: star,
+        heart: heart,
+        recentResults: recentResults,
       );
     } else {
       return OptionPartData(
@@ -272,6 +316,13 @@ abstract class PartData {
 }
 
 class EngPartData extends PartData {
+  int correctCount;
+  int incorrectCount;
+  int hintCount;
+  bool star;
+  bool heart;
+  List<String> recentResults;
+
   EngPartData({
     required super.mode,
     required super.making,
@@ -279,10 +330,23 @@ class EngPartData extends PartData {
     required super.domain,
     required super.field,
     required super.totalScore,
+    this.correctCount = 0,
+    this.incorrectCount = 0,
+    this.hintCount = 0,
+    this.star = false,
+    this.heart = false,
+    this.recentResults = const [],
   });
 
   String get word => making[0];
   String get meaning => making[1];
+
+  // 正解率計算ゲッター (△は0.5回分として計算)
+  double get accuracyRate {
+    final total = correctCount + hintCount + incorrectCount;
+    if (total == 0) return 0.0;
+    return ((correctCount + hintCount * 0.5) / total) * 100;
+  }
 }
 
 class LatexPartData extends PartData {

@@ -25,7 +25,9 @@ MidConfig currentMidConfig(Ref ref) {
   final selectedIndex = ref.watch(selectedModeIndexProvider);
 
   // タブIndexに基づいて、原本から該当するモードを取得
-  final masterMid = allData.mid[selectedIndex < 2 ? selectedIndex : 0];
+  // Indexがmidの範囲外（ランキング・設定など）の場合は、デフォルトとして0番目の設定を使用する
+  final midIndex = selectedIndex < allData.mid.length ? selectedIndex : 0;
+  final masterMid = allData.mid[midIndex];
   final selectedModeId = masterMid.modeData.modeType;
 
   // 高速化：クイズのステータスをIDをキーにしたMapに変換しておく
