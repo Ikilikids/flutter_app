@@ -6,7 +6,6 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:quiz/quiz.dart";
 
-
 // These typedefs are local to this file for now.
 
 class NtEndScreen extends ConsumerStatefulWidget {
@@ -33,7 +32,9 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
   void initState() {
     super.initState();
     _quizinfo = ref.read(currentDetailConfigProvider);
-    _startSequence();
+    LoadQuiz(quizinfo: _quizinfo).init(ref).then((_) => _startSequence());
+    final activeMap = ref.read(activeGameMapProvider);
+    print(activeMap[1]!.length);
   }
 
   Future<void> _startSequence() async {
@@ -359,7 +360,7 @@ class _RankSection extends StatelessWidget {
   }
 }
 
-class _ActionSection extends StatelessWidget {
+class _ActionSection extends ConsumerWidget {
   final Color backgroundColor;
   final bool isLimitedMode;
 
@@ -369,7 +370,7 @@ class _ActionSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0),
       child: Row(
@@ -384,7 +385,7 @@ class _ActionSection extends StatelessWidget {
                 : () {
                     InterstitialAdHelper.navigate(
                       context,
-                      CommonCountdownScreen(),
+                      const CommonCountdownScreen(),
                     );
                   },
           ),
@@ -393,6 +394,9 @@ class _ActionSection extends StatelessWidget {
             icon: Icons.home,
             label: 'メニュー',
             onTap: () {
+              ref
+                  .read(currentDetailConfigProvider.notifier)
+                  .clearManualMode(); // 手動モード解除して自動更新に戻す
               InterstitialAdHelper.navigate(context, null);
             },
           ),

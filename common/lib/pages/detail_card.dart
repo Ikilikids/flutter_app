@@ -58,7 +58,12 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
             detailConfig: detailConfig,
             onPlay: _isNavigating
                 ? null
-                : (qcount) => _handlePlay(context, ref, detailConfig, qcount),
+                : (qcount) => globalHandlePlay(
+                      context: context,
+                      ref: ref,
+                      config: detailConfig,
+                      qcount: qcount,
+                    ),
             onWatchAd: _isNavigating
                 ? null
                 : () => _handleWatchAd(ref, detailConfig.detail.resisterOrigin),
@@ -69,7 +74,7 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
   }
 
   /// プレイ開始処理
-  void _handlePlay(BuildContext context, WidgetRef ref, DetailConfig config,
+  void handlePlay(BuildContext context, WidgetRef ref, DetailConfig config,
       int? qcount) async {
     if (_isNavigating) return;
 
@@ -137,11 +142,6 @@ class _CommonSubjectCard extends HookConsumerWidget {
     final accentColor = getQuizColor2(detail.color, context, 1, 0.55, 0.95);
     final scoreIconColor = getQuizColor2(detail.color, context, 1, 0.35, 0.95);
 
-    // モードが "z" の場合、登録単語数を取得（リアクティブ）
-    final registeredCount = (mode.modeType == "z")
-        ? detailConfig.appData.registeredCount?.call(ref, detail.sort)
-        : null;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       child: Container(
@@ -187,7 +187,6 @@ class _CommonSubjectCard extends HookConsumerWidget {
                     iconColor: scoreIconColor,
                     modeType: mode.modeType,
                     config: detailConfig,
-                    currentRegisteredCount: registeredCount,
                   ),
                   if (mode.isbattle)
                     _PlayButton(
@@ -203,9 +202,7 @@ class _CommonSubjectCard extends HookConsumerWidget {
                       buttonTextKey: detailConfig.buttonText,
                       accentColor: accentColor,
                       qcount: 5,
-                      onPressed: onPlay != null &&
-                              (mode.modeType != "z" ||
-                                  (registeredCount ?? 0) >= 5)
+                      onPressed: onPlay != null
                           ? () => _handleOnPressed(
                               context, detailConfig.buttonText, 5)
                           : null,
@@ -214,9 +211,7 @@ class _CommonSubjectCard extends HookConsumerWidget {
                       buttonTextKey: detailConfig.buttonText,
                       accentColor: accentColor,
                       qcount: 10,
-                      onPressed: onPlay != null &&
-                              (mode.modeType != "z" ||
-                                  (registeredCount ?? 0) >= 10)
+                      onPressed: onPlay != null
                           ? () => _handleOnPressed(
                               context, detailConfig.buttonText, 10)
                           : null,
@@ -391,7 +386,6 @@ class _ScoreDisplay extends HookConsumerWidget {
   final Color iconColor;
   final String modeType;
   final DetailConfig config;
-  final int? currentRegisteredCount;
 
   const _ScoreDisplay({
     required this.highScore,
@@ -400,21 +394,14 @@ class _ScoreDisplay extends HookConsumerWidget {
     required this.iconColor,
     required this.modeType,
     required this.config,
-    this.currentRegisteredCount,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isbattle = config.modeData.isbattle;
-    final isReviewMode = modeType == "z";
-    final displayValue = isReviewMode
-        ? (currentRegisteredCount?.toString() ?? "--")
-        : (highScore == 0.0 ? "--" : highScore.toStringAsFixed(fix));
-    final icon = isbattle
-        ? Icons.emoji_events
-        : isReviewMode
-            ? Icons.collections_bookmark
-            : Icons.workspace_premium;
+    final displayValue =
+        (highScore == 0.0 ? "--" : highScore.toStringAsFixed(fix));
+    final icon = isbattle ? Icons.emoji_events : Icons.workspace_premium;
     final displayUnit = l10n(context, unit);
 
     return Expanded(
@@ -498,6 +485,41 @@ class _PlayButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// クラスの外に定義して、どこからでも呼べるようにする
+Future<void> globalHandlePlay({
+  required BuildContext context,
+  required WidgetRef ref,
+  required DetailConfig config,
+  int? qcount,
+}) async {
+  final notifier = ref.read(userStatusNotifierProvider.notifier);
+
+  // 1. 選択状態を更新
+  notifier.selectDetail(config.detail.resisterOrigin);
+
+  // 2. 問題数があれば更新
+  if (qcount != null) {
+    notifier.updateQcount(
+      config.detail.resisterOrigin,
+      config.modeData.modeType,
+      qcount,
+    );
+  }
+
+  // 3. 制限モードの記録（あれば）
+  if (config.modeData.islimited) {
+    await notifier.recordPlay(config.detail.resisterOrigin);
+  }
+
+  // 4. 画面遷移
+  if (context.mounted) {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CommonCountdownScreen()),
     );
   }
 }

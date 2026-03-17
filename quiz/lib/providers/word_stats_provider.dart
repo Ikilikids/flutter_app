@@ -29,6 +29,15 @@ class WordStats {
     return ((correctCount + hintCount * 0.5) / total) * 100;
   }
 
+  /// プレイ回数 (○+△+×)
+  int get totalPlayCount => correctCount + hintCount + incorrectCount;
+
+  /// 直近5回の正解数
+  int get recentCorrectCount => recentResults.where((r) => r == "○").length;
+
+  /// 直近5回の不正解数
+  int get recentIncorrectCount => recentResults.where((r) => r == "×").length;
+
   WordStats copyWith({
     bool? star,
     bool? heart,
@@ -48,6 +57,50 @@ class WordStats {
   }
 }
 
+/// 統計データの初期ロードを行うプロバイダー (CSVと同様に初回のみ実行)
+@Riverpod(keepAlive: true)
+Future<Map<String, WordStats>> wordStatsInitial(Ref ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final Map<String, WordStats> statsMap = {};
+  final allKeys = prefs.getKeys();
+
+  final Set<String> wordKeys = {};
+  for (var k in allKeys) {
+    if (k.startsWith('stats_')) {
+      String? word;
+      if (k.endsWith('_star')) {
+        word = k.substring(6, k.length - 5);
+      } else if (k.endsWith('_heart')) {
+        word = k.substring(6, k.length - 6);
+      } else if (k.endsWith('_c')) {
+        word = k.substring(6, k.length - 2);
+      } else if (k.endsWith('_i')) {
+        word = k.substring(6, k.length - 2);
+      } else if (k.endsWith('_h')) {
+        word = k.substring(6, k.length - 2);
+      } else if (k.endsWith('_r')) {
+        word = k.substring(6, k.length - 2);
+      }
+
+      if (word != null) wordKeys.add(word);
+    }
+  }
+
+  for (var key in wordKeys) {
+    statsMap[key] = WordStats(
+      star: prefs.getBool('stats_${key}_star') ?? false,
+      heart: prefs.getBool('stats_${key}_heart') ?? false,
+      correctCount: prefs.getInt('stats_${key}_c') ?? 0,
+      incorrectCount: prefs.getInt('stats_${key}_i') ?? 0,
+      hintCount: prefs.getInt('stats_${key}_h') ?? 0,
+      recentResults: (prefs.getString('stats_${key}_r') ?? "").isEmpty
+          ? []
+          : (prefs.getString('stats_${key}_r')!).split(','),
+    );
+  }
+  return statsMap;
+}
+
 /// 単語の全統計情報を管理するNotifier
 @Riverpod(keepAlive: true)
 class WordStatsNotifier extends _$WordStatsNotifier {
@@ -56,34 +109,9 @@ class WordStatsNotifier extends _$WordStatsNotifier {
   @override
   FutureOr<Map<String, WordStats>> build() async {
     _prefs = await SharedPreferences.getInstance();
-    return _loadAllStats();
-  }
-
-  /// SharedPreferences から全データを一括ロード
-  Map<String, WordStats> _loadAllStats() {
-    final Map<String, WordStats> statsMap = {};
-    final allKeys = _prefs.getKeys();
-
-    // stats_ で始まるキーをスキャンして単語リストを作成
-    final wordKeys = allKeys
-        .where((k) => k.startsWith('stats_'))
-        .map((k) => k.split('_')[1])
-        .toSet();
-
-    for (var word in wordKeys) {
-      final key = word.toLowerCase();
-      statsMap[key] = WordStats(
-        star: _prefs.getBool('stats_${key}_star') ?? false,
-        heart: _prefs.getBool('stats_${key}_heart') ?? false,
-        correctCount: _prefs.getInt('stats_${key}_c') ?? 0,
-        incorrectCount: _prefs.getInt('stats_${key}_i') ?? 0,
-        hintCount: _prefs.getInt('stats_${key}_h') ?? 0,
-        recentResults: (_prefs.getString('stats_${key}_r') ?? "").isEmpty
-            ? []
-            : (_prefs.getString('stats_${key}_r')!).split(','),
-      );
-    }
-    return statsMap;
+    // 初回ロードプロバイダーからデータを取得
+    final initialData = await ref.watch(wordStatsInitialProvider.future);
+    return initialData;
   }
 
   /// 星マークの切り替え
@@ -106,7 +134,7 @@ class WordStatsNotifier extends _$WordStatsNotifier {
 
   /// クイズ結果の更新
   Future<void> recordResult(String word, String result) async {
-    final key = word.toLowerCase();
+    final key = word.trim().toLowerCase();
     final current = state.value?[key] ?? const WordStats();
 
     int c = current.correctCount;
@@ -129,11 +157,13 @@ class WordStatsNotifier extends _$WordStatsNotifier {
     // 1. 先に状態を更新してUIを反応させる
     _updateState(key, next);
 
-    // 2. 裏で保存処理を実行
-    _prefs.setInt('stats_${key}_c', next.correctCount);
+    // 2. 永続化
+    await _prefs.setInt('stats_${key}_c', next.correctCount);
     await _prefs.setInt('stats_${key}_i', next.incorrectCount);
     await _prefs.setInt('stats_${key}_h', next.hintCount);
     await _prefs.setString('stats_${key}_r', next.recentResults.join(','));
+
+    print("Stats updated and saved for '$key': ○:$c △:$h ×:$i");
   }
 
   /// 内部用：状態更新と保存（bool値）
@@ -144,6 +174,7 @@ class WordStatsNotifier extends _$WordStatsNotifier {
 
     // 2. 保存
     await _prefs.setBool('stats_${key}_$type', value);
+    print("Stats tag updated for '$key': $type = $value");
   }
 
   /// 内部用：メモリ上の状態を更新して通知
@@ -154,16 +185,4 @@ class WordStatsNotifier extends _$WordStatsNotifier {
       state = AsyncData(newMap);
     }
   }
-}
-
-/// 登録済みの単語数をカウントするProvider
-@riverpod
-int registeredCount(Ref ref, String type) {
-  final statsMap = ref.watch(wordStatsNotifierProvider).value ?? {};
-  if (type == "star") {
-    return statsMap.values.where((s) => s.star).length;
-  } else if (type == "heart") {
-    return statsMap.values.where((s) => s.heart).length;
-  }
-  return 0;
 }

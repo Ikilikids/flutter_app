@@ -84,8 +84,8 @@ class SettingsPage extends HookConsumerWidget {
                 ),
 
                 /// Language
-                if (allData.appTitle == "とことん四則演算" ||
-                    allData.appTitle == "とことん反射神経") ...[
+                if (allData.appTitle == "appTitle" ||
+                    allData.appTitle == "reflectTitle") ...[
                   const Divider(height: 1),
                   _sectionHeader(
                       context, l10n(context, 'languageSectionTitle')),

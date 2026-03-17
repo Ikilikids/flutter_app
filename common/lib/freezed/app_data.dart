@@ -19,8 +19,6 @@ typedef EndBuilder = Widget Function(
 );
 typedef SettingWidgetsBuilder = List<Widget> Function(
     BuildContext, String, Function);
-typedef RegisteredCountBuilder = int? Function(
-    WidgetRef ref, String sort);
 
 @freezed
 class AdditionalPageConfig with _$AdditionalPageConfig {
@@ -49,11 +47,11 @@ class AllData with _$AllData {
   bool get isRotation => appData.isRotation;
   String get URL => appData.URL;
   GamePageBuilder get mainGame => appData.mainGame;
-  AdditionalPageConfig? get additionalPage => appData.additionalPage;
+  AdditionalPageConfig? get additionalPage1 => appData.additionalPage1;
+  AdditionalPageConfig? get additionalPage2 => appData.additionalPage2;
   LoadBuilder? get loadGame => appData.loadGame;
   EndBuilder? get endBuilder => appData.endBuilder;
   SettingWidgetsBuilder? get settingWidgets => appData.settingWidgets;
-  RegisteredCountBuilder? get registeredCount => appData.registeredCount;
 
   String? get BannerId => appData.bannerId;
   String? get InterId => appData.interId;
@@ -72,8 +70,8 @@ class AppData with _$AppData {
     LoadBuilder? loadGame,
     EndBuilder? endBuilder,
     SettingWidgetsBuilder? settingWidgets,
-    RegisteredCountBuilder? registeredCount,
-    AdditionalPageConfig? additionalPage,
+    AdditionalPageConfig? additionalPage1,
+    AdditionalPageConfig? additionalPage2,
     String? bannerId,
     String? interId,
     String? rewardId,

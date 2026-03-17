@@ -8,7 +8,7 @@ import 'user_status_provider.dart'; // UserStatusNotifier
 part 'ui_provider.g.dart';
 
 /// ① 今どのタブ（モード）を選択しているか (0:無制限, 1:1日限定, 2:ランキング, 3:設定)
-@riverpod
+@Riverpod(keepAlive: true)
 class SelectedModeIndex extends _$SelectedModeIndex {
   @override
   int build() => 0;
@@ -17,7 +17,7 @@ class SelectedModeIndex extends _$SelectedModeIndex {
 }
 
 /// ② 原本と成績を合体させた「現在のモード」の全データ
-@riverpod
+@Riverpod(keepAlive: true)
 MidConfig currentMidConfig(Ref ref) {
   // ユーザー状態を監視 (同期)
   final status = ref.watch(userStatusNotifierProvider);
@@ -56,15 +56,37 @@ MidConfig currentMidConfig(Ref ref) {
 }
 
 /// ③ 今まさに「選ばれている1件」の DetailConfig
-@riverpod
-DetailConfig currentDetailConfig(Ref ref) {
-  final midConfig = ref.watch(currentMidConfigProvider);
-  final status = ref.watch(userStatusNotifierProvider);
+@Riverpod(keepAlive: true)
+class CurrentDetailConfig extends _$CurrentDetailConfig {
+  DetailConfig? _manualValue;
 
-  final selectedDetailId = status.selectedDetailId;
+  @override
+  DetailConfig build() {
+    // 1. 依存先をwatch（自動更新のトリガー）
+    final midConfig = ref.watch(currentMidConfigProvider);
+    final status = ref.watch(userStatusNotifierProvider);
 
-  return midConfig.details.firstWhere(
-    (d) => d.detail.resisterOrigin == selectedDetailId,
-    orElse: () => midConfig.details.first,
-  );
+    // 2. 手動でセットされた値があれば、それを優先して返す（自動更新をブロック）
+    if (_manualValue != null) {
+      return _manualValue!;
+    }
+
+    // 3. 通常時の自動計算
+    return midConfig.details.firstWhere(
+      (d) => d.detail.resisterOrigin == status.selectedDetailId,
+      orElse: () => midConfig.details.first,
+    );
+  }
+
+  /// 【更新】手動で値を固定する
+  void updateConfig(DetailConfig newConfig) {
+    _manualValue = newConfig;
+    state = newConfig;
+  }
+
+  /// 【捨てる】手動モードを解除して自動更新に戻す
+  void clearManualMode() {
+    _manualValue = null;
+    ref.invalidateSelf(); // buildを再実行させて自動計算に戻す
+  }
 }

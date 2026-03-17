@@ -22,6 +22,7 @@ class UserStatusNotifier extends _$UserStatusNotifier {
   Future<void> initializeData() async {
     final prefs = await SharedPreferences.getInstance();
     final allScoresMap = await ScoreManager.getAllScores();
+    final dateKey = _getDateKey();
 
     final List<QuizStatus> initialQuizzes = [];
     for (var mid in allData.mid) {
@@ -29,7 +30,7 @@ class UserStatusNotifier extends _$UserStatusNotifier {
         final uniqueId = "${detail.resisterOrigin}_${mid.modeData.modeType}";
         final score = allScoresMap[uniqueId] ?? 0.0;
         final playCount =
-            prefs.getInt('playCount_${detail.resisterOrigin}') ?? 0;
+            prefs.getInt('playCount_${dateKey}_${detail.resisterOrigin}') ?? 0;
 
         initialQuizzes.add(QuizStatus(
           id: uniqueId,
@@ -52,7 +53,7 @@ class UserStatusNotifier extends _$UserStatusNotifier {
       firstModeId,
       firstDetailId,
       prefs,
-      _getDateKey(),
+      dateKey,
     );
   }
 
@@ -122,9 +123,9 @@ class UserStatusNotifier extends _$UserStatusNotifier {
     final dateKey = _getDateKey();
 
     // IDをキーにしてプレイ回数を保存・更新
-    int nextCount = ((prefs.getInt('playCount_$quizId') ?? 0) + 1);
+    int nextCount = ((prefs.getInt('playCount_${dateKey}_$quizId') ?? 0) + 1);
     print("Recording play for $quizId, next count: $nextCount");
-    await prefs.setInt('playCount_$quizId', nextCount);
+    await prefs.setInt('playCount_${dateKey}_$quizId', nextCount);
 
     // 状態（quizzesリスト）の中の、該当するIDを持つすべてのデータを更新
     final newQuizzes = state.quizzes

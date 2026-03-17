@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:common/common.dart';
 import "package:quiz/quiz.dart";
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'word_stats_provider.dart';
 
 part 'quiz_session_provider.g.dart';
 
@@ -165,7 +166,12 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     // 英単語の場合、統計情報を保存
     final currentQ = state.currentQuestion;
     if (currentQ is EngMakingData) {
-      _saveStats(currentQ, result, isHintUsed);
+      final statsNotifier = ref.read(wordStatsNotifierProvider.notifier);
+      String mark = "×";
+      if (result == "maru") {
+        mark = isHintUsed ? "△" : "○";
+      }
+      statsNotifier.recordResult(currentQ.word, mark);
     }
 
     final updatedMarks = List<String>.from(state.marks);
@@ -231,48 +237,6 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       } else {
         ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
       }
-    }
-  }
-
-  Future<void> _saveStats(
-      EngMakingData question, String result, bool isHintUsed) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      // キーを小文字に統一して保存・読み込みの不一致を解消
-      final statsKey = question.word.toLowerCase();
-      String key;
-      String currentMark;
-      if (result == "maru") {
-        if (isHintUsed) {
-          key = 'stats_${statsKey}_h';
-          currentMark = "△";
-        } else {
-          key = 'stats_${statsKey}_c';
-          currentMark = "○";
-        }
-      } else {
-        key = 'stats_${statsKey}_i';
-        currentMark = "×";
-      }
-      final current = prefs.getInt(key) ?? 0;
-      await prefs.setInt(key, current + 1);
-
-      // 直近5回の履歴を更新
-      final recentKey = 'stats_${statsKey}_r';
-      final recentRaw = prefs.getString(recentKey) ?? "";
-      List<String> recentList = recentRaw.isEmpty ? [] : recentRaw.split(",");
-      // 先頭に追加
-      recentList.insert(0, currentMark);
-      // 最大5件に制限
-      if (recentList.length > 5) {
-        recentList = recentList.sublist(0, 5);
-      }
-      await prefs.setString(recentKey, recentList.join(","));
-
-      print(
-          "Saved stats: $key = ${current + 1}, recent = ${recentList.join(",")}");
-    } catch (e) {
-      print("Error saving stats: $e");
     }
   }
 }

@@ -23,8 +23,6 @@ class WordListPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // --- State (Hooks) ---
-    final isLoading = useState(true);
-    final wordListData = useState<List<PartData>>([]);
     final searchQuery = useState("");
     final sortOption = useState(WordSortOption.field);
     final isAscending = useState(true);
@@ -37,174 +35,162 @@ class WordListPage extends HookConsumerWidget {
     final selectedDomains = useState<Set<String>>({});
     final selectedLevels = useState<Set<int>>({});
 
-    // --- データ取得ロジック (Fetch) ---
-    final fetch = useCallback(() async {
-      isLoading.value = true;
-      final activeConfig = ref.read(currentDetailConfigProvider);
-      final loader = LoadQuiz(quizinfo: activeConfig);
+    // --- データ取得 (非同期) ---
+    final integratedAsync = ref.watch(integratedEngQuizProvider);
 
-      await loader.init(ref);
+    return integratedAsync.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(body: Center(child: Text("エラーが発生しました: $err"))),
+      data: (integratedData) {
+        final wordListData = useMemoized(() {
+          final List<PartData> allItems = [];
+          integratedData.forEach((key, value) {
+            allItems.addAll(value);
+          });
+          return allItems;
+        }, [integratedData]);
 
-      final List<PartData> allItems = [];
-      loader.allQuizData.forEach((key, value) {
-        allItems.addAll(value);
-      });
+        // 統計情報の最新状態を監視 (★/♥ の絞り込みや表示更新に必要)
+        final statsMap = ref.watch(wordStatsNotifierProvider).value ?? {};
 
-      if (context.mounted) {
-        wordListData.value = allItems;
-        isLoading.value = false;
-      }
-    }, []);
+        // カテゴリ（domain）とレベル（totalScore）のユニークな値を取得
+        final filterOptions = useMemoized(() {
+          final domains = wordListData.map((e) => e.domain).toSet().toList()
+            ..sort();
+          final levels =
+              wordListData.map((e) => e.totalScore).toSet().toList()..sort();
+          return (domains: domains, levels: levels);
+        }, [wordListData]);
 
-    // 画面が現在アクティブかどうかを監視
-    final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+        // フィルタリングとソートの適用
+        final displayListData = useMemoized(() {
+          List<PartData> list = List.from(wordListData);
 
-    useEffect(() {
-      if (isCurrent) {
-        fetch();
-      }
-      return null;
-    }, [fetch, isCurrent]);
+          // 1. カテゴリ絞り込み
+          if (selectedDomains.value.isNotEmpty) {
+            list = list
+                .where((item) => selectedDomains.value.contains(item.domain))
+                .toList();
+          }
 
-    // 統計情報の最新状態を監視 (★/♥ の絞り込みや表示更新に必要)
-    final statsMap = ref.watch(wordStatsNotifierProvider).value ?? {};
+          // 2. レベル絞り込み
+          if (selectedLevels.value.isNotEmpty) {
+            list = list
+                .where((item) => selectedLevels.value.contains(item.totalScore))
+                .toList();
+          }
 
-    // カテゴリ（domain）とレベル（totalScore）のユニークな値を取得
-    final filterOptions = useMemoized(() {
-      final domains = wordListData.value.map((e) => e.domain).toSet().toList()
-        ..sort();
-      final levels =
-          wordListData.value.map((e) => e.totalScore).toSet().toList()..sort();
-      return (domains: domains, levels: levels);
-    }, [wordListData.value]);
+          // 2.5 マーカー絞り込み (プロバイダーの最新状態を使用)
+          if (showOnlyStar.value) {
+            list = list.where((item) {
+              final key = (item as EngPartData).word.trim().toLowerCase();
+              return statsMap[key]?.star ?? false;
+            }).toList();
+          }
+          if (showOnlyHeart.value) {
+            list = list.where((item) {
+              final key = (item as EngPartData).word.trim().toLowerCase();
+              return statsMap[key]?.heart ?? false;
+            }).toList();
+          }
 
-    // フィルタリングとソートの適用
-    final displayListData = useMemoized(() {
-      List<PartData> list = List.from(wordListData.value);
+          // 3. 検索フィルタリング
+          if (searchQuery.value.isNotEmpty) {
+            final query = searchQuery.value.trim().toLowerCase();
+            list = list.where((item) {
+              final word =
+                  item.making.isNotEmpty ? item.making[0].trim().toLowerCase() : "";
+              final meaning =
+                  item.making.length > 1 ? item.making[1].trim().toLowerCase() : "";
+              return word.contains(query) || meaning.contains(query);
+            }).toList();
+          }
 
-      // 1. カテゴリ絞り込み
-      if (selectedDomains.value.isNotEmpty) {
-        list = list
-            .where((item) => selectedDomains.value.contains(item.domain))
-            .toList();
-      }
+          // 4. ソート
+          list.sort((a, b) {
+            final keyA = (a as EngPartData).word.trim().toLowerCase();
+            final keyB = (b as EngPartData).word.trim().toLowerCase();
+            final statsA = statsMap[keyA] ?? const WordStats();
+            final statsB = statsMap[keyB] ?? const WordStats();
 
-      // 2. レベル絞り込み
-      if (selectedLevels.value.isNotEmpty) {
-        list = list
-            .where((item) => selectedLevels.value.contains(item.totalScore))
-            .toList();
-      }
-
-      // 2.5 マーカー絞り込み (プロバイダーの最新状態を使用)
-      if (showOnlyStar.value) {
-        list = list.where((item) {
-          final key = (item as EngPartData).word.toLowerCase();
-          return statsMap[key]?.star ?? false;
-        }).toList();
-      }
-      if (showOnlyHeart.value) {
-        list = list.where((item) {
-          final key = (item as EngPartData).word.toLowerCase();
-          return statsMap[key]?.heart ?? false;
-        }).toList();
-      }
-
-      // 3. 検索フィルタリング
-      if (searchQuery.value.isNotEmpty) {
-        final query = searchQuery.value.toLowerCase();
-        list = list.where((item) {
-          final word =
-              item.making.isNotEmpty ? item.making[0].toLowerCase() : "";
-          final meaning =
-              item.making.length > 1 ? item.making[1].toLowerCase() : "";
-          return word.contains(query) || meaning.contains(query);
-        }).toList();
-      }
-
-      // 4. ソート
-      list.sort((a, b) {
-        final keyA = (a as EngPartData).word.toLowerCase();
-        final keyB = (b as EngPartData).word.toLowerCase();
-        final statsA = statsMap[keyA] ?? const WordStats();
-        final statsB = statsMap[keyB] ?? const WordStats();
-
-        int cmp;
-        switch (sortOption.value) {
-          case WordSortOption.field:
-            int? fa = int.tryParse(a.field);
-            int? fb = int.tryParse(b.field);
-            if (fa != null && fb != null) {
-              cmp = fa.compareTo(fb);
-            } else {
-              cmp = a.field.compareTo(b.field);
+            int cmp;
+            switch (sortOption.value) {
+              case WordSortOption.field:
+                int? fa = int.tryParse(a.field);
+                int? fb = int.tryParse(b.field);
+                if (fa != null && fb != null) {
+                  cmp = fa.compareTo(fb);
+                } else {
+                  cmp = a.field.compareTo(b.field);
+                }
+                break;
+              case WordSortOption.word:
+                cmp = a.word.compareTo(b.word);
+                break;
+              case WordSortOption.correctCount:
+                cmp = statsA.correctCount.compareTo(statsB.correctCount);
+                break;
+              case WordSortOption.hintCount:
+                cmp = statsA.hintCount.compareTo(statsB.hintCount);
+                break;
+              case WordSortOption.incorrectCount:
+                cmp = statsA.incorrectCount.compareTo(statsB.incorrectCount);
+                break;
+              case WordSortOption.accuracyRate:
+                cmp = statsA.accuracyRate.compareTo(statsB.accuracyRate);
+                break;
             }
-            break;
-          case WordSortOption.word:
-            cmp = a.word.compareTo(b.word);
-            break;
-          case WordSortOption.correctCount:
-            cmp = statsA.correctCount.compareTo(statsB.correctCount);
-            break;
-          case WordSortOption.hintCount:
-            cmp = statsA.hintCount.compareTo(statsB.hintCount);
-            break;
-          case WordSortOption.incorrectCount:
-            cmp = statsA.incorrectCount.compareTo(statsB.incorrectCount);
-            break;
-          case WordSortOption.accuracyRate:
-            cmp = statsA.accuracyRate.compareTo(statsB.accuracyRate);
-            break;
-        }
-        return isAscending.value ? cmp : -cmp;
-      });
+            return isAscending.value ? cmp : -cmp;
+          });
 
-      return list;
-    }, [
-      wordListData.value,
-      searchQuery.value,
-      sortOption.value,
-      isAscending.value,
-      showOnlyStar.value,
-      showOnlyHeart.value,
-      selectedDomains.value,
-      selectedLevels.value,
-      statsMap // 統計情報が変わった時も再計算
-    ]);
+          return list;
+        }, [
+          wordListData,
+          searchQuery.value,
+          sortOption.value,
+          isAscending.value,
+          showOnlyStar.value,
+          showOnlyHeart.value,
+          selectedDomains.value,
+          selectedLevels.value,
+          statsMap
+        ]);
 
-    // ベースとなるカラーを取得
-    final themeColor = getQuizColor2("9", context, 1, 0.65, 1);
+        // ベースとなるカラーを取得
+        final themeColor = getQuizColor2("9", context, 1, 0.65, 1);
 
-    return SafeArea(
-      child: Column(
-        children: [
-          // 統合コントロールパネル
-          _buildUnifiedControlPanel(
-            context,
-            searchQuery,
-            sortOption,
-            isAscending,
-            showOnlyStar,
-            showOnlyHeart,
-            filterOptions,
-            selectedDomains,
-            selectedLevels,
-            displayListData.length,
-            themeColor,
-          ),
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                // 統合コントロールパネル
+                _buildUnifiedControlPanel(
+                  context,
+                  searchQuery,
+                  sortOption,
+                  isAscending,
+                  showOnlyStar,
+                  showOnlyHeart,
+                  filterOptions,
+                  selectedDomains,
+                  selectedLevels,
+                  displayListData.length,
+                  themeColor,
+                ),
 
-          // 単語一覧表示エリア
-          Expanded(
-            child: isLoading.value
-                ? const Center(child: CircularProgressIndicator())
-                : _buildWordList(
+                // 単語一覧表示エリア
+                Expanded(
+                  child: _buildWordList(
                     context,
                     displayListData,
                     themeColor,
                   ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -273,7 +259,7 @@ class WordListPage extends HookConsumerWidget {
                       child: Text("正解数", style: TextStyle(fontSize: 13))),
                   DropdownMenuItem(
                       value: WordSortOption.hintCount,
-                      child: Text("△数", style: TextStyle(fontSize: 13))),
+                      child: Text("準正解数", style: TextStyle(fontSize: 13))),
                   DropdownMenuItem(
                       value: WordSortOption.incorrectCount,
                       child: Text("不正解数", style: TextStyle(fontSize: 13))),
@@ -446,38 +432,27 @@ class WordListPage extends HookConsumerWidget {
 
 // --- 単語1行分のカードコンポーネント ---
 
-/// 日本語の「意味」を最大2行に整形する関数
-/// 「、」での分割を優先し、次いで「()」での分割を行う。
 String _formatMeaning(String rawMeaning) {
   if (rawMeaning.isEmpty) return "";
-
-  // 1. 「、」を最優先で分割（2行まで）
   if (rawMeaning.contains("、")) {
     final parts = rawMeaning.split("、");
     return "${parts[0]}\n${parts.sublist(1).join("、")}";
   }
-
-  // 2. 「、」がない場合に「( )」で分割
   if (rawMeaning.contains("(")) {
     final openIdx = rawMeaning.indexOf("(");
     if (openIdx == 0) {
-      // 先頭がカッコの場合: 最初の下カッコの直後で切る
       final closeIdx = rawMeaning.indexOf(")");
       if (closeIdx != -1 && closeIdx < rawMeaning.length - 1) {
         return "${rawMeaning.substring(0, closeIdx + 1)}\n${rawMeaning.substring(closeIdx + 1)}";
       }
     } else {
-      // 途中にカッコがある場合: カッコの直前で切る
       return "${rawMeaning.substring(0, openIdx)}\n${rawMeaning.substring(openIdx)}";
     }
   }
-
-  // 4. 文字数が長い場合に分割 (7文字以上)
   if (rawMeaning.length >= 7) {
     final splitIndex = (rawMeaning.length / 2).ceil();
     return "${rawMeaning.substring(0, splitIndex)}\n${rawMeaning.substring(splitIndex)}";
   }
-
   return rawMeaning;
 }
 
@@ -494,28 +469,26 @@ class _WordCard extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // WordListは英単語(eng)でしか使わないため、EngPartDataにキャスト
     final p = part as EngPartData;
     final badgeColor = themeColor;
 
-    // プロバイダーからこの単語の最新統計を取得
     final stats = ref.watch(wordStatsNotifierProvider.select(
-      (s) => s.value?[p.word.toLowerCase()] ?? const WordStats(),
+      (s) => s.value?[p.word.trim().toLowerCase()] ?? const WordStats(),
     ));
 
     final toggleMarker = useCallback((String type) async {
       final notifier = ref.read(wordStatsNotifierProvider.notifier);
       if (type == 'star') {
-        await notifier.toggleStar(p.word);
+        await notifier.toggleStar(p.word.trim());
       } else {
-        await notifier.toggleHeart(p.word);
+        await notifier.toggleHeart(p.word.trim());
       }
     }, [p.word]);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: Container(
-        height: 90, // 高さを90に固定
+        height: 90,
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           border: Border.all(color: themeColor.withAlpha(100), width: 1.5),
@@ -531,7 +504,6 @@ class _WordCard extends HookConsumerWidget {
         ),
         child: Row(
           children: [
-            // 1. fieldを表示（順位部分） - Ratio 20
             Expanded(
               flex: 20,
               child: Container(
@@ -556,15 +528,12 @@ class _WordCard extends HookConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-
-            // 2. 単語情報エリア - Ratio 50
             Expanded(
               flex: 50,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 単語
                   Expanded(
                     flex: 2,
                     child: FittedBox(
@@ -580,7 +549,6 @@ class _WordCard extends HookConsumerWidget {
                       ),
                     ),
                   ),
-                  // 直近5回の履歴
                   Expanded(
                     flex: 1,
                     child: FittedBox(
@@ -620,7 +588,6 @@ class _WordCard extends HookConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // 通算統計
                   Expanded(
                     flex: 1,
                     child: FittedBox(
@@ -657,8 +624,6 @@ class _WordCard extends HookConsumerWidget {
               ),
             ),
             const SizedBox(width: 4),
-
-            // 3. マーカーエリア - Ratio 25
             Expanded(
               flex: 25,
               child: FittedBox(
@@ -694,8 +659,6 @@ class _WordCard extends HookConsumerWidget {
               ),
             ),
             const SizedBox(width: 4),
-
-            // 4. 意味表示エリア - Ratio 40
             Expanded(
               flex: 40,
               child: FittedBox(
@@ -711,7 +674,7 @@ class _WordCard extends HookConsumerWidget {
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         fontSize: 20,
-                        height: 1.1, // 行間を少し詰める
+                        height: 1.1,
                         fontWeight: FontWeight.bold,
                         color: themeColor,
                       ),

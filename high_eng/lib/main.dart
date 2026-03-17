@@ -29,6 +29,14 @@ final _appConfig = AllData(
         marks: markData,
       );
     },
+    additionalPage1: AdditionalPageConfig(
+        builder: (BuildContext context) => const WordListPage(),
+        title: "単語リスト",
+        icon: Icons.style),
+    additionalPage2: AdditionalPageConfig(
+        builder: (BuildContext context) => const WordListPage(),
+        title: "単語リスト",
+        icon: Icons.style),
   ),
   mid: [
     MidData(
@@ -239,6 +247,21 @@ final _appConfig = AllData(
         ),
       ],
     ),
+    MidData(
+      modeData: ModeData(
+        unit: "問",
+        fix: 0,
+        islimited: false,
+        isbattle: false,
+        modeIcon: Icons.find_replace,
+        modeType: "z",
+        modeTitle: "復習モード",
+        sub1: "自由に条件を選んで復習しよう！",
+        sub2: "苦手克服への近道！",
+        isSmallerBetter: false,
+      ),
+      detail: [],
+    )
   ],
 );
 

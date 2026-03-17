@@ -20,6 +20,7 @@ export "page/eng.dart";
 export "page/latex.dart";
 export "page/optionscreen.dart";
 export "page/quiz_screen_j.dart";
+export "page/review_setup_page.dart";
 export "page/time_circle_painter.dart";
 export "page/word_list.dart";
 export 'providers/load_quiz.dart';

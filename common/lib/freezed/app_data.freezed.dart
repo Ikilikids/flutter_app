@@ -361,9 +361,9 @@ mixin _$AppData {
   EndBuilder? get endBuilder => throw _privateConstructorUsedError;
   SettingWidgetsBuilder? get settingWidgets =>
       throw _privateConstructorUsedError;
-  RegisteredCountBuilder? get registeredCount =>
+  AdditionalPageConfig? get additionalPage1 =>
       throw _privateConstructorUsedError;
-  AdditionalPageConfig? get additionalPage =>
+  AdditionalPageConfig? get additionalPage2 =>
       throw _privateConstructorUsedError;
   String? get bannerId => throw _privateConstructorUsedError;
   String? get interId => throw _privateConstructorUsedError;
@@ -390,13 +390,14 @@ abstract class $AppDataCopyWith<$Res> {
       LoadBuilder? loadGame,
       EndBuilder? endBuilder,
       SettingWidgetsBuilder? settingWidgets,
-      RegisteredCountBuilder? registeredCount,
-      AdditionalPageConfig? additionalPage,
+      AdditionalPageConfig? additionalPage1,
+      AdditionalPageConfig? additionalPage2,
       String? bannerId,
       String? interId,
       String? rewardId});
 
-  $AdditionalPageConfigCopyWith<$Res>? get additionalPage;
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage1;
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage2;
 }
 
 /// @nodoc
@@ -423,8 +424,8 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
     Object? loadGame = freezed,
     Object? endBuilder = freezed,
     Object? settingWidgets = freezed,
-    Object? registeredCount = freezed,
-    Object? additionalPage = freezed,
+    Object? additionalPage1 = freezed,
+    Object? additionalPage2 = freezed,
     Object? bannerId = freezed,
     Object? interId = freezed,
     Object? rewardId = freezed,
@@ -466,13 +467,13 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
               as SettingWidgetsBuilder?,
-      registeredCount: freezed == registeredCount
-          ? _value.registeredCount
-          : registeredCount // ignore: cast_nullable_to_non_nullable
-              as RegisteredCountBuilder?,
-      additionalPage: freezed == additionalPage
-          ? _value.additionalPage
-          : additionalPage // ignore: cast_nullable_to_non_nullable
+      additionalPage1: freezed == additionalPage1
+          ? _value.additionalPage1
+          : additionalPage1 // ignore: cast_nullable_to_non_nullable
+              as AdditionalPageConfig?,
+      additionalPage2: freezed == additionalPage2
+          ? _value.additionalPage2
+          : additionalPage2 // ignore: cast_nullable_to_non_nullable
               as AdditionalPageConfig?,
       bannerId: freezed == bannerId
           ? _value.bannerId
@@ -493,13 +494,29 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $AdditionalPageConfigCopyWith<$Res>? get additionalPage {
-    if (_value.additionalPage == null) {
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage1 {
+    if (_value.additionalPage1 == null) {
       return null;
     }
 
-    return $AdditionalPageConfigCopyWith<$Res>(_value.additionalPage!, (value) {
-      return _then(_value.copyWith(additionalPage: value) as $Val);
+    return $AdditionalPageConfigCopyWith<$Res>(_value.additionalPage1!,
+        (value) {
+      return _then(_value.copyWith(additionalPage1: value) as $Val);
+    });
+  }
+
+  /// Create a copy of AppData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage2 {
+    if (_value.additionalPage2 == null) {
+      return null;
+    }
+
+    return $AdditionalPageConfigCopyWith<$Res>(_value.additionalPage2!,
+        (value) {
+      return _then(_value.copyWith(additionalPage2: value) as $Val);
     });
   }
 }
@@ -521,14 +538,16 @@ abstract class _$$AppDataImplCopyWith<$Res> implements $AppDataCopyWith<$Res> {
       LoadBuilder? loadGame,
       EndBuilder? endBuilder,
       SettingWidgetsBuilder? settingWidgets,
-      RegisteredCountBuilder? registeredCount,
-      AdditionalPageConfig? additionalPage,
+      AdditionalPageConfig? additionalPage1,
+      AdditionalPageConfig? additionalPage2,
       String? bannerId,
       String? interId,
       String? rewardId});
 
   @override
-  $AdditionalPageConfigCopyWith<$Res>? get additionalPage;
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage1;
+  @override
+  $AdditionalPageConfigCopyWith<$Res>? get additionalPage2;
 }
 
 /// @nodoc
@@ -553,8 +572,8 @@ class __$$AppDataImplCopyWithImpl<$Res>
     Object? loadGame = freezed,
     Object? endBuilder = freezed,
     Object? settingWidgets = freezed,
-    Object? registeredCount = freezed,
-    Object? additionalPage = freezed,
+    Object? additionalPage1 = freezed,
+    Object? additionalPage2 = freezed,
     Object? bannerId = freezed,
     Object? interId = freezed,
     Object? rewardId = freezed,
@@ -596,13 +615,13 @@ class __$$AppDataImplCopyWithImpl<$Res>
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
               as SettingWidgetsBuilder?,
-      registeredCount: freezed == registeredCount
-          ? _value.registeredCount
-          : registeredCount // ignore: cast_nullable_to_non_nullable
-              as RegisteredCountBuilder?,
-      additionalPage: freezed == additionalPage
-          ? _value.additionalPage
-          : additionalPage // ignore: cast_nullable_to_non_nullable
+      additionalPage1: freezed == additionalPage1
+          ? _value.additionalPage1
+          : additionalPage1 // ignore: cast_nullable_to_non_nullable
+              as AdditionalPageConfig?,
+      additionalPage2: freezed == additionalPage2
+          ? _value.additionalPage2
+          : additionalPage2 // ignore: cast_nullable_to_non_nullable
               as AdditionalPageConfig?,
       bannerId: freezed == bannerId
           ? _value.bannerId
@@ -633,8 +652,8 @@ class _$AppDataImpl implements _AppData {
       this.loadGame,
       this.endBuilder,
       this.settingWidgets,
-      this.registeredCount,
-      this.additionalPage,
+      this.additionalPage1,
+      this.additionalPage2,
       this.bannerId,
       this.interId,
       this.rewardId})
@@ -665,9 +684,9 @@ class _$AppDataImpl implements _AppData {
   @override
   final SettingWidgetsBuilder? settingWidgets;
   @override
-  final RegisteredCountBuilder? registeredCount;
+  final AdditionalPageConfig? additionalPage1;
   @override
-  final AdditionalPageConfig? additionalPage;
+  final AdditionalPageConfig? additionalPage2;
   @override
   final String? bannerId;
   @override
@@ -677,7 +696,7 @@ class _$AppDataImpl implements _AppData {
 
   @override
   String toString() {
-    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, endBuilder: $endBuilder, settingWidgets: $settingWidgets, registeredCount: $registeredCount, additionalPage: $additionalPage, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
+    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, endBuilder: $endBuilder, settingWidgets: $settingWidgets, additionalPage1: $additionalPage1, additionalPage2: $additionalPage2, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
   }
 
   @override
@@ -700,10 +719,10 @@ class _$AppDataImpl implements _AppData {
                 other.endBuilder == endBuilder) &&
             (identical(other.settingWidgets, settingWidgets) ||
                 other.settingWidgets == settingWidgets) &&
-            (identical(other.registeredCount, registeredCount) ||
-                other.registeredCount == registeredCount) &&
-            (identical(other.additionalPage, additionalPage) ||
-                other.additionalPage == additionalPage) &&
+            (identical(other.additionalPage1, additionalPage1) ||
+                other.additionalPage1 == additionalPage1) &&
+            (identical(other.additionalPage2, additionalPage2) ||
+                other.additionalPage2 == additionalPage2) &&
             (identical(other.bannerId, bannerId) ||
                 other.bannerId == bannerId) &&
             (identical(other.interId, interId) || other.interId == interId) &&
@@ -723,8 +742,8 @@ class _$AppDataImpl implements _AppData {
       loadGame,
       endBuilder,
       settingWidgets,
-      registeredCount,
-      additionalPage,
+      additionalPage1,
+      additionalPage2,
       bannerId,
       interId,
       rewardId);
@@ -749,8 +768,8 @@ abstract class _AppData implements AppData {
       final LoadBuilder? loadGame,
       final EndBuilder? endBuilder,
       final SettingWidgetsBuilder? settingWidgets,
-      final RegisteredCountBuilder? registeredCount,
-      final AdditionalPageConfig? additionalPage,
+      final AdditionalPageConfig? additionalPage1,
+      final AdditionalPageConfig? additionalPage2,
       final String? bannerId,
       final String? interId,
       final String? rewardId}) = _$AppDataImpl;
@@ -774,9 +793,9 @@ abstract class _AppData implements AppData {
   @override
   SettingWidgetsBuilder? get settingWidgets;
   @override
-  RegisteredCountBuilder? get registeredCount;
+  AdditionalPageConfig? get additionalPage1;
   @override
-  AdditionalPageConfig? get additionalPage;
+  AdditionalPageConfig? get additionalPage2;
   @override
   String? get bannerId;
   @override

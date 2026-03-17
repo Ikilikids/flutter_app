@@ -7,147 +7,127 @@ class CommonModeSelectionPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // グローバルな状態（現在のタブIndex）を監視
     final selectedIndex = ref.watch(selectedModeIndexProvider);
-    final additionalPage = allData.additionalPage;
+    final additionalPage1 = allData.additionalPage1;
+    final additionalPage2 = allData.additionalPage2;
+
+    // --- 1. ページの定義をひとまとめにする ---
+    final List<_PageConfig> pages = [
+      // ゲームモード（allData.mid）
+      ...allData.mid.asMap().entries.map((e) {
+        // builderの中身を外側で定義しておくとスッキリします
+        WidgetBuilder pageBuilder;
+        if (e.key == 2 && additionalPage1 != null) {
+          pageBuilder = (context) => additionalPage1.builder(context);
+        } else {
+          pageBuilder = (context) => CommonDetailCard(modeIndex: e.key);
+        }
+
+        return _PageConfig(
+          title: l10n(context, e.value.modeData.modeTitle ?? ''),
+          icon: e.value.modeData.modeIcon ?? Icons.play_arrow,
+          color: _getGameModeColor(e.key),
+          builder: pageBuilder,
+        );
+      }),
+
+      // ランキング
+      _PageConfig(
+        title: l10n(context, 'rankingButton'),
+        icon: Icons.emoji_events,
+        color: Colors.amber,
+        builder: (context) => const CommonRankingPage(),
+      ),
+
+      // 設定
+      _PageConfig(
+        title: l10n(context, 'settingsButton'),
+        icon: Icons.settings,
+        color: Colors.green,
+        builder: (context) => const SettingsPage(),
+      ),
+
+      // 追加ページ2
+      if (additionalPage2 != null)
+        _PageConfig(
+          title: additionalPage2.title,
+          icon: additionalPage2.icon,
+          color: Colors.deepOrange, // 任意の色
+          builder: (context) => additionalPage2.builder(context),
+        ),
+    ];
+
+    // インデックスが範囲外にならないようガード
+    final safeIndex = selectedIndex >= pages.length ? 0 : selectedIndex;
+    final currentPage = pages[safeIndex];
 
     return PopScope(
       canPop: false,
       child: AppAdScaffold(
-        appBar: _buildAppBar(context, selectedIndex),
         advisible: true,
+        // --- 2. AppBarは現在のページ設定から取得 ---
+        appBar: AppBar(
+          centerTitle: true,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(currentPage.icon),
+              const SizedBox(width: 8),
+              Text(currentPage.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              Icon(currentPage.icon),
+            ],
+          ),
+        ),
+        // --- 3. IndexedStack もリストから生成 ---
         body: IndexedStack(
-          index: selectedIndex,
-          children: [
-            ...allData.mid
-                .asMap()
-                .entries
-                .map((e) => CommonDetailCard(modeIndex: e.key)),
-            const CommonRankingPage(),
-            const SettingsPage(),
-            if (additionalPage != null) additionalPage.builder(context),
-          ],
+          index: safeIndex,
+          children: pages.map((p) => p.builder(context)).toList(),
         ),
         bottomNavigationBar: BottomNavigationBar(
-          currentIndex: selectedIndex,
+          currentIndex: safeIndex,
           onTap: (index) =>
               ref.read(selectedModeIndexProvider.notifier).update(index),
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: _getTabColor(selectedIndex),
+          selectedItemColor: currentPage.color,
           unselectedItemColor: Colors.grey,
-          items: [
-            ...allData.mid
-                .asMap()
-                .entries
-                .map((e) => _buildGameNavItem(context, e.key)),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.emoji_events),
-              label: l10n(context, 'rankingButton'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.settings),
-              label: l10n(context, 'settingsButton'),
-            ),
-            if (additionalPage != null)
-              BottomNavigationBarItem(
-                icon: Icon(additionalPage.icon), // クラスで定義したアイコン
-                label: additionalPage.title, // クラスで定義したタイトル
-              ),
-          ],
+          // --- 4. BottomNavigationBarItem も同じリストから生成 ---
+          items: pages
+              .map((p) => BottomNavigationBarItem(
+                    icon: Icon(p.icon),
+                    label: p.title,
+                  ))
+              .toList(),
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, int index) {
-    String title = '';
-    IconData? icon;
-
-    // index が 0 or 1 の時だけ allData.mid を参照する
-    if (index < allData.mid.length) {
-      final midData = allData.mid[index];
-      title = l10n(context, midData.modeData.modeTitle ?? '');
-      icon = midData.modeData.modeIcon;
-    } else if (index == allData.mid.length) {
-      title = l10n(context, 'rankingTitle');
-      icon = Icons.emoji_events;
-    } else if (index == allData.mid.length + 1) {
-      title = l10n(context, 'settingsTitle');
-      icon = Icons.settings;
-    } else if (index == allData.mid.length + 2 &&
-        allData.additionalPage != null) {
-      title = allData.additionalPage!.title;
-      icon = allData.additionalPage!.icon;
+  // ゲームモードの色分けだけ残す
+  Color _getGameModeColor(int index) {
+    switch (index) {
+      case 0:
+        return Colors.blue;
+      case 1:
+        return Colors.red;
+      case 2:
+        return Colors.indigo;
+      default:
+        return Colors.blueGrey;
     }
-
-    return AppBar(
-      centerTitle: true,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon),
-            const SizedBox(width: 8),
-          ],
-          Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-          if (icon != null) ...[
-            const SizedBox(width: 8),
-            Icon(icon),
-          ],
-        ],
-      ),
-    );
   }
+}
 
-  // 名前を _buildGameNavItem に変更し、ゲーム用であることを明示
-  BottomNavigationBarItem _buildGameNavItem(BuildContext context, int index) {
-    // 安全装置：万が一範囲外ならデフォルトを出す
-    if (index >= allData.mid.length) {
-      return const BottomNavigationBarItem(
-        icon: Icon(Icons.help),
-        label: 'Error',
-      );
-    }
-
-    final midData = allData.mid[index];
-    return BottomNavigationBarItem(
-      icon: Icon(midData.modeData.modeIcon ?? Icons.play_arrow),
-      label: l10n(context, midData.modeData.modeTitle ?? ''),
-    );
-  }
-
-  Color _getTabColor(int index) {
-    final midLength = allData.mid.length;
-
-    // ゲームモード
-    if (index < midLength) {
-      switch (index) {
-        case 0:
-          return Colors.blue;
-        case 1:
-          return Colors.red;
-        case 2:
-          return Colors.indigo;
-        default:
-          return Colors.blueGrey;
-      }
-    }
-
-    // ランキング
-    if (index == midLength) {
-      return Colors.amber; // 黄色
-    }
-
-    // 設定
-    if (index == midLength + 1) {
-      return Colors.green;
-    }
-
-    // 追加ページ
-    if (index == midLength + 2) {
-      return Colors.purple;
-    }
-
-    return Colors.grey;
-  }
+// 内部管理用のクラス
+class _PageConfig {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final WidgetBuilder builder;
+  _PageConfig(
+      {required this.title,
+      required this.icon,
+      required this.color,
+      required this.builder});
 }
