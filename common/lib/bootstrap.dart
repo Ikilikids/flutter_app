@@ -1,6 +1,5 @@
 import 'package:common/common.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,39 +28,24 @@ class _BootstrapState extends ConsumerState<Bootstrap> {
   }
 
   Future<void> _initialize() async {
-    // 最小限の初期化。Firebase.initializeApp() だけは
-    // インスタンスを確実に準備するためだけに行い、チェックは後回しにする。
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(options: widget.firebaseOptions);
-    }
+    // 最小限の初期化
 
-    // ユーザーデータの読み込み (これを待つことで起動時に全て揃う)
-    await ref.read(userStatusNotifierProvider.notifier).initializeData();
+    await Firebase.initializeApp(options: widget.firebaseOptions);
 
-    // 他の初期化（広告やアップデートチェック）はバックグラウンドで開始 (待たない)
-    _initBackgroundServices();
+    // アップデートチェックと基本設定の読み込みを先に行う
+    await Future.wait([
+      UpdateManager.checkUpdate(),
+      ref.read(appThemeProvider.future),
+      ref.read(appLocaleProvider.future),
+    ]);
+
+    // ユーザーデータの読み込みを開始 (await しないことで、タイトル画面をすぐに出しつつ裏で通信する)
+    ref.read(userStatusNotifierProvider.notifier).initializeData();
 
     if (mounted) {
       setState(() {
         _isInitialized = true;
       });
-    }
-  }
-
-  void _initBackgroundServices() {
-    // バージョンチェックをバックグラウンドで開始
-    UpdateManager.checkUpdate();
-    ref.read(appThemeProvider);
-    ref.read(appLocaleProvider);
-    ref.read(appUidProvider);
-    ref.read(appSoundProvider);
-    ref.read(userStatusNotifierProvider);
-    if (!kIsWeb) {
-      AdManager.initialize();
-      InterstitialAdHelper.configure(widget.appConfig);
-      InterstitialAdHelper.init();
-      RewardedAdManager.configure(widget.appConfig);
-      RewardedAdManager.loadAd();
     }
   }
 

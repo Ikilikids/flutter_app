@@ -293,7 +293,7 @@ class _CircleIcon extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.contain,
                     child: Icon(
-                      getIconForCategory(detail.method) ?? (mode.modeIcon),
+                      detail.detailIcon ?? mode.modeIcon,
                       color: bgColor1(context),
                     ),
                   ),

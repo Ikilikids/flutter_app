@@ -10,7 +10,8 @@ class QuizTabInfo {
   final String id;
   final String display;
   final String? color; // 科目ごとの色を保持
-  QuizTabInfo({required this.id, required this.display, this.color});
+  final IconData? icon; // アイコンを保持
+  QuizTabInfo({required this.id, required this.display, this.color, this.icon});
 }
 
 class RankingEntry {
@@ -40,16 +41,25 @@ class CommonRankingPage extends HookConsumerWidget {
 
     // --- 期間タブの生成 ---
     final periodTabs = useMemoized(
-        () => [
-              QuizTabInfo(
-                  id: buildPeriod()[0], display: l10n(context, 'allPeriod')),
-              QuizTabInfo(
-                  id: buildPeriod()[1],
-                  display: l10n(context, 'monthlyPeriod')),
-              QuizTabInfo(
-                  id: buildPeriod()[2], display: l10n(context, 'weeklyPeriod')),
-            ],
-        [context]);
+      () => [
+        QuizTabInfo(
+          id: buildPeriod()[0],
+          display: l10n(context, 'allPeriod'),
+          icon: Icons.history, // 全期間
+        ),
+        QuizTabInfo(
+          id: buildPeriod()[1],
+          display: l10n(context, 'monthlyPeriod'),
+          icon: Icons.calendar_month, // 月間
+        ),
+        QuizTabInfo(
+          id: buildPeriod()[2],
+          display: l10n(context, 'weeklyPeriod'),
+          icon: Icons.view_week, // 週間
+        ),
+      ],
+      [context],
+    );
 
     // --- クイズ種別タブの生成 ---
     final quizTabs = useMemoized(() {
@@ -57,17 +67,44 @@ class CommonRankingPage extends HookConsumerWidget {
       final List<QuizTabInfo> tabs = gameData.detail
           .where((d) => seen.add(d.resisterSub))
           .map((d) => QuizTabInfo(
-                id: d.resisterSub,
-                display: l10n(context, d.displayRank),
-                color: d.color,
-              ))
+              id: d.resisterSub,
+              display: l10n(context, d.displayRank),
+              color: d.color,
+              icon: d.detailIcon))
           .toList();
 
       if (!gameData.isbattle) {
-        tabs.insert(0, QuizTabInfo(id: "全合計", display: "全合計", color: "9"));
+        tabs.insert(
+            0,
+            QuizTabInfo(
+                id: "全合計", display: "全合計", color: "9", icon: Icons.functions));
       }
       return tabs;
     }, [selectedModeIndex.value, context]);
+
+    final modeTabs = useMemoized(() {
+      return allData.mid.asMap().entries.take(2).map((entry) {
+        final int index = entry.key;
+        final d = entry.value;
+
+        // 0番目なら青、1番目なら赤、それ以外はデフォルト(9)
+        String colorCode;
+        if (index == 0) {
+          colorCode = "1"; // 青のカラーコード
+        } else if (index == 1) {
+          colorCode = "2"; // 赤のカラーコード
+        } else {
+          colorCode = "9";
+        }
+
+        return QuizTabInfo(
+          id: d.modeData.modeType,
+          display: l10n(context, d.modeData.modeTitle),
+          color: colorCode,
+          icon: d.modeData.modeIcon,
+        );
+      }).toList();
+    }, [context]);
 
     // モード切り替え時に選択インデックスを安全にリセット
     useEffect(() {
@@ -78,6 +115,8 @@ class CommonRankingPage extends HookConsumerWidget {
 
     // --- Tab Controllers ---
     // keysを指定することで、タブの中身が変わった時にコントローラーを自動再生成
+    final modeTabController =
+        useTabController(initialLength: allData.mid.length, keys: [modeTabs]);
     final quizTabController = useTabController(
       initialLength: quizTabs.length,
       keys: [quizTabs],
@@ -134,36 +173,107 @@ class CommonRankingPage extends HookConsumerWidget {
     // 現在選択されているタブのcolorを直接参照
     final currentColorCode = quizTabs[selectedSubjectIndex.value].color ?? "9";
     final tabColor = getQuizColor2(currentColorCode, context, 1, 0.65, 1);
+// 1. 共通のTabBar生成メソッドを作成
+    Widget _buildCustomTabBar(
+        {required TabController controller,
+        required List<dynamic> tabs,
+        required Color color,
+        required double height,
+        required ValueChanged<int> onTap,
+        required double bottomBorderWidth}) {
+      final bool isScroll = tabs.length >= 4;
+
+      return Container(
+        height: height,
+        // --- ここでTabBar全体の底に線を引く ---
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey.shade300, // 線の色（固定ならグレー、変えるならcolor）
+              width: bottomBorderWidth, // ← ここで「下の線の太さ」を自由に設定
+            ),
+          ),
+        ),
+        // ----------------------------------
+        child: TabBar(
+          controller: controller,
+          isScrollable: isScroll,
+          indicatorColor: color,
+          dividerColor: Colors.transparent,
+          indicatorWeight: 6.0, // これは「選択中」の線の太さ
+          tabAlignment: isScroll ? TabAlignment.start : TabAlignment.fill,
+          labelColor: color,
+          unselectedLabelColor: Colors.grey,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 24.0),
+          onTap: onTap,
+          tabs: tabs
+              .map((tab) => Tab(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (tab.icon != null) ...[
+                              Icon(tab.icon, size: 60),
+                              const SizedBox(width: 12),
+                            ],
+                            Text(
+                              tab.display,
+                              style: const TextStyle(
+                                fontSize: 50,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ))
+              .toList(),
+        ),
+      );
+    }
 
     return SafeArea(
       child: Column(
         children: [
-          // モード選択ボタン（無制限 / 限定）
-          _buildModeSelector(context, selectedModeIndex),
+          // モード選択
+          _buildCustomTabBar(
+            controller: modeTabController,
+            tabs: modeTabs,
+            // 0の時は青、それ以外（1）は赤
+            height: 60,
+            bottomBorderWidth: 4.0, // モードタブの下線を太くして強調
+            color: selectedModeIndex.value == 0 ? Colors.blue : Colors.red,
+            onTap: (index) {
+              selectedModeIndex.value = index;
+              // 必要に応じてここで全体のテーマカラー（tabColor）も更新する
+            },
+          ),
 
-          // クイズ種別タブ (TabBar)
-          if (quizTabs.isNotEmpty)
-            TabBar(
-              controller: quizTabController,
-              indicatorColor: tabColor,
-              labelColor: tabColor,
-              unselectedLabelColor: textColor2(context),
-              isScrollable: true,
-              tabs: quizTabs.map((tab) => Tab(text: tab.display)).toList(),
-              onTap: (index) => selectedSubjectIndex.value = index,
-            ),
+          // クイズ種別
+          _buildCustomTabBar(
+            controller: quizTabController,
+            height: 40,
+            bottomBorderWidth: 2.0, // クイズ種別タブの下線は細くして控えめに
+            tabs: quizTabs,
+            color: tabColor,
+            onTap: (index) => selectedSubjectIndex.value = index,
+          ),
 
-          // 期間選択タブ (TabBar)
-          TabBar(
+          // 期間選択
+          _buildCustomTabBar(
             controller: periodTabController,
-            indicatorColor: tabColor,
-            labelColor: tabColor,
-            unselectedLabelColor: textColor2(context),
-            tabs: periodTabs.map((tab) => Tab(text: tab.display)).toList(),
+            height: 40,
+            bottomBorderWidth: 2.0, // クイズ種別タブの下線は細くして控えめに
+            tabs: periodTabs,
+            color: tabColor,
             onTap: (index) => selectedPeriodIndex.value = index,
           ),
 
-          // ランキングリスト表示エリア
+          // ランキングリスト
           Expanded(
             child: isLoading.value
                 ? const Center(child: CircularProgressIndicator())
@@ -177,43 +287,6 @@ class CommonRankingPage extends HookConsumerWidget {
                   ),
           ),
         ],
-      ),
-    );
-  }
-
-  // --- 内部メソッド：モードセレクター ---
-  Widget _buildModeSelector(
-      BuildContext context, ValueNotifier<int> selectedModeIndex) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Row(
-        children: List.generate(2, (i) {
-          final isSelected = selectedModeIndex.value == i;
-          final modeColor = i == 0 ? Colors.blue : Colors.red;
-          return Expanded(
-            child: Padding(
-              padding:
-                  EdgeInsets.only(left: i == 0 ? 0 : 8, right: i == 1 ? 0 : 8),
-              child: ElevatedButton(
-                onPressed: () => selectedModeIndex.value = i,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSelected ? bgColor2(context) : Colors.grey,
-                  foregroundColor: isSelected ? modeColor : bgColor1(context),
-                  side: isSelected
-                      ? BorderSide(color: modeColor, width: 3)
-                      : null,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: Text(
-                  l10n(context, allData.mid[i].modeTitle!),
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }

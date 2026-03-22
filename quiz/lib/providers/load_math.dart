@@ -31,12 +31,23 @@ class MathQuizLoader {
       if (row.length < 17) continue;
       final mode = row[0].toString();
       final making = [row[1].toString(), row[2].toString(), row[3].toString()];
+
       if (mode == "latex") {
-        _processLatex(row, mode, making, row[5].toString(), row[6].toString(),
-            row[7].toString(), map);
+        _processLatex(
+          row,
+          mode,
+          making,
+          row[5].toString(),
+          row[6].toString(),
+          row[7].toString(),
+          map,
+        );
       } else {
-        final score =
-            int.parse(row[13].toString().replaceAll(RegExp(r"[ab]"), ""));
+        // latex以外はrow[13]の単一スコアのみ処理
+        final scoreStr = row[13].toString().replaceAll(RegExp(r"[ab]"), "");
+        if (scoreStr.isEmpty) continue;
+
+        final score = int.parse(scoreStr);
         map.putIfAbsent(score, () => []).add(PartData.create(
             mode: mode,
             making: making,
@@ -48,42 +59,75 @@ class MathQuizLoader {
     }
   }
 
-  // --- 既存のLatexパース処理をここに保持 ---
   static void _processLatex(List<dynamic> row, String mode, List<String> making,
       String sub, String dom, String field, Map<int, List<PartData>> map) {
+    final controlButtons = [
+      row[9].toString(),
+      row[10].toString(),
+      row[11].toString(),
+      row[12].toString()
+    ];
     final scoreStrings = [
       row[13].toString(),
       row[14].toString(),
       row[15].toString(),
       row[16].toString()
     ];
+
     List<int> validIndices = [];
-    for (int k = 0; k < 4; k++)
-      if (scoreStrings[k].isNotEmpty) validIndices.add(k);
+    List<int> aIndices = [];
+    List<int> bIndices = [];
 
-    for (int i = 1; i < (1 << validIndices.length); i++) {
-      List<int> subset = [];
-      for (int j = 0; j < validIndices.length; j++)
-        if ((i & (1 << j)) != 0) subset.add(validIndices[j]);
-
-      // バリデーション等の既存処理 ...
-      List<HoleData> holes = [];
-      int total = 0;
-      for (int idx in subset) {
-        int s = int.parse(scoreStrings[idx].replaceAll(RegExp(r"[ab]"), ""));
-        holes.add(
-            HoleData(index: idx, button: row[9 + idx].toString(), score: s));
-        total += s;
+    // 有効なインデックスとa/bグループの分類
+    for (int k = 0; k < scoreStrings.length; k++) {
+      if (scoreStrings[k].isNotEmpty) {
+        validIndices.add(k);
+        if (scoreStrings[k].contains('a')) aIndices.add(k);
+        if (scoreStrings[k].contains('b')) bIndices.add(k);
       }
-      map.putIfAbsent(total, () => []).add(PartData.create(
-          mode: mode,
-          making: making,
-          subject: sub,
-          domain: dom,
-          field: field,
-          totalScore: total,
-          holes: holes,
-          firstButton: row[8].toString()));
+    }
+
+    int n = validIndices.length;
+    // ビット全探索で全ての組み合わせを生成
+    for (int i = 1; i < (1 << n); i++) {
+      List<int> subsetIndices = [];
+      for (int j = 0; j < n; j++) {
+        if ((i & (1 << j)) != 0) subsetIndices.add(validIndices[j]);
+      }
+
+      // --- バリデーションロジック ---
+
+      // グループ「a」: 含まれている場合は、aに属する全てが含まれていなければならない（必須セット）
+      if (aIndices.isNotEmpty) {
+        if (!aIndices.every((idx) => subsetIndices.contains(idx))) continue;
+      }
+
+      // グループ「b」: 一つでも含まれるなら、bに属する全てが含まれていなければならない（一括セット）
+      if (bIndices.isNotEmpty) {
+        bool hasAnyB = bIndices.any((idx) => subsetIndices.contains(idx));
+        bool hasAllB = bIndices.every((idx) => subsetIndices.contains(idx));
+        if (hasAnyB && !hasAllB) continue;
+      }
+
+      List<HoleData> holes = [];
+      int currentTotal = 0;
+      for (int idx in subsetIndices) {
+        int s = int.parse(scoreStrings[idx].replaceAll(RegExp(r"[ab]"), ""));
+        holes.add(HoleData(index: idx, button: controlButtons[idx], score: s));
+        currentTotal += s;
+      }
+
+      final p = PartData.create(
+        mode: mode,
+        making: making,
+        subject: sub,
+        domain: dom,
+        field: field,
+        totalScore: currentTotal,
+        holes: holes,
+        firstButton: row[8].toString(),
+      );
+      map.putIfAbsent(currentTotal, () => []).add(p);
     }
   }
 

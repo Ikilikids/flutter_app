@@ -6,6 +6,8 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import '../providers/eng_review_provider.dart';
+
 // These typedefs are local to this file for now.
 
 class NtEndScreen extends ConsumerStatefulWidget {
@@ -33,8 +35,6 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
     super.initState();
     _quizinfo = ref.read(currentDetailConfigProvider);
     LoadQuiz(quizinfo: _quizinfo).init(ref).then((_) => _startSequence());
-    final activeMap = ref.read(activeGameMapProvider);
-    print(activeMap[1]!.length);
   }
 
   Future<void> _startSequence() async {
@@ -371,6 +371,15 @@ class _ActionSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final activeMap = ref.watch(activeGameMapProvider);
+    final quizinfo = ref.watch(currentDetailConfigProvider);
+    final availableCount = activeMap[1]?.length ?? 0;
+    final isReviewMode = quizinfo.detail.resisterOrigin == "復習モード";
+
+    // 復習モードの場合、必要な問題数(qcount)が足りているかチェック
+    final hasEnoughQuestions =
+        !isReviewMode || availableCount >= quizinfo.qcount;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0),
       child: Row(
@@ -380,7 +389,9 @@ class _ActionSection extends ConsumerWidget {
             backgroundColor: backgroundColor,
             icon: Icons.refresh,
             label: 'もう一度',
-            onTap: isLimitedMode
+            availableCount: availableCount,
+            showCount: isReviewMode,
+            onTap: (isLimitedMode || !hasEnoughQuestions)
                 ? null
                 : () {
                     InterstitialAdHelper.navigate(
@@ -394,9 +405,7 @@ class _ActionSection extends ConsumerWidget {
             icon: Icons.home,
             label: 'メニュー',
             onTap: () {
-              ref
-                  .read(currentDetailConfigProvider.notifier)
-                  .clearManualMode(); // 手動モード解除して自動更新に戻す
+              ref.read(engReviewFilterProvider.notifier).state = null;
               InterstitialAdHelper.navigate(context, null);
             },
           ),
@@ -411,12 +420,16 @@ class _ActionItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
+  final int? availableCount;
+  final bool showCount;
 
   const _ActionItem({
     required this.backgroundColor,
     required this.icon,
     required this.label,
     required this.onTap,
+    this.availableCount,
+    this.showCount = false,
   });
 
   @override
@@ -425,6 +438,20 @@ class _ActionItem extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
+          if (showCount && availableCount != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                '現在: $availableCount問',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: (onTap == null)
+                      ? Colors.red
+                      : textColor1(context).withAlpha(180),
+                ),
+              ),
+            ),
           Expanded(
             flex: 5,
             child: AspectRatio(

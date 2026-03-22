@@ -4,22 +4,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import '../providers/eng_review_provider.dart';
 import '../providers/word_stats_provider.dart';
-
-enum ReviewMetric {
-  accuracyRate("正解率", 0, 100, "%"),
-  correctCount("正解数", 0, 20, "回"),
-  incorrectCount("不正解数", 0, 20, "回"),
-  recentCorrectCount("直近5回の正解数", 0, 5, "回"),
-  recentIncorrectCount("直近5回の不正解数", 0, 5, "回"),
-  totalPlayCount("プレイ回数", 0, 20, "回");
-
-  final String label;
-  final double min;
-  final double max;
-  final String unit;
-  const ReviewMetric(this.label, this.min, this.max, this.unit);
-}
 
 class ReviewSetupPage extends HookConsumerWidget {
   const ReviewSetupPage({super.key});
@@ -50,7 +36,7 @@ class ReviewSetupPage extends HookConsumerWidget {
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) =>
-          Scaffold(body: Center(child: Text("エラーが発生しました: $err"))),
+          Scaffold(body: Center(child: Text("エラーが発生しました:$err"))),
       data: (integratedData) {
         final allWords = useMemoized(() {
           final List<EngPartData> allItems = [];
@@ -113,66 +99,64 @@ class ReviewSetupPage extends HookConsumerWidget {
 
         final totalMatches = matchingWords.length;
 
-        return Scaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- 1. タグ ---
-                _buildSectionHeader(context, Icons.local_offer, "タグ"),
-                _buildFilterCard(context, [
-                  _buildTagSwitch(
-                      context, '★ 星付き', Icons.star, Colors.orange, useStar),
-                  _buildTagSwitch(context, '♪ 登録済み', Icons.music_note,
-                      Colors.red, useHeart),
-                ]),
-                const SizedBox(height: 28),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- 1. タグ ---
+              _buildSectionHeader(context, Icons.local_offer, "タグ"),
+              _buildFilterCard(context, [
+                _buildTagSwitch(
+                    context, '★ 星付き', Icons.star, Colors.orange, useStar),
+                _buildTagSwitch(
+                    context, '♪ 登録済み', Icons.music_note, Colors.red, useHeart),
+              ]),
+              const SizedBox(height: 28),
 
-                // --- 2. 指標フィルタ (スライダー) ---
-                _buildSectionHeader(context, Icons.tune, "絞り込み指標"),
-                _buildMetricRangeSlider(context, selectedMetric, rangeValues),
-                const SizedBox(height: 28),
+              // --- 2. 指標フィルタ (スライダー) ---
+              _buildSectionHeader(context, Icons.tune, "絞り込み指標"),
+              _buildMetricRangeSlider(context, selectedMetric, rangeValues),
+              const SizedBox(height: 28),
 
-                // --- 3. レベル ---
-                _buildSectionHeader(context, Icons.layers, "レベル"),
-                _buildLevelChips(context, selectedLevels),
-                const SizedBox(height: 28),
+              // --- 3. レベル ---
+              _buildSectionHeader(context, Icons.layers, "レベル"),
+              _buildLevelChips(context, selectedLevels),
+              const SizedBox(height: 28),
 
-                // --- 4. 品詞 ---
-                _buildSectionHeader(context, Icons.category, "品詞"),
-                _buildPartChips(context, selectedParts),
+              // --- 4. 品詞 ---
+              _buildSectionHeader(context, Icons.category, "品詞"),
+              _buildPartChips(context, selectedParts),
 
-                const SizedBox(height: 48),
+              const SizedBox(height: 48),
 
-                // --- 該当件数表示 ---
-                Center(
-                  child: Text(
-                    "該当する問題数: $totalMatches 問",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor1(context).withOpacity(0.7),
-                    ),
+              // --- 該当件数表示 ---
+              Center(
+                child: Text(
+                  "該当する問題数: $totalMatches 問",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: textColor1(context).withAlpha(180),
                   ),
                 ),
-                const SizedBox(height: 12),
+              ),
+              const SizedBox(height: 12),
 
-                // --- 開始ボタン ---
-                _buildStartButtons(
-                  context,
-                  totalMatches,
-                  ref,
-                  parts: selectedParts.value,
-                  levels: selectedLevels.value,
-                  metric: selectedMetric.value,
-                  range: rangeValues.value,
-                  star: useStar.value,
-                  heart: useHeart.value,
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
+              // --- 開始ボタン ---
+              _buildStartButtons(
+                context,
+                totalMatches,
+                ref,
+                parts: selectedParts.value,
+                levels: selectedLevels.value,
+                metric: selectedMetric.value,
+                range: rangeValues.value,
+                star: useStar.value,
+                heart: useHeart.value,
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
         );
       },
@@ -201,7 +185,7 @@ class ReviewSetupPage extends HookConsumerWidget {
       decoration: BoxDecoration(
         color: bgColor2(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withAlpha(30)),
       ),
       child: Column(children: children),
     );
@@ -214,7 +198,7 @@ class ReviewSetupPage extends HookConsumerWidget {
       title: Text(title, style: const TextStyle(fontSize: 15)),
       trailing: Switch(
         value: state.value,
-        activeColor: color,
+        activeThumbColor: color,
         onChanged: (v) => state.value = v,
       ),
       onTap: () => state.value = !state.value,
@@ -284,7 +268,7 @@ class ReviewSetupPage extends HookConsumerWidget {
             max: metric.value.max,
             divisions: metric.value.max.toInt() == 5 ? 5 : 20,
             activeColor: metricColor,
-            inactiveColor: metricColor.withOpacity(0.2),
+            inactiveColor: metricColor.withAlpha(50),
             labels: RangeLabels(
               "${range.value.start.round()}${metric.value.unit}",
               "${range.value.end.round()}${metric.value.unit}",
@@ -315,8 +299,8 @@ class ReviewSetupPage extends HookConsumerWidget {
               newSet.remove(level);
             selected.value = newSet;
           },
-          selectedColor: Colors.orange.withOpacity(0.2),
-          checkmarkColor: Colors.orange,
+          selectedColor: getQuizColor2("6", context, 0.6, 0.2, 0.95),
+          checkmarkColor: getQuizColor2("6", context, 1, 0.7, 0.95),
         );
       }),
     );
@@ -361,8 +345,6 @@ class ReviewSetupPage extends HookConsumerWidget {
     required bool star,
     required bool heart,
   }) {
-    final activeConfig = ref.read(currentDetailConfigProvider);
-
     Widget buildButton(int qCount) {
       final isEnabled = count >= qCount;
       return Expanded(
@@ -373,32 +355,26 @@ class ReviewSetupPage extends HookConsumerWidget {
             child: ElevatedButton(
               onPressed: isEnabled
                   ? () {
-                      final partIds =
-                          parts.map((p) => getSpeechNumber(p)).join();
-                      final levelIds = levels.join();
-                      final metricIdx = ReviewMetric.values.indexOf(metric);
-                      final min = range.start.round();
-                      final max = range.end.round();
-                      String tagMode = "none";
-                      if (star && heart) {
-                        tagMode = "both";
-                      } else if (star) {
-                        tagMode = "star";
-                      } else if (heart) {
-                        tagMode = "heart";
-                      }
-
-                      final sortStr =
-                          "$partIds;$levelIds;$metricIdx;$min;$max;$tagMode";
-
-                      final reviewConfig = activeConfig.copyWith(
-                        qcount: qCount,
-                        detail: activeConfig.detail.copyWith(sort: sortStr),
+                      // 1. 英単語専用のフィルタを「登録」
+                      ref.read(engReviewFilterProvider.notifier).state =
+                          EngReviewFilter(
+                        parts: parts,
+                        levels: levels,
+                        metric: metric,
+                        range: range,
+                        star: star,
+                        heart: heart,
                       );
 
+                      // 2. 問題数をシステム（UserStatus）に「登録」
+                      // resisterOrigin: "復習モード", modeType: "z"
                       ref
-                          .read(currentDetailConfigProvider.notifier)
-                          .updateConfig(reviewConfig);
+                          .read(userStatusNotifierProvider.notifier)
+                          .updateQcount(
+                            "復習モード",
+                            "z",
+                            qCount,
+                          );
 
                       Navigator.push(
                         context,
@@ -410,7 +386,7 @@ class ReviewSetupPage extends HookConsumerWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey.withOpacity(0.2),
+                disabledBackgroundColor: Colors.grey.withAlpha(50),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
                 elevation: 0,

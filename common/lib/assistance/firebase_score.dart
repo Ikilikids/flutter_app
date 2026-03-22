@@ -70,93 +70,98 @@ class ScoreManager {
     required String userName,
   }) async {
     if (score <= 0) return null;
-    print(resisterOrigin);
+
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return null;
+    if (user == null) {
+      print("❌ Firebase Error: User not logged in.");
+      return null;
+    }
 
     final uid = user.uid;
     final rounded = (score * fix).roundToDouble() / fix;
-    final List<DocumentReference> targets = [];
 
+    // 参照リストを整理
     final resisterTypes = isBattle
         ? [resisterOrigin]
-        : resisterOrigin == resisterSub
+        : (resisterOrigin == resisterSub
             ? [resisterOrigin, "全合計"]
-            : [resisterOrigin, resisterSub, "全合計"];
+            : [resisterOrigin, resisterSub, "全合計"]);
+    print(resisterTypes);
 
-    // ===== userスコア =====
-
-    for (var rType in resisterTypes) {
-      final jName = '${rType}_$modeType';
-      targets.add(
-        _firestore
-            .collection('users2')
-            .doc(uid)
-            .collection('scores')
-            .doc(jName),
-      );
-    }
-
-    // ===== ranking =====
     final periods = buildPeriod();
+    final List<DocumentReference> userScoreRefs = [];
+    final List<DocumentReference> rankingRefs = [];
 
     for (var rType in resisterTypes) {
+      userScoreRefs.add(_firestore
+          .collection('users2')
+          .doc(uid)
+          .collection('scores')
+          .doc('${rType}_$modeType'));
       for (var period in periods) {
-        final rankingId = "${rType}_${modeType}_${period}";
-
-        targets.add(
-          _firestore
-              .collection('rankings_v5')
-              .doc(rankingId)
-              .collection('users')
-              .doc(uid),
-        );
+        rankingRefs.add(_firestore
+            .collection('rankings_v5')
+            .doc("${rType}_${modeType}_$period")
+            .collection('users')
+            .doc(uid));
       }
     }
-    double? finalUpdatedScore; // ★ここを返す
-    await _firestore.runTransaction((tx) async {
-      // --- 1. 読み取りフェーズ（Read Phase） ---
-      // すべての参照先データを先に取得してMapに溜める
-      final Map<DocumentReference, DocumentSnapshot> snapshots = {};
-      for (final ref in targets) {
-        snapshots[ref] = await tx.get(ref);
-      }
 
-      for (final ref in targets) {
-        final snapshot = snapshots[ref]!;
+    final allRefs = [...userScoreRefs, ...rankingRefs];
+    double? finalUpdatedScore;
 
-        if (!snapshot.exists) {
-          tx.set(ref, {
-            'score': rounded,
-            'userName': userName, // ← ここで保存！
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          finalUpdatedScore = rounded; // 更新された値をセット
-          continue;
+    try {
+      await _firestore.runTransaction((tx) async {
+        // --- 1. 読み取りフェーズ（全てのGetを先に！） ---
+        final snapshots = <DocumentReference, DocumentSnapshot>{};
+        for (final ref in allRefs) {
+          snapshots[ref] = await tx.get(ref);
         }
 
-        final data = snapshot.data() as Map<String, dynamic>?;
-        final prev = (data?['score'] as num?)?.toDouble() ?? 0.0;
+        // --- 2. 書き込みフェーズ（ここからSet/Updateのみ） ---
+        for (final ref in allRefs) {
+          final snapshot = snapshots[ref]!;
 
-        if (!isBattle) {
-          final newTotal = prev + rounded;
-          tx.update(ref, {
-            'score': newTotal,
-            'userName': userName, // ← ここで保存！
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          finalUpdatedScore = newTotal; // 加算後の値をセット
-        } else if (isBetter(rounded, prev, isSmallerBetter)) {
-          tx.update(ref, {
-            'score': rounded,
-            'userName': userName, // ← ここで保存！
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          finalUpdatedScore = rounded; // 更新された値をセット
+          if (!snapshot.exists) {
+            tx.set(ref, {
+              'score': rounded,
+              'userName': userName,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+            finalUpdatedScore = rounded;
+          } else {
+            final data = snapshot.data() as Map<String, dynamic>?;
+            final prev = (data?['score'] as num?)?.toDouble() ?? 0.0;
+
+            if (!isBattle) {
+              // 加算モード（全合計など）
+              final newTotal = prev + rounded;
+              tx.update(ref, {
+                'score': newTotal,
+                'userName': userName,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              finalUpdatedScore = newTotal;
+            } else if (isBetter(rounded, prev, isSmallerBetter)) {
+              // ハイスコア更新モード
+              tx.update(ref, {
+                'score': rounded,
+                'userName': userName,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              finalUpdatedScore = rounded;
+            }
+          }
         }
-      }
-    });
-    return finalUpdatedScore; // 更新されなかったら null が返る
+      });
+      print("✅ Transaction Success!");
+      return finalUpdatedScore;
+    } catch (e, stack) {
+      // ここで何が起きたか100%分かります
+      print("❌ Transaction Failed: $e");
+      print("StackTrace: $stack");
+      return null;
+    }
   }
 
   static Future<List<Map<String, dynamic>>> getRanking({
@@ -183,7 +188,7 @@ class ScoreManager {
   }
 
   static Future<List<int>> getMyRank({
-    required String resisterOrigin, // ← periodを含まない部分
+    required String resisterOrigin,
     required String modeType,
     required num myScore,
     required bool isSmallerBetter,
@@ -191,7 +196,6 @@ class ScoreManager {
     if (myScore <= 0) return [0, 0, 0];
 
     final periods = buildPeriod();
-
     final List<int> ranks = [];
 
     for (final period in periods) {
@@ -203,10 +207,14 @@ class ScoreManager {
           .collection('users');
 
       final snap = isSmallerBetter
-          ? await q.where('score', isLessThan: myScore).count().get()
-          : await q.where('score', isGreaterThan: myScore).count().get();
+          ? await q.where('score', isLessThanOrEqualTo: myScore).count().get()
+          : await q
+              .where('score', isGreaterThanOrEqualTo: myScore)
+              .count()
+              .get();
 
-      ranks.add((snap.count ?? 0) + 1);
+      // 自分も含まれるので +1 しない
+      ranks.add(snap.count ?? 0);
     }
 
     return ranks;

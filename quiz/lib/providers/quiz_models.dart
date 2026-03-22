@@ -1,5 +1,3 @@
-import 'package:quiz/quiz.dart';
-
 abstract class PartData {
   final String mode;
   final List<String> making;
@@ -146,10 +144,15 @@ class HoleData {
 
 String getSpeechNumber(String speech) {
   switch (speech) {
-    case "動詞": return "3";
-    case "形容詞": return "1";
-    case "副詞": return "5";
-    case "名詞": return "2";
-    default: return "4";
+    case "動詞":
+      return "3";
+    case "形容詞":
+      return "1";
+    case "副詞":
+      return "5";
+    case "名詞":
+      return "2";
+    default:
+      return "4";
   }
 }

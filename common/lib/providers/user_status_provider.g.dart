@@ -7,7 +7,7 @@ part of 'user_status_provider.dart';
 // **************************************************************************
 
 String _$userStatusNotifierHash() =>
-    r'060b153aaac9fb510d234f412843b2b31ce2aa01';
+    r'f439741a66df1778e0b9550a880140a6fd82e138';
 
 /// See also [UserStatusNotifier].
 @ProviderFor(UserStatusNotifier)

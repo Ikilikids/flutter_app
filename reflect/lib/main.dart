@@ -28,8 +28,8 @@ final _appConfig = AllData(
         modeType: "t",
         modeTitle: "unlimitedModeTitle",
         modeIcon: Icons.all_inclusive,
-        sub1: "unlimitedModeSub1",
-        sub2: "unlimitedModeSub2",
+        modeDescription: "・1日に何回でも挑戦できます！\n"
+            "・ハイスコアを目指そう！",
       ),
       detail: [
         DetailData(
@@ -42,6 +42,7 @@ final _appConfig = AllData(
           description: "colorReactDesc",
           color: "2",
           circleColor: "2",
+          detailIcon: Icons.palette,
         ),
         DetailData(
           sort: "number",
@@ -53,6 +54,7 @@ final _appConfig = AllData(
           description: "numberReactDesc",
           color: "5",
           circleColor: "5",
+          detailIcon: Icons.pin,
         ),
         DetailData(
           sort: "grid",
@@ -64,6 +66,7 @@ final _appConfig = AllData(
           description: "gridReactDesc",
           color: "4",
           circleColor: "4",
+          detailIcon: Icons.grid_4x4,
         ),
       ],
     ),
@@ -77,8 +80,8 @@ final _appConfig = AllData(
         modeType: "g",
         modeTitle: "dailyLimitedModeTitle",
         modeIcon: Icons.timer,
-        sub1: "dailyLimitedModeSub1",
-        sub2: "dailyLimitedModeSub2",
+        modeDescription: "・1日1回限定！\n"
+            "・集中して挑もう！",
       ),
       detail: [
         DetailData(
@@ -91,6 +94,7 @@ final _appConfig = AllData(
           description: "colorReactDesc",
           color: "3",
           circleColor: "3",
+          detailIcon: Icons.palette,
         ),
         DetailData(
           sort: "number",
@@ -102,6 +106,7 @@ final _appConfig = AllData(
           description: "numberReactDesc",
           color: "1",
           circleColor: "1",
+          detailIcon: Icons.pin,
         ),
         DetailData(
           sort: "grid",
@@ -113,6 +118,7 @@ final _appConfig = AllData(
           description: "gridReactDesc",
           color: "6",
           circleColor: "6",
+          detailIcon: Icons.grid_4x4,
         ),
       ],
     ),

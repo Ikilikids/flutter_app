@@ -118,7 +118,7 @@ class Quizscreen extends HookConsumerWidget {
                                     remainingTime: session.remainingTime)),
                           ] else ...[
                             // それ以外の場合
-                            if (activeConfig.modeData.isbattle)
+                            if (activeConfig.modeData.isbattle) ...[
                               Expanded(
                                 flex: 1,
                                 child: FittedBox(
@@ -130,7 +130,8 @@ class Quizscreen extends HookConsumerWidget {
                                         isDark: isDark),
                                   ),
                                 ),
-                              ),
+                              )
+                            ],
                             Expanded(flex: 2, child: quizInfo(context, P)),
                             Expanded(
                               flex: 1,
@@ -215,7 +216,7 @@ class Quizscreen extends HookConsumerWidget {
     final ct = ChooseQuizData(ref: ref).chooseRandombyScoreRange();
 
     final question = MakingData.fromPart(ct);
-    print("New Question: ${question} ");
+
     sessionNotifier.updateQuestion(question);
   }
 

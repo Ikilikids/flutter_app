@@ -174,3 +174,26 @@ Widget menuButton(
     ),
   );
 }
+
+void showModeDescription(BuildContext context, PageConfig currentPage) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [Icon(currentPage.icon), Text('${currentPage.title}')],
+        ),
+        content: Text(
+          currentPage.modeDescription!,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+        ],
+      );
+    },
+  );
+}

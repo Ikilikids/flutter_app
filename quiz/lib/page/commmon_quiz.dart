@@ -69,7 +69,6 @@ class ChooseQuizData {
     }
 
     if (isEngMode) {
-      print(candidates.length);
       return candidates[random.nextInt(candidates.length)];
     }
     // 2️⃣ fieldごとにまとめる

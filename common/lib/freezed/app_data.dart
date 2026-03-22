@@ -91,10 +91,9 @@ class MidData with _$MidData {
   int get fix => modeData.fix;
   bool get islimited => modeData.islimited;
   bool get isbattle => modeData.isbattle;
-  IconData? get modeIcon => modeData.modeIcon;
-  String? get modeTitle => modeData.modeTitle;
-  String? get sub1 => modeData.sub1;
-  String? get sub2 => modeData.sub2;
+  IconData get modeIcon => modeData.modeIcon;
+  String get modeTitle => modeData.modeTitle;
+  String? get modeDescription => modeData.modeDescription;
   bool get isSmallerBetter => modeData.isSmallerBetter;
   String get modeType => modeData.modeType;
 }
@@ -108,10 +107,9 @@ class ModeData with _$ModeData {
     required bool isbattle,
     required bool isSmallerBetter,
     required String modeType,
-    IconData? modeIcon,
-    String? modeTitle,
-    String? sub1,
-    String? sub2,
+    required IconData modeIcon,
+    required String modeTitle,
+    String? modeDescription,
   }) = _ModeData;
 }
 
@@ -127,5 +125,6 @@ class DetailData with _$DetailData {
     required String description,
     required String color,
     required String circleColor,
+    IconData? detailIcon,
   }) = _DetailData;
 }

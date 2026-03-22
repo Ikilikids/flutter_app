@@ -48,77 +48,91 @@ class SettingsPage extends HookConsumerWidget {
     }, const []);
 
     // ---------- UI ----------
+    // themeAsyncなどの状態に合わせて画面全体（Scaffold）を返す
     return themeAsync.when(
       data: (currentTheme) => localeAsync.when(
         data: (currentLocale) => numberAsync.when(
           data: (currentNumber) {
             final isDarkMode = currentTheme == ThemeMode.dark;
 
-            return ListView(
-              children: [
-                /// Username
-                _sectionHeader(
-                  context,
-                  l10n(context, 'accountSectionTitle'),
-                ),
-                _userNameTile(
-                  context,
-                  controller: nameController,
-                  focusNode: nameFocusNode,
-                  currentUserName: currentUserName,
-                  isEditingName: isEditingName,
-                ),
-                const Divider(height: 1),
-
-                /// Theme
-                _sectionHeader(
-                    context, l10n(context, 'appearanceSectionTitle')),
-                SwitchListTile(
-                  title: Text(l10n(context, 'darkModeLabel')),
-                  secondary:
-                      Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-                  value: isDarkMode,
-                  onChanged: (newValue) {
-                    onThemeChanged(newValue ? ThemeMode.dark : ThemeMode.light);
-                  },
-                ),
-
-                /// Language
-                if (allData.appTitle == "appTitle" ||
-                    allData.appTitle == "reflectTitle") ...[
-                  const Divider(height: 1),
+            return AppAdScaffold(
+              // ★Scaffoldを追加して画面の土台を作る
+              appBar: AppBar(
+                title: Text(l10n(context, 'settingsTitle')), // 「アカウント設定」などのタイトル
+              ),
+              body: ListView(
+                // ★bodyの中にコンテンツを入れる
+                children: [
+                  /// Username
                   _sectionHeader(
-                      context, l10n(context, 'languageSectionTitle')),
-                  _languageTile(
-                    context: context,
-                    currentLocale: currentLocale,
-                    onSelect: onLocaleChanged,
+                    context,
+                    l10n(context, 'accountSectionTitle'),
+                  ),
+                  _userNameTile(
+                    context,
+                    controller: nameController,
+                    focusNode: nameFocusNode,
+                    currentUserName: currentUserName,
+                    isEditingName: isEditingName,
+                  ),
+                  const Divider(height: 1),
+
+                  /// Theme
+                  _sectionHeader(
+                      context, l10n(context, 'appearanceSectionTitle')),
+                  SwitchListTile(
+                    title: Text(l10n(context, 'darkModeLabel')),
+                    secondary:
+                        Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                    value: isDarkMode,
+                    onChanged: (newValue) {
+                      onThemeChanged(
+                          newValue ? ThemeMode.dark : ThemeMode.light);
+                    },
+                  ),
+
+                  /// Language
+                  if (allData.appTitle == "appTitle" ||
+                      allData.appTitle == "reflectTitle") ...[
+                    const Divider(height: 1),
+                    _sectionHeader(
+                        context, l10n(context, 'languageSectionTitle')),
+                    _languageTile(
+                      context: context,
+                      currentLocale: currentLocale,
+                      onSelect: onLocaleChanged,
+                    ),
+                  ],
+
+                  /// Other
+                  ...?allData.settingWidgets
+                      ?.call(context, currentNumber, onNumberChanged),
+
+                  const Divider(height: 1),
+
+                  /// About
+                  _sectionHeader(context, l10n(context, 'aboutSectionTitle')),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(l10n(context, 'contactLabel')),
                   ),
                 ],
-
-                /// Other
-                ...?allData.settingWidgets
-                    ?.call(context, currentNumber, onNumberChanged),
-
-                const Divider(height: 1),
-
-                /// About
-                _sectionHeader(context, l10n(context, 'aboutSectionTitle')),
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: Text(l10n(context, 'contactLabel')),
-                ),
-              ],
+              ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Number Error: $e')),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, _) =>
+              Scaffold(body: Center(child: Text('Number Error: $e'))),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Locale Error: $e')),
+        loading: () =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
+        error: (e, _) =>
+            Scaffold(body: Center(child: Text('Locale Error: $e'))),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Theme Error: $e')),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Scaffold(body: Center(child: Text('Theme Error: $e'))),
     );
   }
 }

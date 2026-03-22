@@ -14,45 +14,77 @@ class EngDisplayView extends HookConsumerWidget {
 
     if (question is! EngMakingData) return const SizedBox.shrink();
 
+    // 1文字あたりの幅を少し狭めに設定
+    // --- EngDisplayView の build メソッド内を以下に差し替え ---
+
+    // 1文字あたりの幅を少し広めに（m や w に対応）
+    // 下線の固定幅（全文字共通。これならバレない）
+    // --- EngDisplayView の build メソッド内 ---
+
+    // --- EngDisplayView の build メソッド内 ---
+
     return Center(
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.all(8),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
           color: getQuizColor2(question.subject, context, 0.6, 0.2, 0.95),
         ),
         child: FittedBox(
-          fit: BoxFit.scaleDown, // 幅に収まらない時だけ縮小する
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                inputState.enteredText,
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 4,
-                  color: textColor1(context),
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            // 文字同士の間隔を最小限に（プロポーショナルな並びにする）
+            children: List.generate(question.word.length, (index) {
+              final hasInput = index < inputState.enteredText.length;
+              final char = hasInput ? inputState.enteredText[index] : '';
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // IntrinsicWidthで「文字の幅」をそのまま反映させる
+                    IntrinsicWidth(
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          // 1. 文字表示（幅は文字に依存。mでも切れない）
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              // 未入力時は適当な文字（'A'等）を透明で置いて
+                              // 全て同じ幅の下線に見せる（バレ防止）
+                              char.isEmpty ? 'A' : char,
+                              style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: char.isEmpty
+                                    ? Colors.transparent
+                                    : textColor1(context),
+                              ),
+                            ),
+                          ),
+                          // 2. 下線（Stackの幅、つまり上の文字幅に自動で伸び縮みする）
+                          Container(
+                            height: 3,
+                            // 未入力時は 'A' の幅、入力後はその文字の幅になる
+                            decoration: BoxDecoration(
+                              color: char.isEmpty
+                                  ? textColor1(context).withAlpha(120)
+                                  : Colors.transparent, // 入力後は消す
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              // 下線を表示（単語の長さ分）
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(question.word.length, (index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 20,
-                    height: 2,
-                    color: index < inputState.enteredText.length
-                        ? Colors.transparent
-                        : textColor1(context).withAlpha(128),
-                  );
-                }),
-              ),
-            ],
+              );
+            }),
           ),
         ),
       ),
@@ -143,7 +175,8 @@ class EngKeyboardView extends HookConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: ElevatedButton.icon(
-                  onPressed: isHintDisabled ? null : () => notifier.giveHint(config),
+                  onPressed:
+                      isHintDisabled ? null : () => notifier.giveHint(config),
                   icon: const Icon(Icons.lightbulb_outline),
                   label: const Text("ヒント"),
                   style: ElevatedButton.styleFrom(

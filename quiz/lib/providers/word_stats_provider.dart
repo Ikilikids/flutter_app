@@ -162,8 +162,6 @@ class WordStatsNotifier extends _$WordStatsNotifier {
     await _prefs.setInt('stats_${key}_i', next.incorrectCount);
     await _prefs.setInt('stats_${key}_h', next.hintCount);
     await _prefs.setString('stats_${key}_r', next.recentResults.join(','));
-
-    print("Stats updated and saved for '$key': ○:$c △:$h ×:$i");
   }
 
   /// 内部用：状態更新と保存（bool値）
@@ -174,7 +172,6 @@ class WordStatsNotifier extends _$WordStatsNotifier {
 
     // 2. 保存
     await _prefs.setBool('stats_${key}_$type', value);
-    print("Stats tag updated for '$key': $type = $value");
   }
 
   /// 内部用：メモリ上の状態を更新して通知

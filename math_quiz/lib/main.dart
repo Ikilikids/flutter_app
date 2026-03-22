@@ -7,16 +7,16 @@ import 'firebase_options.dart';
 
 final List<DetailData> gameDetails = subjects.map((s) {
   return DetailData(
-    sort: s[0],
-    displayLabel: s[2],
-    displayRank: generateRankLabel(s[0]),
-    resisterSub: generateRankLabel(s[0]),
-    resisterOrigin: s[2],
-    method: s[1],
-    description: s[3],
-    color: s[0],
-    circleColor: s[0],
-  );
+      sort: s[0],
+      displayLabel: s[2],
+      displayRank: generateRankLabel(s[0]),
+      resisterSub: generateRankLabel(s[0]),
+      resisterOrigin: s[2],
+      method: s[1],
+      description: s[3],
+      color: s[0],
+      circleColor: s[0],
+      detailIcon: getIconForCategory(s[1]));
 }).toList();
 
 String generateRankLabel(String sort) {
@@ -65,8 +65,8 @@ final _appConfig = AllData(
         modeType: "t",
         modeIcon: Icons.school,
         modeTitle: "学習モード",
-        sub1: "分野別に学習しよう！",
-        sub2: "数Ⅰ～数Cまで対応！",
+        modeDescription: "・分野別に学習しよう！\n"
+            "・5問モードと10問モードが選択可能",
         isSmallerBetter: false,
       ),
       detail: gameDetails,
@@ -80,8 +80,8 @@ final _appConfig = AllData(
         modeIcon: Icons.local_fire_department,
         modeType: "g",
         modeTitle: "実践モード",
-        sub1: "時間制限あり(教科別)です",
-        sub2: "ハイスコアを目指そう!!",
+        modeDescription: "・60秒の点数で競おう！\n"
+            "・答えるごとに問題のレベル(★)が上がります。速く答えるとボーナス点がもらえます！",
         isSmallerBetter: false,
       ),
       detail: [
@@ -95,6 +95,7 @@ final _appConfig = AllData(
           description: "高1向け! 60秒での点数で競おう!!",
           color: "A",
           circleColor: "1A",
+          detailIcon: Icons.filter_1,
         ),
         DetailData(
           sort: "2B",
@@ -102,10 +103,11 @@ final _appConfig = AllData(
           displayRank: "数Ⅱ・数B",
           resisterSub: "数Ⅱ・数B",
           resisterOrigin: "数Ⅱ・数B",
-          method: "数Ⅱ・数B de全範囲(対数, 積分, 統計など)",
+          method: "数Ⅱ・数Bの全範囲(対数, 積分, 統計など)",
           description: "高2向け! 60秒での点数で競おう!!",
           color: "B",
           circleColor: "2B",
+          detailIcon: Icons.filter_2,
         ),
         DetailData(
           sort: "3C",
@@ -117,13 +119,14 @@ final _appConfig = AllData(
           description: "理系向け! 60秒での点数で競おう!!",
           color: "C",
           circleColor: "3C",
+          detailIcon: Icons.filter_3,
         ),
       ],
     ),
   ],
 );
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   final options = DefaultFirebaseOptions.currentPlatform;
@@ -186,3 +189,51 @@ final List<List<String>> subjects = [
   ["C", "複素数平面", "ドモアブルの定理", "合成の上位互換,難しい"],
   ["C", "複素数平面", "回転", "90°,-90°回転を考える"],
 ];
+IconData? getIconForCategory(String category) {
+  switch (category) {
+    case '二次関数':
+      return Icons.superscript; // 関数のアイコン
+    case '数と式':
+      return Icons.calculate; // 計算のアイコン
+    case '三角比':
+      return Icons.change_history; // 三角形アイコン
+    case '図形と方程式':
+      return Icons.square_foot; // 図形っぽいアイコン
+    case '解と方程式':
+      return Icons.low_priority; // 図形っぽいアイコン
+    case '積分':
+      return Icons.line_axis; // 積分アイコン（Flutterにない場合は代替アイコン）
+    case '微分':
+      return Icons.exposure; // 微分っぽいアイコンとして代用
+    case '三角関数':
+      return Icons.waves; // 三角関数向けに波っぽいイメージ
+    case '論証':
+      return Icons.gavel; // 論証→裁判のハンマーアイコン
+    case '確率':
+      return Icons.casino; // 確率 → ギャンブル系アイコン
+    case '数列':
+      return Icons.format_list_numbered; // 数列 → 番号付きリストアイコン
+    case '指数・対数':
+      return Icons.turn_sharp_right; // 指数っぽいイメージ
+    case 'データ':
+      return Icons.bar_chart; // データ→棒グラフ
+    case '統計':
+      return Icons.pie_chart; // 統計→円グラフ
+    case '幾何':
+      return Icons.architecture; // 図形→三角形アイコン
+    case '整数':
+      return Icons.looks_one; // 整数→番号的なアイコン
+    case '複素数平面':
+      return Icons.format_italic; // 複素数平面→散布図アイコン
+    case 'ベクトル':
+      return Icons.text_rotation_none; // ベクトル→矢印アイコン
+    case '極限':
+      return Icons.all_inclusive; // 極限→∞マーク風アイコン
+    case '数Ⅲ　関数':
+      return Icons.functions; // 数Ⅲ 関数も関数アイコンでよし
+    case '二次曲線':
+      return Icons.vignette;
+    default:
+      return null;
+  }
+}

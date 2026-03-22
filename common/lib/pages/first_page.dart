@@ -1,4 +1,5 @@
 import 'package:common/common.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart'; // Hookを追加
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -25,7 +26,7 @@ class CommonFirstPage extends HookConsumerWidget {
 
     // メインアニメーション（アイコン・タイトル）
     final controller = useAnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
     );
 
     // 点滅アニメーション
@@ -53,15 +54,35 @@ class CommonFirstPage extends HookConsumerWidget {
 
     useEffect(() {
       _checkFirstLaunch();
+
+      // アニメーションを開始
       controller.forward();
       blinkController.repeat(reverse: true);
-      return null; // dispose は Hook が自動で行うため不要
+
+      // アニメーション完了後 (1000ms後) に重い初期化処理を開始
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (!context.mounted) return;
+
+        // 重いデータ処理と広告初期化を遅延開始
+        ref.read(appUidProvider);
+        ref.read(appSoundProvider);
+
+        if (!kIsWeb) {
+          AdManager.initialize();
+          InterstitialAdHelper.configure(allData);
+          InterstitialAdHelper.init();
+          RewardedAdManager.configure(allData);
+          RewardedAdManager.loadAd();
+        }
+      });
+      return null;
     }, const []);
 
     // --- Logic ---
 
     Future<void> navigateToDestination() async {
-      if (isNavigating.value) return;
+      // アニメーション中、または遷移中なら無視
+      if (controller.isAnimating || isNavigating.value) return;
 
       isNavigating.value = true;
 
@@ -81,12 +102,12 @@ class CommonFirstPage extends HookConsumerWidget {
         final uidAsync = ref.read(appUidProvider);
         final soundAsync = ref.read(appSoundProvider);
 
-        if (uidAsync.isLoading || soundAsync.isLoading) {
-          await Future.wait([
-            ref.read(appUidProvider.future),
-            ref.read(appSoundProvider.future),
-          ]);
-        }
+        // 初期化が終わるまで待機
+        await Future.wait([
+          if (uidAsync.isLoading) ref.read(appUidProvider.future),
+          if (soundAsync.isLoading) ref.read(appSoundProvider.future),
+          ref.read(userStatusNotifierProvider.notifier).initialized,
+        ]);
       } catch (e) {
         debugPrint('Navigation initialization error: $e');
         isNavigating.value = false;

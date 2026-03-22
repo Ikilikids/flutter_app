@@ -7,6 +7,11 @@ part 'user_status_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class UserStatusNotifier extends _$UserStatusNotifier {
+  Future<void>? _initFuture;
+
+  /// 初期化が完了するのを待機するための Future
+  Future<void> get initialized => _initFuture ?? Future.value();
+
   @override
   UserStatus build() {
     // 最初は空の状態で作成 (Bootstrapで後から上書きされる)
@@ -20,6 +25,12 @@ class UserStatusNotifier extends _$UserStatusNotifier {
 
   /// 外部（Bootstrap）から初期データを注入するためのメソッド
   Future<void> initializeData() async {
+    // 二重初期化を防ぎつつ Future を保存
+    _initFuture ??= _doInitialize();
+    return _initFuture;
+  }
+
+  Future<void> _doInitialize() async {
     final prefs = await SharedPreferences.getInstance();
     final allScoresMap = await ScoreManager.getAllScores();
     final dateKey = _getDateKey();

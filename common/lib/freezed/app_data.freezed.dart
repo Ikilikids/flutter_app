@@ -988,10 +988,9 @@ mixin _$ModeData {
   bool get isbattle => throw _privateConstructorUsedError;
   bool get isSmallerBetter => throw _privateConstructorUsedError;
   String get modeType => throw _privateConstructorUsedError;
-  IconData? get modeIcon => throw _privateConstructorUsedError;
-  String? get modeTitle => throw _privateConstructorUsedError;
-  String? get sub1 => throw _privateConstructorUsedError;
-  String? get sub2 => throw _privateConstructorUsedError;
+  IconData get modeIcon => throw _privateConstructorUsedError;
+  String get modeTitle => throw _privateConstructorUsedError;
+  String? get modeDescription => throw _privateConstructorUsedError;
 
   /// Create a copy of ModeData
   /// with the given fields replaced by the non-null parameter values.
@@ -1012,10 +1011,9 @@ abstract class $ModeDataCopyWith<$Res> {
       bool isbattle,
       bool isSmallerBetter,
       String modeType,
-      IconData? modeIcon,
-      String? modeTitle,
-      String? sub1,
-      String? sub2});
+      IconData modeIcon,
+      String modeTitle,
+      String? modeDescription});
 }
 
 /// @nodoc
@@ -1039,10 +1037,9 @@ class _$ModeDataCopyWithImpl<$Res, $Val extends ModeData>
     Object? isbattle = null,
     Object? isSmallerBetter = null,
     Object? modeType = null,
-    Object? modeIcon = freezed,
-    Object? modeTitle = freezed,
-    Object? sub1 = freezed,
-    Object? sub2 = freezed,
+    Object? modeIcon = null,
+    Object? modeTitle = null,
+    Object? modeDescription = freezed,
   }) {
     return _then(_value.copyWith(
       unit: null == unit
@@ -1069,21 +1066,17 @@ class _$ModeDataCopyWithImpl<$Res, $Val extends ModeData>
           ? _value.modeType
           : modeType // ignore: cast_nullable_to_non_nullable
               as String,
-      modeIcon: freezed == modeIcon
+      modeIcon: null == modeIcon
           ? _value.modeIcon
           : modeIcon // ignore: cast_nullable_to_non_nullable
-              as IconData?,
-      modeTitle: freezed == modeTitle
+              as IconData,
+      modeTitle: null == modeTitle
           ? _value.modeTitle
           : modeTitle // ignore: cast_nullable_to_non_nullable
-              as String?,
-      sub1: freezed == sub1
-          ? _value.sub1
-          : sub1 // ignore: cast_nullable_to_non_nullable
-              as String?,
-      sub2: freezed == sub2
-          ? _value.sub2
-          : sub2 // ignore: cast_nullable_to_non_nullable
+              as String,
+      modeDescription: freezed == modeDescription
+          ? _value.modeDescription
+          : modeDescription // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -1104,10 +1097,9 @@ abstract class _$$ModeDataImplCopyWith<$Res>
       bool isbattle,
       bool isSmallerBetter,
       String modeType,
-      IconData? modeIcon,
-      String? modeTitle,
-      String? sub1,
-      String? sub2});
+      IconData modeIcon,
+      String modeTitle,
+      String? modeDescription});
 }
 
 /// @nodoc
@@ -1129,10 +1121,9 @@ class __$$ModeDataImplCopyWithImpl<$Res>
     Object? isbattle = null,
     Object? isSmallerBetter = null,
     Object? modeType = null,
-    Object? modeIcon = freezed,
-    Object? modeTitle = freezed,
-    Object? sub1 = freezed,
-    Object? sub2 = freezed,
+    Object? modeIcon = null,
+    Object? modeTitle = null,
+    Object? modeDescription = freezed,
   }) {
     return _then(_$ModeDataImpl(
       unit: null == unit
@@ -1159,21 +1150,17 @@ class __$$ModeDataImplCopyWithImpl<$Res>
           ? _value.modeType
           : modeType // ignore: cast_nullable_to_non_nullable
               as String,
-      modeIcon: freezed == modeIcon
+      modeIcon: null == modeIcon
           ? _value.modeIcon
           : modeIcon // ignore: cast_nullable_to_non_nullable
-              as IconData?,
-      modeTitle: freezed == modeTitle
+              as IconData,
+      modeTitle: null == modeTitle
           ? _value.modeTitle
           : modeTitle // ignore: cast_nullable_to_non_nullable
-              as String?,
-      sub1: freezed == sub1
-          ? _value.sub1
-          : sub1 // ignore: cast_nullable_to_non_nullable
-              as String?,
-      sub2: freezed == sub2
-          ? _value.sub2
-          : sub2 // ignore: cast_nullable_to_non_nullable
+              as String,
+      modeDescription: freezed == modeDescription
+          ? _value.modeDescription
+          : modeDescription // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }
@@ -1189,10 +1176,9 @@ class _$ModeDataImpl implements _ModeData {
       required this.isbattle,
       required this.isSmallerBetter,
       required this.modeType,
-      this.modeIcon,
-      this.modeTitle,
-      this.sub1,
-      this.sub2});
+      required this.modeIcon,
+      required this.modeTitle,
+      this.modeDescription});
 
   @override
   final String unit;
@@ -1207,17 +1193,15 @@ class _$ModeDataImpl implements _ModeData {
   @override
   final String modeType;
   @override
-  final IconData? modeIcon;
+  final IconData modeIcon;
   @override
-  final String? modeTitle;
+  final String modeTitle;
   @override
-  final String? sub1;
-  @override
-  final String? sub2;
+  final String? modeDescription;
 
   @override
   String toString() {
-    return 'ModeData(unit: $unit, fix: $fix, islimited: $islimited, isbattle: $isbattle, isSmallerBetter: $isSmallerBetter, modeType: $modeType, modeIcon: $modeIcon, modeTitle: $modeTitle, sub1: $sub1, sub2: $sub2)';
+    return 'ModeData(unit: $unit, fix: $fix, islimited: $islimited, isbattle: $isbattle, isSmallerBetter: $isSmallerBetter, modeType: $modeType, modeIcon: $modeIcon, modeTitle: $modeTitle, modeDescription: $modeDescription)';
   }
 
   @override
@@ -1239,13 +1223,13 @@ class _$ModeDataImpl implements _ModeData {
                 other.modeIcon == modeIcon) &&
             (identical(other.modeTitle, modeTitle) ||
                 other.modeTitle == modeTitle) &&
-            (identical(other.sub1, sub1) || other.sub1 == sub1) &&
-            (identical(other.sub2, sub2) || other.sub2 == sub2));
+            (identical(other.modeDescription, modeDescription) ||
+                other.modeDescription == modeDescription));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, unit, fix, islimited, isbattle,
-      isSmallerBetter, modeType, modeIcon, modeTitle, sub1, sub2);
+      isSmallerBetter, modeType, modeIcon, modeTitle, modeDescription);
 
   /// Create a copy of ModeData
   /// with the given fields replaced by the non-null parameter values.
@@ -1264,10 +1248,9 @@ abstract class _ModeData implements ModeData {
       required final bool isbattle,
       required final bool isSmallerBetter,
       required final String modeType,
-      final IconData? modeIcon,
-      final String? modeTitle,
-      final String? sub1,
-      final String? sub2}) = _$ModeDataImpl;
+      required final IconData modeIcon,
+      required final String modeTitle,
+      final String? modeDescription}) = _$ModeDataImpl;
 
   @override
   String get unit;
@@ -1282,13 +1265,11 @@ abstract class _ModeData implements ModeData {
   @override
   String get modeType;
   @override
-  IconData? get modeIcon;
+  IconData get modeIcon;
   @override
-  String? get modeTitle;
+  String get modeTitle;
   @override
-  String? get sub1;
-  @override
-  String? get sub2;
+  String? get modeDescription;
 
   /// Create a copy of ModeData
   /// with the given fields replaced by the non-null parameter values.
@@ -1309,6 +1290,7 @@ mixin _$DetailData {
   String get description => throw _privateConstructorUsedError;
   String get color => throw _privateConstructorUsedError;
   String get circleColor => throw _privateConstructorUsedError;
+  IconData? get detailIcon => throw _privateConstructorUsedError;
 
   /// Create a copy of DetailData
   /// with the given fields replaced by the non-null parameter values.
@@ -1332,7 +1314,8 @@ abstract class $DetailDataCopyWith<$Res> {
       String method,
       String description,
       String color,
-      String circleColor});
+      String circleColor,
+      IconData? detailIcon});
 }
 
 /// @nodoc
@@ -1359,6 +1342,7 @@ class _$DetailDataCopyWithImpl<$Res, $Val extends DetailData>
     Object? description = null,
     Object? color = null,
     Object? circleColor = null,
+    Object? detailIcon = freezed,
   }) {
     return _then(_value.copyWith(
       sort: null == sort
@@ -1397,6 +1381,10 @@ class _$DetailDataCopyWithImpl<$Res, $Val extends DetailData>
           ? _value.circleColor
           : circleColor // ignore: cast_nullable_to_non_nullable
               as String,
+      detailIcon: freezed == detailIcon
+          ? _value.detailIcon
+          : detailIcon // ignore: cast_nullable_to_non_nullable
+              as IconData?,
     ) as $Val);
   }
 }
@@ -1418,7 +1406,8 @@ abstract class _$$DetailDataImplCopyWith<$Res>
       String method,
       String description,
       String color,
-      String circleColor});
+      String circleColor,
+      IconData? detailIcon});
 }
 
 /// @nodoc
@@ -1443,6 +1432,7 @@ class __$$DetailDataImplCopyWithImpl<$Res>
     Object? description = null,
     Object? color = null,
     Object? circleColor = null,
+    Object? detailIcon = freezed,
   }) {
     return _then(_$DetailDataImpl(
       sort: null == sort
@@ -1481,6 +1471,10 @@ class __$$DetailDataImplCopyWithImpl<$Res>
           ? _value.circleColor
           : circleColor // ignore: cast_nullable_to_non_nullable
               as String,
+      detailIcon: freezed == detailIcon
+          ? _value.detailIcon
+          : detailIcon // ignore: cast_nullable_to_non_nullable
+              as IconData?,
     ));
   }
 }
@@ -1497,7 +1491,8 @@ class _$DetailDataImpl implements _DetailData {
       required this.method,
       required this.description,
       required this.color,
-      required this.circleColor});
+      required this.circleColor,
+      this.detailIcon});
 
   @override
   final String sort;
@@ -1517,10 +1512,12 @@ class _$DetailDataImpl implements _DetailData {
   final String color;
   @override
   final String circleColor;
+  @override
+  final IconData? detailIcon;
 
   @override
   String toString() {
-    return 'DetailData(sort: $sort, displayLabel: $displayLabel, displayRank: $displayRank, resisterSub: $resisterSub, resisterOrigin: $resisterOrigin, method: $method, description: $description, color: $color, circleColor: $circleColor)';
+    return 'DetailData(sort: $sort, displayLabel: $displayLabel, displayRank: $displayRank, resisterSub: $resisterSub, resisterOrigin: $resisterOrigin, method: $method, description: $description, color: $color, circleColor: $circleColor, detailIcon: $detailIcon)';
   }
 
   @override
@@ -1542,12 +1539,24 @@ class _$DetailDataImpl implements _DetailData {
                 other.description == description) &&
             (identical(other.color, color) || other.color == color) &&
             (identical(other.circleColor, circleColor) ||
-                other.circleColor == circleColor));
+                other.circleColor == circleColor) &&
+            (identical(other.detailIcon, detailIcon) ||
+                other.detailIcon == detailIcon));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, sort, displayLabel, displayRank,
-      resisterSub, resisterOrigin, method, description, color, circleColor);
+  int get hashCode => Object.hash(
+      runtimeType,
+      sort,
+      displayLabel,
+      displayRank,
+      resisterSub,
+      resisterOrigin,
+      method,
+      description,
+      color,
+      circleColor,
+      detailIcon);
 
   /// Create a copy of DetailData
   /// with the given fields replaced by the non-null parameter values.
@@ -1568,7 +1577,8 @@ abstract class _DetailData implements DetailData {
       required final String method,
       required final String description,
       required final String color,
-      required final String circleColor}) = _$DetailDataImpl;
+      required final String circleColor,
+      final IconData? detailIcon}) = _$DetailDataImpl;
 
   @override
   String get sort;
@@ -1588,6 +1598,8 @@ abstract class _DetailData implements DetailData {
   String get color;
   @override
   String get circleColor;
+  @override
+  IconData? get detailIcon;
 
   /// Create a copy of DetailData
   /// with the given fields replaced by the non-null parameter values.

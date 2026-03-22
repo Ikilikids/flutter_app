@@ -39,8 +39,10 @@ class WordListPage extends HookConsumerWidget {
     final integratedAsync = ref.watch(integratedEngQuizProvider);
 
     return integratedAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Scaffold(body: Center(child: Text("エラーが発生しました: $err"))),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) =>
+          Scaffold(body: Center(child: Text("エラーが発生しました: $err"))),
       data: (integratedData) {
         final wordListData = useMemoized(() {
           final List<PartData> allItems = [];
@@ -57,8 +59,8 @@ class WordListPage extends HookConsumerWidget {
         final filterOptions = useMemoized(() {
           final domains = wordListData.map((e) => e.domain).toSet().toList()
             ..sort();
-          final levels =
-              wordListData.map((e) => e.totalScore).toSet().toList()..sort();
+          final levels = wordListData.map((e) => e.totalScore).toSet().toList()
+            ..sort();
           return (domains: domains, levels: levels);
         }, [wordListData]);
 
@@ -98,10 +100,12 @@ class WordListPage extends HookConsumerWidget {
           if (searchQuery.value.isNotEmpty) {
             final query = searchQuery.value.trim().toLowerCase();
             list = list.where((item) {
-              final word =
-                  item.making.isNotEmpty ? item.making[0].trim().toLowerCase() : "";
-              final meaning =
-                  item.making.length > 1 ? item.making[1].trim().toLowerCase() : "";
+              final word = item.making.isNotEmpty
+                  ? item.making[0].trim().toLowerCase()
+                  : "";
+              final meaning = item.making.length > 1
+                  ? item.making[1].trim().toLowerCase()
+                  : "";
               return word.contains(query) || meaning.contains(query);
             }).toList();
           }
@@ -159,36 +163,32 @@ class WordListPage extends HookConsumerWidget {
         // ベースとなるカラーを取得
         final themeColor = getQuizColor2("9", context, 1, 0.65, 1);
 
-        return Scaffold(
-          body: SafeArea(
-            child: Column(
-              children: [
-                // 統合コントロールパネル
-                _buildUnifiedControlPanel(
-                  context,
-                  searchQuery,
-                  sortOption,
-                  isAscending,
-                  showOnlyStar,
-                  showOnlyHeart,
-                  filterOptions,
-                  selectedDomains,
-                  selectedLevels,
-                  displayListData.length,
-                  themeColor,
-                ),
-
-                // 単語一覧表示エリア
-                Expanded(
-                  child: _buildWordList(
-                    context,
-                    displayListData,
-                    themeColor,
-                  ),
-                ),
-              ],
+        return Column(
+          children: [
+            // 統合コントロールパネル
+            _buildUnifiedControlPanel(
+              context,
+              searchQuery,
+              sortOption,
+              isAscending,
+              showOnlyStar,
+              showOnlyHeart,
+              filterOptions,
+              selectedDomains,
+              selectedLevels,
+              displayListData.length,
+              themeColor,
             ),
-          ),
+
+            // 単語一覧表示エリア
+            Expanded(
+              child: _buildWordList(
+                context,
+                displayListData,
+                themeColor,
+              ),
+            ),
+          ],
         );
       },
     );
