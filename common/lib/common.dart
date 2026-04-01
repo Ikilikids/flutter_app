@@ -29,6 +29,7 @@ export 'pages/settings_page.dart';
 // providers
 export 'providers/app_locale.dart';
 export 'providers/app_number.dart';
+export 'providers/app_shared.dart';
 export 'providers/app_sound.dart';
 export 'providers/app_theme.dart';
 export 'providers/app_uid.dart';
@@ -42,3 +43,5 @@ export 'widgets/color.dart';
 export 'widgets/common_widget.dart';
 export 'widgets/dialog.dart';
 export 'widgets/math_background.dart';
+export 'widgets/user_detail_dialog.dart';
+export 'widgets/user_radar_chart.dart';

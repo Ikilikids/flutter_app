@@ -7,11 +7,9 @@ import 'firebase_options.dart';
 
 final List<DetailData> gameDetails = subjects.map((s) {
   return DetailData(
+      quizId: QuizId(resisterOrigin: s[2], modeType: "t"),
       sort: s[0],
       displayLabel: s[2],
-      displayRank: generateRankLabel(s[0]),
-      resisterSub: generateRankLabel(s[0]),
-      resisterOrigin: s[2],
       method: s[1],
       description: s[3],
       color: s[0],
@@ -46,7 +44,7 @@ final _appConfig = AllData(
     endBuilder: (context, totalScore, originalData, quizinfo) {
       // 念のため、中身をキャストして渡す
       final List<MakingData> pData = List<MakingData>.from(originalData[0]);
-      final List<String> markData = List<String>.from(originalData[1]);
+      final List<QuizResult> markData = List<QuizResult>.from(originalData[1]);
 
       return NtEndScreen(
         correctCount: totalScore.round(),
@@ -68,6 +66,16 @@ final _appConfig = AllData(
         modeDescription: "・分野別に学習しよう！\n"
             "・5問モードと10問モードが選択可能",
         isSmallerBetter: false,
+        rankingList: [
+          QuizTabInfo(
+              id: "全合計", display: "全合計", color: "9", icon: Icons.functions),
+          QuizTabInfo(
+              id: "数Ⅰ・数A", display: "数Ⅰ・数A", color: "1", icon: Icons.filter_1),
+          QuizTabInfo(
+              id: "数Ⅱ・数B", display: "数Ⅱ・数B", color: "2", icon: Icons.filter_2),
+          QuizTabInfo(
+              id: "数Ⅲ・数C", display: "数Ⅲ・数C", color: "3", icon: Icons.filter_3),
+        ],
       ),
       detail: gameDetails,
     ),
@@ -83,14 +91,20 @@ final _appConfig = AllData(
         modeDescription: "・60秒の点数で競おう！\n"
             "・答えるごとに問題のレベル(★)が上がります。速く答えるとボーナス点がもらえます！",
         isSmallerBetter: false,
+        rankingList: [
+          QuizTabInfo(
+              id: "数Ⅰ・数A", display: "数Ⅰ・数A", color: "A", icon: Icons.filter_1),
+          QuizTabInfo(
+              id: "数Ⅱ・数B", display: "数Ⅱ・数B", color: "B", icon: Icons.filter_2),
+          QuizTabInfo(
+              id: "数Ⅲ・数C", display: "数Ⅲ・数C", color: "C", icon: Icons.filter_3),
+        ],
       ),
       detail: [
         DetailData(
+          quizId: QuizId(resisterOrigin: "数Ⅰ・数A", modeType: "g"),
           sort: "1A",
           displayLabel: "数Ⅰ・数A",
-          displayRank: "数Ⅰ・数A",
-          resisterSub: "数Ⅰ・数A",
-          resisterOrigin: "数Ⅰ・数A",
           method: "数I・数Aの全範囲(因数分解, 三角比, 確率など)",
           description: "高1向け! 60秒での点数で競おう!!",
           color: "A",
@@ -98,11 +112,9 @@ final _appConfig = AllData(
           detailIcon: Icons.filter_1,
         ),
         DetailData(
+          quizId: QuizId(resisterOrigin: "数Ⅱ・数B", modeType: "g"),
           sort: "2B",
           displayLabel: "数Ⅱ・数B",
-          displayRank: "数Ⅱ・数B",
-          resisterSub: "数Ⅱ・数B",
-          resisterOrigin: "数Ⅱ・数B",
           method: "数Ⅱ・数Bの全範囲(対数, 積分, 統計など)",
           description: "高2向け! 60秒での点数で競おう!!",
           color: "B",
@@ -110,11 +122,9 @@ final _appConfig = AllData(
           detailIcon: Icons.filter_2,
         ),
         DetailData(
+          quizId: QuizId(resisterOrigin: "数Ⅲ・数C", modeType: "g"),
           sort: "3C",
           displayLabel: "数Ⅲ・数C",
-          displayRank: "数Ⅲ・数C",
-          resisterSub: "数Ⅲ・数C",
-          resisterOrigin: "数Ⅲ・数C",
           method: "数Ⅲ・数Cの全範囲(極限, 二次曲線, ベクトルなど)",
           description: "理系向け! 60秒での点数で競おう!!",
           color: "C",
@@ -132,9 +142,7 @@ void main() {
   final options = DefaultFirebaseOptions.currentPlatform;
 
   runApp(
-    ProviderScope(
-      child: Bootstrap(appConfig: _appConfig, firebaseOptions: options),
-    ),
+    Bootstrap(appConfig: _appConfig, firebaseOptions: options),
   );
 }
 

@@ -137,8 +137,9 @@ class MathQuizLoader {
     final list = filtered[1];
     if (list == null || list.isEmpty) return;
     int qCount = quizinfo.detail.sort == "4867" ? 10 : 20;
-    ref.read(userStatusNotifierProvider.notifier).updateQcount(
-        quizinfo.detail.resisterOrigin, quizinfo.modeData.modeType, qCount);
+    ref
+        .read(userStatusNotifierProvider.notifier)
+        .updateQcount(quizinfo.detail.quizId, qCount);
 
     final count = qCount ~/ list.length;
     List<PartData> expanded = [];

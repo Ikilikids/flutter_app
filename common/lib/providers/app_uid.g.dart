@@ -6,12 +6,12 @@ part of 'app_uid.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appUidHash() => r'3859255037b0fd41d49188bee22c5cc269fd424e';
+String _$appUidHash() => r'c347f74145b1e4382e4849903a4759c154a398a2';
 
-/// See also [AppUid].
-@ProviderFor(AppUid)
-final appUidProvider = AsyncNotifierProvider<AppUid, String>.internal(
-  AppUid.new,
+/// See also [appUid].
+@ProviderFor(appUid)
+final appUidProvider = FutureProvider<String>.internal(
+  appUid,
   name: r'appUidProvider',
   debugGetCreateSourceHash:
       const bool.fromEnvironment('dart.vm.product') ? null : _$appUidHash,
@@ -19,6 +19,22 @@ final appUidProvider = AsyncNotifierProvider<AppUid, String>.internal(
   allTransitiveDependencies: null,
 );
 
-typedef _$AppUid = AsyncNotifier<String>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AppUidRef = FutureProviderRef<String>;
+String _$appUserNameHash() => r'8b8aa182b9a40c93b7d121382989528356cfa159';
+
+/// See also [AppUserName].
+@ProviderFor(AppUserName)
+final appUserNameProvider = AsyncNotifierProvider<AppUserName, String>.internal(
+  AppUserName.new,
+  name: r'appUserNameProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$appUserNameHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$AppUserName = AsyncNotifier<String>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

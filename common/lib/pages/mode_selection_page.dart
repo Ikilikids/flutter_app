@@ -34,11 +34,13 @@ class CommonModeSelectionPage extends HookConsumerWidget {
 
       // ランキング
       PageConfig(
-        title: l10n(context, 'rankingButton'),
-        icon: Icons.emoji_events,
-        color: Colors.amber,
-        builder: (context) => const CommonRankingPage(),
-      ),
+          title: l10n(context, 'rankingButton'),
+          icon: Icons.emoji_events,
+          color: Colors.amber,
+          builder: (context) => const CommonRankingPage(),
+          modeDescription: "・正解数ランキングは品詞別に集計されます。\n"
+              "・ユーザーカードをタップすると他のユーザーの詳細データを確認できます。\n"
+              "・レーダーチャートの1位の方の記録をMaxとしています。"),
 
       // 追加ページ2
       if (additionalPage2 != null)

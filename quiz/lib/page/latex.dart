@@ -131,7 +131,7 @@ class LatexKeyboardView extends HookConsumerWidget {
       if (sessionState.isAnswerChecked || sessionState.isGameOver) return;
 
       final sound = RegExp(r'\d').hasMatch(symbol) ? '$symbol.mp3' : '0.mp3';
-      ref.read(appSoundProvider).requireValue.playSound(sound);
+      ref.read(appSoundProvider).playSound(sound);
 
       _updateController(controller, symbol);
 
@@ -231,30 +231,14 @@ class LatexKeyboardView extends HookConsumerWidget {
     String sign = "";
     String content = extracted;
 
-    if (content.startsWith("{-")) {
-      sign = "{-";
-      content = content.substring(2);
-    } else if (content.startsWith("-")) {
+    if (content.startsWith("-")) {
       sign = "-";
       content = content.substring(1);
     } else if (content.startsWith("+")) {
       sign = "+";
       content = content.substring(1);
-    } else if (content.startsWith("{")) {
-      sign = "{";
-      content = content.substring(1);
     }
-
-    String newPart;
-    if (content.contains("sqrt") && sign.contains("{")) {
-      newPart = "$sign\\frac{}{$content}}}";
-    } else if (content.contains("sqrt") || sign.contains("{")) {
-      newPart = "$sign\\frac{}{$content}}";
-    } else if (content.isNotEmpty) {
-      newPart = "$sign\\frac{}{$content}";
-    } else {
-      return;
-    }
+    String newPart = "$sign\\frac{}{$content}";
 
     controller.text = current.replaceRange(start, pos, newPart);
     controller.selection =
@@ -306,7 +290,7 @@ class LatexKeyboardView extends HookConsumerWidget {
       WidgetRef ref, String firstButton, Function(String) onTap) {
     final latexButton = ref.read(appNumberProvider);
     final List<List<String>> rows;
-    if (latexButton.value == "mobile") {
+    if (latexButton == "mobile") {
       rows = [
         ["1", "2", "3"],
         ["4", "5", "6"],

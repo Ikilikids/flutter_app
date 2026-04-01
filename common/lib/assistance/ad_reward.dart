@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../freezed/app_data.dart';
@@ -28,8 +27,9 @@ class RewardedAdManager {
 
     _isLoading = true;
 
-    final adUnitId = _config!.appData.rewardId ??
-        'ca-app-pub-3940256099942544/5224354917'; // テストID fallback
+    final adUnitId = kDebugMode || _config!.appData.rewardId == null
+        ? 'ca-app-pub-3940256099942544/5224354917'
+        : _config!.appData.rewardId!; // テストID fallback
     print('Loading Rewarded Ad: $adUnitId');
     RewardedAd.load(
       adUnitId: adUnitId,

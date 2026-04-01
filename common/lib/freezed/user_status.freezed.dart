@@ -15,11 +15,152 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
+mixin _$QuizId {
+  String get resisterOrigin => throw _privateConstructorUsedError;
+  String get modeType => throw _privateConstructorUsedError;
+
+  /// Create a copy of QuizId
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $QuizIdCopyWith<QuizId> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $QuizIdCopyWith<$Res> {
+  factory $QuizIdCopyWith(QuizId value, $Res Function(QuizId) then) =
+      _$QuizIdCopyWithImpl<$Res, QuizId>;
+  @useResult
+  $Res call({String resisterOrigin, String modeType});
+}
+
+/// @nodoc
+class _$QuizIdCopyWithImpl<$Res, $Val extends QuizId>
+    implements $QuizIdCopyWith<$Res> {
+  _$QuizIdCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of QuizId
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? resisterOrigin = null,
+    Object? modeType = null,
+  }) {
+    return _then(_value.copyWith(
+      resisterOrigin: null == resisterOrigin
+          ? _value.resisterOrigin
+          : resisterOrigin // ignore: cast_nullable_to_non_nullable
+              as String,
+      modeType: null == modeType
+          ? _value.modeType
+          : modeType // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$QuizIdImplCopyWith<$Res> implements $QuizIdCopyWith<$Res> {
+  factory _$$QuizIdImplCopyWith(
+          _$QuizIdImpl value, $Res Function(_$QuizIdImpl) then) =
+      __$$QuizIdImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String resisterOrigin, String modeType});
+}
+
+/// @nodoc
+class __$$QuizIdImplCopyWithImpl<$Res>
+    extends _$QuizIdCopyWithImpl<$Res, _$QuizIdImpl>
+    implements _$$QuizIdImplCopyWith<$Res> {
+  __$$QuizIdImplCopyWithImpl(
+      _$QuizIdImpl _value, $Res Function(_$QuizIdImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of QuizId
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? resisterOrigin = null,
+    Object? modeType = null,
+  }) {
+    return _then(_$QuizIdImpl(
+      resisterOrigin: null == resisterOrigin
+          ? _value.resisterOrigin
+          : resisterOrigin // ignore: cast_nullable_to_non_nullable
+              as String,
+      modeType: null == modeType
+          ? _value.modeType
+          : modeType // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$QuizIdImpl extends _QuizId {
+  const _$QuizIdImpl({required this.resisterOrigin, required this.modeType})
+      : super._();
+
+  @override
+  final String resisterOrigin;
+  @override
+  final String modeType;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$QuizIdImpl &&
+            (identical(other.resisterOrigin, resisterOrigin) ||
+                other.resisterOrigin == resisterOrigin) &&
+            (identical(other.modeType, modeType) ||
+                other.modeType == modeType));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, resisterOrigin, modeType);
+
+  /// Create a copy of QuizId
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$QuizIdImplCopyWith<_$QuizIdImpl> get copyWith =>
+      __$$QuizIdImplCopyWithImpl<_$QuizIdImpl>(this, _$identity);
+}
+
+abstract class _QuizId extends QuizId {
+  const factory _QuizId(
+      {required final String resisterOrigin,
+      required final String modeType}) = _$QuizIdImpl;
+  const _QuizId._() : super._();
+
+  @override
+  String get resisterOrigin;
+  @override
+  String get modeType;
+
+  /// Create a copy of QuizId
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$QuizIdImplCopyWith<_$QuizIdImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$QuizStatus {
-  String get id =>
-      throw _privateConstructorUsedError; // "${detail.resisterOrigin}_${modeType}"
+  QuizId get id => throw _privateConstructorUsedError;
   num get highScore => throw _privateConstructorUsedError;
-  String get buttonText => throw _privateConstructorUsedError;
+  QuizButtonType get buttonType => throw _privateConstructorUsedError;
   int get playCount => throw _privateConstructorUsedError;
   int get qCount => throw _privateConstructorUsedError;
 
@@ -37,7 +178,13 @@ abstract class $QuizStatusCopyWith<$Res> {
       _$QuizStatusCopyWithImpl<$Res, QuizStatus>;
   @useResult
   $Res call(
-      {String id, num highScore, String buttonText, int playCount, int qCount});
+      {QuizId id,
+      num highScore,
+      QuizButtonType buttonType,
+      int playCount,
+      int qCount});
+
+  $QuizIdCopyWith<$Res> get id;
 }
 
 /// @nodoc
@@ -57,7 +204,7 @@ class _$QuizStatusCopyWithImpl<$Res, $Val extends QuizStatus>
   $Res call({
     Object? id = null,
     Object? highScore = null,
-    Object? buttonText = null,
+    Object? buttonType = null,
     Object? playCount = null,
     Object? qCount = null,
   }) {
@@ -65,15 +212,15 @@ class _$QuizStatusCopyWithImpl<$Res, $Val extends QuizStatus>
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as QuizId,
       highScore: null == highScore
           ? _value.highScore
           : highScore // ignore: cast_nullable_to_non_nullable
               as num,
-      buttonText: null == buttonText
-          ? _value.buttonText
-          : buttonText // ignore: cast_nullable_to_non_nullable
-              as String,
+      buttonType: null == buttonType
+          ? _value.buttonType
+          : buttonType // ignore: cast_nullable_to_non_nullable
+              as QuizButtonType,
       playCount: null == playCount
           ? _value.playCount
           : playCount // ignore: cast_nullable_to_non_nullable
@@ -83,6 +230,16 @@ class _$QuizStatusCopyWithImpl<$Res, $Val extends QuizStatus>
           : qCount // ignore: cast_nullable_to_non_nullable
               as int,
     ) as $Val);
+  }
+
+  /// Create a copy of QuizStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $QuizIdCopyWith<$Res> get id {
+    return $QuizIdCopyWith<$Res>(_value.id, (value) {
+      return _then(_value.copyWith(id: value) as $Val);
+    });
   }
 }
 
@@ -95,7 +252,14 @@ abstract class _$$QuizStatusImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id, num highScore, String buttonText, int playCount, int qCount});
+      {QuizId id,
+      num highScore,
+      QuizButtonType buttonType,
+      int playCount,
+      int qCount});
+
+  @override
+  $QuizIdCopyWith<$Res> get id;
 }
 
 /// @nodoc
@@ -113,7 +277,7 @@ class __$$QuizStatusImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? highScore = null,
-    Object? buttonText = null,
+    Object? buttonType = null,
     Object? playCount = null,
     Object? qCount = null,
   }) {
@@ -121,15 +285,15 @@ class __$$QuizStatusImplCopyWithImpl<$Res>
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as QuizId,
       highScore: null == highScore
           ? _value.highScore
           : highScore // ignore: cast_nullable_to_non_nullable
               as num,
-      buttonText: null == buttonText
-          ? _value.buttonText
-          : buttonText // ignore: cast_nullable_to_non_nullable
-              as String,
+      buttonType: null == buttonType
+          ? _value.buttonType
+          : buttonType // ignore: cast_nullable_to_non_nullable
+              as QuizButtonType,
       playCount: null == playCount
           ? _value.playCount
           : playCount // ignore: cast_nullable_to_non_nullable
@@ -148,19 +312,18 @@ class _$QuizStatusImpl implements _QuizStatus {
   const _$QuizStatusImpl(
       {required this.id,
       this.highScore = 0,
-      this.buttonText = 'playButton',
+      this.buttonType = QuizButtonType.play,
       this.playCount = 0,
       this.qCount = 5});
 
   @override
-  final String id;
-// "${detail.resisterOrigin}_${modeType}"
+  final QuizId id;
   @override
   @JsonKey()
   final num highScore;
   @override
   @JsonKey()
-  final String buttonText;
+  final QuizButtonType buttonType;
   @override
   @JsonKey()
   final int playCount;
@@ -170,7 +333,7 @@ class _$QuizStatusImpl implements _QuizStatus {
 
   @override
   String toString() {
-    return 'QuizStatus(id: $id, highScore: $highScore, buttonText: $buttonText, playCount: $playCount, qCount: $qCount)';
+    return 'QuizStatus(id: $id, highScore: $highScore, buttonType: $buttonType, playCount: $playCount, qCount: $qCount)';
   }
 
   @override
@@ -181,8 +344,8 @@ class _$QuizStatusImpl implements _QuizStatus {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.highScore, highScore) ||
                 other.highScore == highScore) &&
-            (identical(other.buttonText, buttonText) ||
-                other.buttonText == buttonText) &&
+            (identical(other.buttonType, buttonType) ||
+                other.buttonType == buttonType) &&
             (identical(other.playCount, playCount) ||
                 other.playCount == playCount) &&
             (identical(other.qCount, qCount) || other.qCount == qCount));
@@ -190,7 +353,7 @@ class _$QuizStatusImpl implements _QuizStatus {
 
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, highScore, buttonText, playCount, qCount);
+      Object.hash(runtimeType, id, highScore, buttonType, playCount, qCount);
 
   /// Create a copy of QuizStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -203,18 +366,18 @@ class _$QuizStatusImpl implements _QuizStatus {
 
 abstract class _QuizStatus implements QuizStatus {
   const factory _QuizStatus(
-      {required final String id,
+      {required final QuizId id,
       final num highScore,
-      final String buttonText,
+      final QuizButtonType buttonType,
       final int playCount,
       final int qCount}) = _$QuizStatusImpl;
 
   @override
-  String get id; // "${detail.resisterOrigin}_${modeType}"
+  QuizId get id;
   @override
   num get highScore;
   @override
-  String get buttonText;
+  QuizButtonType get buttonType;
   @override
   int get playCount;
   @override
@@ -229,141 +392,8 @@ abstract class _QuizStatus implements QuizStatus {
 }
 
 /// @nodoc
-mixin _$ModeStatus {
-  String get modeType => throw _privateConstructorUsedError;
-
-  /// Create a copy of ModeStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ModeStatusCopyWith<ModeStatus> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ModeStatusCopyWith<$Res> {
-  factory $ModeStatusCopyWith(
-          ModeStatus value, $Res Function(ModeStatus) then) =
-      _$ModeStatusCopyWithImpl<$Res, ModeStatus>;
-  @useResult
-  $Res call({String modeType});
-}
-
-/// @nodoc
-class _$ModeStatusCopyWithImpl<$Res, $Val extends ModeStatus>
-    implements $ModeStatusCopyWith<$Res> {
-  _$ModeStatusCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of ModeStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? modeType = null,
-  }) {
-    return _then(_value.copyWith(
-      modeType: null == modeType
-          ? _value.modeType
-          : modeType // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$ModeStatusImplCopyWith<$Res>
-    implements $ModeStatusCopyWith<$Res> {
-  factory _$$ModeStatusImplCopyWith(
-          _$ModeStatusImpl value, $Res Function(_$ModeStatusImpl) then) =
-      __$$ModeStatusImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String modeType});
-}
-
-/// @nodoc
-class __$$ModeStatusImplCopyWithImpl<$Res>
-    extends _$ModeStatusCopyWithImpl<$Res, _$ModeStatusImpl>
-    implements _$$ModeStatusImplCopyWith<$Res> {
-  __$$ModeStatusImplCopyWithImpl(
-      _$ModeStatusImpl _value, $Res Function(_$ModeStatusImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of ModeStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? modeType = null,
-  }) {
-    return _then(_$ModeStatusImpl(
-      modeType: null == modeType
-          ? _value.modeType
-          : modeType // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$ModeStatusImpl implements _ModeStatus {
-  const _$ModeStatusImpl({required this.modeType});
-
-  @override
-  final String modeType;
-
-  @override
-  String toString() {
-    return 'ModeStatus(modeType: $modeType)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ModeStatusImpl &&
-            (identical(other.modeType, modeType) ||
-                other.modeType == modeType));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, modeType);
-
-  /// Create a copy of ModeStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ModeStatusImplCopyWith<_$ModeStatusImpl> get copyWith =>
-      __$$ModeStatusImplCopyWithImpl<_$ModeStatusImpl>(this, _$identity);
-}
-
-abstract class _ModeStatus implements ModeStatus {
-  const factory _ModeStatus({required final String modeType}) =
-      _$ModeStatusImpl;
-
-  @override
-  String get modeType;
-
-  /// Create a copy of ModeStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ModeStatusImplCopyWith<_$ModeStatusImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
 mixin _$UserStatus {
-  List<QuizStatus> get quizzes => throw _privateConstructorUsedError;
-  List<ModeStatus> get modes => throw _privateConstructorUsedError;
-  String get selectedModeId => throw _privateConstructorUsedError;
-  String get selectedDetailId => throw _privateConstructorUsedError;
+  Map<QuizId, QuizStatus> get quizzes => throw _privateConstructorUsedError;
 
   /// Create a copy of UserStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -378,11 +408,7 @@ abstract class $UserStatusCopyWith<$Res> {
           UserStatus value, $Res Function(UserStatus) then) =
       _$UserStatusCopyWithImpl<$Res, UserStatus>;
   @useResult
-  $Res call(
-      {List<QuizStatus> quizzes,
-      List<ModeStatus> modes,
-      String selectedModeId,
-      String selectedDetailId});
+  $Res call({Map<QuizId, QuizStatus> quizzes});
 }
 
 /// @nodoc
@@ -401,27 +427,12 @@ class _$UserStatusCopyWithImpl<$Res, $Val extends UserStatus>
   @override
   $Res call({
     Object? quizzes = null,
-    Object? modes = null,
-    Object? selectedModeId = null,
-    Object? selectedDetailId = null,
   }) {
     return _then(_value.copyWith(
       quizzes: null == quizzes
           ? _value.quizzes
           : quizzes // ignore: cast_nullable_to_non_nullable
-              as List<QuizStatus>,
-      modes: null == modes
-          ? _value.modes
-          : modes // ignore: cast_nullable_to_non_nullable
-              as List<ModeStatus>,
-      selectedModeId: null == selectedModeId
-          ? _value.selectedModeId
-          : selectedModeId // ignore: cast_nullable_to_non_nullable
-              as String,
-      selectedDetailId: null == selectedDetailId
-          ? _value.selectedDetailId
-          : selectedDetailId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as Map<QuizId, QuizStatus>,
     ) as $Val);
   }
 }
@@ -434,11 +445,7 @@ abstract class _$$UserStatusImplCopyWith<$Res>
       __$$UserStatusImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {List<QuizStatus> quizzes,
-      List<ModeStatus> modes,
-      String selectedModeId,
-      String selectedDetailId});
+  $Res call({Map<QuizId, QuizStatus> quizzes});
 }
 
 /// @nodoc
@@ -455,27 +462,12 @@ class __$$UserStatusImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? quizzes = null,
-    Object? modes = null,
-    Object? selectedModeId = null,
-    Object? selectedDetailId = null,
   }) {
     return _then(_$UserStatusImpl(
       quizzes: null == quizzes
           ? _value._quizzes
           : quizzes // ignore: cast_nullable_to_non_nullable
-              as List<QuizStatus>,
-      modes: null == modes
-          ? _value._modes
-          : modes // ignore: cast_nullable_to_non_nullable
-              as List<ModeStatus>,
-      selectedModeId: null == selectedModeId
-          ? _value.selectedModeId
-          : selectedModeId // ignore: cast_nullable_to_non_nullable
-              as String,
-      selectedDetailId: null == selectedDetailId
-          ? _value.selectedDetailId
-          : selectedDetailId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as Map<QuizId, QuizStatus>,
     ));
   }
 }
@@ -483,40 +475,20 @@ class __$$UserStatusImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$UserStatusImpl implements _UserStatus {
-  const _$UserStatusImpl(
-      {required final List<QuizStatus> quizzes,
-      required final List<ModeStatus> modes,
-      this.selectedModeId = '',
-      this.selectedDetailId = ''})
-      : _quizzes = quizzes,
-        _modes = modes;
+  const _$UserStatusImpl({required final Map<QuizId, QuizStatus> quizzes})
+      : _quizzes = quizzes;
 
-  final List<QuizStatus> _quizzes;
+  final Map<QuizId, QuizStatus> _quizzes;
   @override
-  List<QuizStatus> get quizzes {
-    if (_quizzes is EqualUnmodifiableListView) return _quizzes;
+  Map<QuizId, QuizStatus> get quizzes {
+    if (_quizzes is EqualUnmodifiableMapView) return _quizzes;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_quizzes);
+    return EqualUnmodifiableMapView(_quizzes);
   }
-
-  final List<ModeStatus> _modes;
-  @override
-  List<ModeStatus> get modes {
-    if (_modes is EqualUnmodifiableListView) return _modes;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_modes);
-  }
-
-  @override
-  @JsonKey()
-  final String selectedModeId;
-  @override
-  @JsonKey()
-  final String selectedDetailId;
 
   @override
   String toString() {
-    return 'UserStatus(quizzes: $quizzes, modes: $modes, selectedModeId: $selectedModeId, selectedDetailId: $selectedDetailId)';
+    return 'UserStatus(quizzes: $quizzes)';
   }
 
   @override
@@ -524,21 +496,12 @@ class _$UserStatusImpl implements _UserStatus {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$UserStatusImpl &&
-            const DeepCollectionEquality().equals(other._quizzes, _quizzes) &&
-            const DeepCollectionEquality().equals(other._modes, _modes) &&
-            (identical(other.selectedModeId, selectedModeId) ||
-                other.selectedModeId == selectedModeId) &&
-            (identical(other.selectedDetailId, selectedDetailId) ||
-                other.selectedDetailId == selectedDetailId));
+            const DeepCollectionEquality().equals(other._quizzes, _quizzes));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_quizzes),
-      const DeepCollectionEquality().hash(_modes),
-      selectedModeId,
-      selectedDetailId);
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(_quizzes));
 
   /// Create a copy of UserStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -550,20 +513,11 @@ class _$UserStatusImpl implements _UserStatus {
 }
 
 abstract class _UserStatus implements UserStatus {
-  const factory _UserStatus(
-      {required final List<QuizStatus> quizzes,
-      required final List<ModeStatus> modes,
-      final String selectedModeId,
-      final String selectedDetailId}) = _$UserStatusImpl;
+  const factory _UserStatus({required final Map<QuizId, QuizStatus> quizzes}) =
+      _$UserStatusImpl;
 
   @override
-  List<QuizStatus> get quizzes;
-  @override
-  List<ModeStatus> get modes;
-  @override
-  String get selectedModeId;
-  @override
-  String get selectedDetailId;
+  Map<QuizId, QuizStatus> get quizzes;
 
   /// Create a copy of UserStatus
   /// with the given fields replaced by the non-null parameter values.

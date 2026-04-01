@@ -234,10 +234,10 @@ Widget increasewidget(String scoreIncrement1, String scoreIncrement2) {
   );
 }
 
-Widget marupekelist(BuildContext context, List<String> marks) {
+Widget marupekelist(BuildContext context, List<QuizResult> marks) {
   bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-  Widget buildRow(List<String> rowMarks, int offset) {
+  Widget buildRow(List<QuizResult> rowMarks, int offset) {
     return Expanded(
       child: Row(
         children: List.generate(rowMarks.length, (index) {
@@ -254,23 +254,13 @@ Widget marupekelist(BuildContext context, List<String> marks) {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
-                    child: mark == "◯"
-                        ? Image.asset(
-                            isDark
-                                ? 'assets/images/circle_dark.png'
-                                : 'assets/images/circle.png',
-                            fit: BoxFit.contain,
-                          )
-                        : mark == "×"
-                            ? Image.asset(
-                                isDark
-                                    ? 'assets/images/cross_dark.png'
-                                    : 'assets/images/cross.png',
-                                fit: BoxFit.contain,
-                              )
-                            : null,
+                    child: mark == QuizResult.unknown
+                        ? null
+                        : Image.asset(isDark
+                            ? 'assets/images/${mark.name}_dark.png'
+                            : 'assets/images/${mark.name}.png'),
                   ),
-                ),
+                )
               ],
             ),
           );
@@ -301,19 +291,11 @@ Widget marupekelist(BuildContext context, List<String> marks) {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
-                  child: marks[index] == "◯"
-                      ? Image.asset(
-                          isDark
-                              ? 'assets/images/circle_dark.png'
-                              : 'assets/images/circle.png',
-                        )
-                      : marks[index] == "×"
-                          ? Image.asset(
-                              isDark
-                                  ? 'assets/images/cross_dark.png'
-                                  : 'assets/images/cross.png',
-                            )
-                          : null,
+                  child: marks[index] == QuizResult.unknown
+                      ? null
+                      : Image.asset(isDark
+                          ? 'assets/images/${marks[index].name}_dark.png'
+                          : 'assets/images/${marks[index].name}.png'),
                 ),
               ),
             ],

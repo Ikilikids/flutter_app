@@ -6,15 +6,18 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 class PipiScreen extends HookConsumerWidget {
   final num totalScore;
   final dynamic originalData;
+  final Map<String, int>? categoryScores; // 外部で集計されたスコアを受け取る
 
   const PipiScreen({
     super.key,
     required this.totalScore,
     this.originalData,
+    this.categoryScores,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print(categoryScores);
     // 内部的な状態管理（画面遷移に使うデータ）
     final highScore = useRef(0.0);
     final myRank = useRef([0, 0, 0]);
@@ -25,22 +28,19 @@ class PipiScreen extends HookConsumerWidget {
         final quizinfo = ref.read(currentDetailConfigProvider);
         final endBuilder = allData.endBuilder;
         final startTime = DateTime.now();
-
-        final uid = await ref.read(appUidProvider.future);
-        final userName =
-            await ref.read(appUidProvider.notifier).loadUsername(uid);
+        final userName = ref.read(appUserNameProvider).requireValue;
 
         try {
           await ScoreManager.updateAllScores(
             score: totalScore.toDouble(),
             resisterOrigin: quizinfo.detail.resisterOrigin,
-            resisterSub: quizinfo.detail.resisterSub,
             modeType: quizinfo.modeData.modeType,
             isBattle: quizinfo.modeData.isbattle,
             isSmallerBetter: quizinfo.modeData.isSmallerBetter,
             isLimitedMode: quizinfo.modeData.islimited,
             fix: 100,
             userName: userName,
+            categoryScores: categoryScores, // 渡されたものをそのまま使う
           );
 
           highScore.value = await ScoreManager.getScore(
@@ -50,16 +50,19 @@ class PipiScreen extends HookConsumerWidget {
 
           // ローカルのスコア更新
           ref.read(userStatusNotifierProvider.notifier).updateScoreLocally(
-                quizinfo.detail.resisterOrigin,
-                quizinfo.modeData.modeType,
+                QuizId(
+                  resisterOrigin: quizinfo.detail.resisterOrigin,
+                  modeType: quizinfo.modeData.modeType,
+                ),
                 highScore.value,
               );
 
           myRank.value = await ScoreManager.getMyRank(
-            resisterOrigin: quizinfo.detail.resisterSub,
+            resisterOrigin: quizinfo.detail.resisterOrigin,
             modeType: quizinfo.modeData.modeType,
             myScore: totalScore.toDouble(),
             isSmallerBetter: quizinfo.modeData.isSmallerBetter,
+            targetPeriods: buildPeriod(), // 全期間・今月・今週を取得
           );
         } catch (e) {
           debugPrint('Error loading data: $e');

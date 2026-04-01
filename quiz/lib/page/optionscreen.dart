@@ -1,13 +1,13 @@
 import 'dart:math';
 
-import "package:quiz/quiz.dart";
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import "package:quiz/quiz.dart";
 
 class QuizOptions extends StatefulWidget {
   final OptionMakingData quizData;
-  final Function(String) onCorrect;
+  final Function(QuizResult) onCorrect;
 
   const QuizOptions({
     super.key,
@@ -84,9 +84,9 @@ class _QuizOptionsState extends State<QuizOptions> {
 
                       // 正誤判定
                       if (option == correctAnswer) {
-                        widget.onCorrect("maru");
+                        widget.onCorrect(QuizResult.circle);
                       } else {
-                        widget.onCorrect("peke");
+                        widget.onCorrect(QuizResult.cross);
                       }
                     },
               child: AnimatedContainer(

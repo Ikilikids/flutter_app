@@ -1,51 +1,102 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:common/common.dart' show buildPeriod;
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../bootstrap.dart';
 
 part 'app_uid.g.dart';
 
+// ---------------------------------------------------------
+// 1. UIDを取得するProvider (一回取ったら不変)
+// ---------------------------------------------------------
 @Riverpod(keepAlive: true)
-class AppUid extends _$AppUid {
+Future<String> appUid(Ref ref) async {
+  final userCred = await FirebaseAuth.instance.signInAnonymously();
+  return userCred.user?.uid ?? "404";
+}
+
+// ---------------------------------------------------------
+// 2. ユーザー名を管理する司令塔 (取得・保持・更新をこれ1つで)
+// ---------------------------------------------------------
+@Riverpod(keepAlive: true)
+class AppUserName extends _$AppUserName {
   @override
   Future<String> build() async {
-    print('AppUid: Building and signing in anonymously...');
-    // 🔹 匿名ログイン
-    final userCred = await FirebaseAuth.instance.signInAnonymously();
-    final uid = userCred.user?.uid;
+    // A. まずUIDが取れるのを待つ
+    final uid = await ref.watch(appUidProvider.future);
 
-    if (uid == null) {
-      throw Exception('UID取得失敗');
+    // B. そのUIDを使って名前をFirestoreから持ってくる
+    return await _fetchOrCreateUser(uid);
+  }
+
+  /// 名前を更新し、各所を一括で書き換える
+  Future<void> updateName(String newName) async {
+    // 起動時にロード済みなら、UIDは requireValue で同期的に取れる
+    final uid = ref.read(appUidProvider).requireValue;
+    final firestore = FirebaseFirestore.instance;
+
+    // guardを使うことで、処理中のエラーハンドリングと状態更新を同時に行う
+    state = await AsyncValue.guard(() async {
+      // 1. users2 ドキュメントの更新
+      await firestore.collection("users2").doc(uid).set({
+        "userName": newName,
+        "updatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 2. ランキングの一括更新（バックグラウンド）
+      _updateAllRankings(uid, newName);
+
+      return newName; // これが新しい state になる
+    });
+  }
+
+  /// ランキング更新ロジック（内部メソッド）
+  Future<void> _updateAllRankings(String uid, String newName) async {
+    final firestore = FirebaseFirestore.instance;
+    final batch = firestore.batch();
+
+    // ※ allDataなどは定義されている前提
+    final rankLabels = allData.mid
+        .expand((g) => g.detail)
+        .map((d) => d.resisterOrigin)
+        .toSet()
+        .toList();
+    rankLabels.add("全合計");
+
+    final periods = buildPeriod();
+    final modeTypes = ['t', 'g'];
+
+    for (var rType in rankLabels) {
+      for (var mType in modeTypes) {
+        for (var period in periods) {
+          final docRef = firestore
+              .collection("rankings_v5")
+              .doc("${rType}_${mType}_$period")
+              .collection("users")
+              .doc(uid);
+
+          batch.set(docRef, {"userName": newName}, SetOptions(merge: true));
+        }
+      }
     }
+    await batch.commit();
+  }
+}
 
-    // 🔹 Firestore にユーザーレコード作成
-    await _createUserRecord(uid);
-    print('AppUid: Anonymous sign-in successful, UID: $uid');
-    return uid;
+// ---------------------------------------------------------
+// 内部用ヘルパー（Firestore操作）
+// ---------------------------------------------------------
+Future<String> _fetchOrCreateUser(String uid) async {
+  final docRef = FirebaseFirestore.instance.collection('users2').doc(uid);
+  final snapshot = await docRef.get();
+
+  if (!snapshot.exists) {
+    await docRef.set({'createdAt': FieldValue.serverTimestamp()});
+    return '名無し';
   }
 
-  /// ユーザードキュメント作成（初回のみ）
-  Future<void> _createUserRecord(String uid) async {
-    final ref = FirebaseFirestore.instance.collection('users2').doc(uid);
-    final snapshot = await ref.get();
-
-    if (!snapshot.exists) {
-      await ref.set({
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-  /// ユーザー名取得
-  Future<String> loadUsername(String uid) async {
-    final doc =
-        await FirebaseFirestore.instance.collection('users2').doc(uid).get();
-
-    if (!doc.exists) return '名無し';
-
-    final data = doc.data();
-    print(data);
-    final userName = data?['userName'];
-
-    return userName is String ? userName : '名無し';
-  }
+  final data = snapshot.data();
+  return data?['userName'] as String? ?? '名無し';
 }

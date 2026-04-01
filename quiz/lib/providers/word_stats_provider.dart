@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../quiz.dart';
+
 part 'word_stats_provider.g.dart';
 
 /// 1単語ごとの統計情報モデル
@@ -11,7 +13,7 @@ class WordStats {
   final int correctCount;
   final int incorrectCount;
   final int hintCount;
-  final List<String> recentResults;
+  final List<QuizResult> recentResults;
 
   const WordStats({
     this.star = false,
@@ -33,10 +35,12 @@ class WordStats {
   int get totalPlayCount => correctCount + hintCount + incorrectCount;
 
   /// 直近5回の正解数
-  int get recentCorrectCount => recentResults.where((r) => r == "○").length;
+  int get recentCorrectCount =>
+      recentResults.where((r) => r == QuizResult.circle).length;
 
   /// 直近5回の不正解数
-  int get recentIncorrectCount => recentResults.where((r) => r == "×").length;
+  int get recentIncorrectCount =>
+      recentResults.where((r) => r == QuizResult.cross).length;
 
   WordStats copyWith({
     bool? star,
@@ -44,7 +48,7 @@ class WordStats {
     int? correctCount,
     int? incorrectCount,
     int? hintCount,
-    List<String>? recentResults,
+    List<QuizResult>? recentResults,
   }) {
     return WordStats(
       star: star ?? this.star,
@@ -95,7 +99,13 @@ Future<Map<String, WordStats>> wordStatsInitial(Ref ref) async {
       hintCount: prefs.getInt('stats_${key}_h') ?? 0,
       recentResults: (prefs.getString('stats_${key}_r') ?? "").isEmpty
           ? []
-          : (prefs.getString('stats_${key}_r')!).split(','),
+          : (prefs.getString('stats_${key}_r')!)
+              .split(',')
+              .map((s) => QuizResult.values.firstWhere(
+                    (v) => v.name == s.split('.').last,
+                    orElse: () => QuizResult.unknown,
+                  ))
+              .toList(),
     );
   }
   return statsMap;
@@ -133,7 +143,7 @@ class WordStatsNotifier extends _$WordStatsNotifier {
   }
 
   /// クイズ結果の更新
-  Future<void> recordResult(String word, String result) async {
+  Future<void> recordResult(String word, QuizResult result) async {
     final key = word.trim().toLowerCase();
     final current = state.value?[key] ?? const WordStats();
 
@@ -141,9 +151,9 @@ class WordStatsNotifier extends _$WordStatsNotifier {
     int i = current.incorrectCount;
     int h = current.hintCount;
 
-    if (result == "○") c++;
-    if (result == "×") i++;
-    if (result == "△") h++;
+    if (result == QuizResult.circle) c++;
+    if (result == QuizResult.cross) i++;
+    if (result == QuizResult.triangle) h++;
 
     final newRecent = [result, ...current.recentResults].take(5).toList();
 
@@ -161,7 +171,8 @@ class WordStatsNotifier extends _$WordStatsNotifier {
     await _prefs.setInt('stats_${key}_c', next.correctCount);
     await _prefs.setInt('stats_${key}_i', next.incorrectCount);
     await _prefs.setInt('stats_${key}_h', next.hintCount);
-    await _prefs.setString('stats_${key}_r', next.recentResults.join(','));
+    await _prefs.setString(
+        'stats_${key}_r', next.recentResults.map((r) => r.name).join(','));
   }
 
   /// 内部用：状態更新と保存（bool値）

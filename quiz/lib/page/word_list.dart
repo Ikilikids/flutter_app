@@ -563,18 +563,21 @@ class _WordCard extends HookConsumerWidget {
                         ...List.generate(
                           5,
                           (index) {
-                            String mark = "？";
+                            QuizResult quizResult = QuizResult.unknown;
                             Color color = Colors.grey.withAlpha(100);
                             if (index < stats.recentResults.length) {
-                              mark = stats.recentResults[index];
-                              if (mark == "○") color = Colors.red;
-                              if (mark == "△") color = Colors.green;
-                              if (mark == "×") color = Colors.blue;
+                              quizResult = stats.recentResults[index];
+                              if (quizResult == QuizResult.circle)
+                                color = Colors.red;
+                              if (quizResult == QuizResult.triangle)
+                                color = Colors.green;
+                              if (quizResult == QuizResult.cross)
+                                color = Colors.blue;
                             }
                             return Padding(
                               padding: const EdgeInsets.only(right: 4),
                               child: Text(
-                                mark,
+                                quizResultToEmoji(quizResult),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,

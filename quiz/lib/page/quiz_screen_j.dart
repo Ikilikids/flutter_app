@@ -27,7 +27,11 @@ class Quizscreen extends HookConsumerWidget {
     ref.listen(quizSessionNotifierProvider.select((s) => s.isAnswerChecked),
         (prev, checked) {
       if (checked) {
-        Future.delayed(const Duration(milliseconds: 150), () {
+        Future.delayed(
+            Duration(
+                milliseconds: activeConfig.appData.appTitle == "とことん高校数学"
+                    ? 400
+                    : 150), () {
           final currentSession = ref.read(quizSessionNotifierProvider);
           if (!context.mounted) return;
           if (currentSession.isGameOver) return;
@@ -189,13 +193,9 @@ class Quizscreen extends HookConsumerWidget {
               if (session.isAnswerChecked)
                 Center(
                   child: Image.asset(
-                    session.resultMark == "◯"
-                        ? (isDark
-                            ? 'assets/images/circle_dark.png'
-                            : 'assets/images/circle.png')
-                        : (isDark
-                            ? 'assets/images/cross_dark.png'
-                            : 'assets/images/cross.png'),
+                    isDark
+                        ? 'assets/images/${session.resultMark.name}_dark.png'
+                        : 'assets/images/${session.resultMark.name}.png',
                     height: 300,
                   ),
                 ),
@@ -225,11 +225,41 @@ class Quizscreen extends HookConsumerWidget {
     ref.read(quizSessionNotifierProvider.notifier).endGame();
 
     Future.delayed(const Duration(milliseconds: 200), () {
-      ref.read(appSoundProvider).requireValue.playSound('hoi.mp3');
+      ref.read(appSoundProvider).playSound('hoi.mp3');
       final solved = [
         ...session.solvedQuestions,
         if (session.currentQuestion != null) session.currentQuestion!
       ];
+
+      // 品詞・レベル別の加算スコアを集計
+      Map<String, int>? categoryScores;
+      if (config.appData.appTitle != "appTitle") {
+        final Map<String, int> counts = {};
+        for (int i = 0; i < solved.length; i++) {
+          if (i < session.marks.length &&
+              session.marks[i] == QuizResult.circle) {
+            final p = solved[i];
+            final domain = p.pt.domain;
+            final subject = p.pt.subject;
+            print(p);
+            // 英単語アプリ特有のマッピングロジック
+            String? category;
+            print("Domain: $domain, Subject: $subject");
+            if (domain == "動詞") {
+              category = "動詞";
+            } else if (domain == "形容詞" || domain == "副詞") {
+              category = "形容詞・副詞";
+            } else if (domain == "名詞" || domain.contains("詞")) {
+              category = "名詞・その他";
+            } else {
+              category = generateRankLabel(subject);
+            }
+
+            counts[category] = (counts[category] ?? 0) + 1;
+          }
+        }
+        if (counts.isNotEmpty) categoryScores = counts;
+      }
 
       Navigator.pushReplacement(
         context,
@@ -237,12 +267,25 @@ class Quizscreen extends HookConsumerWidget {
           builder: (context) => config.appData.appTitle == "appTitle"
               ? PipiScreen(totalScore: session.elapsedTime)
               : config.modeData.isbattle
-                  ? PipiScreen(totalScore: session.totalScore)
+                  ? PipiScreen(
+                      totalScore: session.totalScore,
+                      originalData: [solved, session.marks],
+                      categoryScores: categoryScores,
+                    )
                   : PipiScreen(
                       totalScore: session.correctCount,
-                      originalData: [solved, session.marks]),
+                      originalData: [solved, session.marks],
+                      categoryScores: categoryScores,
+                    ),
         ),
       );
     });
   }
+}
+
+String generateRankLabel(String sort) {
+  if (sort == "1" || sort == "A") return "数Ⅰ・数A";
+  if (sort == "2" || sort == "B") return "数Ⅱ・数B";
+  if (sort == "3" || sort == "C") return "数Ⅲ・数C";
+  return sort;
 }

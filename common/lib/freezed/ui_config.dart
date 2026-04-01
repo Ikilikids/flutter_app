@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 // 原本の型（ModeData, DetailData, AppData）を参照するためにインポート
-import 'app_data.dart';
+import '../common.dart';
 
 part 'ui_config.freezed.dart';
 
@@ -21,7 +21,7 @@ class DetailConfig with _$DetailConfig {
     required ModeData modeData,
     required DetailData detail, // 原本のカタログデータ
     required num highScore, // 状態：最新スコア
-    required String buttonText, // 状態：ボタンの文字
+    required QuizButtonType buttonType, // 状態：ボタンの種類
     required int qcount, // 状態：選択された問題数
   }) = _DetailConfig;
 }

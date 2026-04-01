@@ -1,6 +1,5 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'firebase_options.dart';
 import 'page/game_screen.dart';
@@ -30,14 +29,26 @@ final _appConfig = AllData(
         modeIcon: Icons.all_inclusive,
         modeDescription: "・1日に何回でも挑戦できます！\n"
             "・ハイスコアを目指そう！",
+        rankingList: [
+          QuizTabInfo(
+              id: "色で反応",
+              display: "colorReact",
+              color: "2",
+              icon: Icons.palette),
+          QuizTabInfo(
+              id: "数字で反応", display: "numberReact", color: "5", icon: Icons.pin),
+          QuizTabInfo(
+              id: "マス目で反応",
+              display: "gridReact",
+              color: "4",
+              icon: Icons.grid_4x4)
+        ],
       ),
       detail: [
         DetailData(
+          quizId: const QuizId(resisterOrigin: "色で反応", modeType: "t"),
           sort: "color",
           displayLabel: "colorReact",
-          displayRank: "colorReact",
-          resisterSub: "色で反応",
-          resisterOrigin: "色で反応",
           method: "colorReactMethod",
           description: "colorReactDesc",
           color: "2",
@@ -45,11 +56,9 @@ final _appConfig = AllData(
           detailIcon: Icons.palette,
         ),
         DetailData(
+          quizId: const QuizId(resisterOrigin: "数字で反応", modeType: "t"),
           sort: "number",
           displayLabel: "numberReact",
-          displayRank: "numberReact",
-          resisterSub: "数字で反応",
-          resisterOrigin: "数字で反応",
           method: "reactMethodAverage",
           description: "numberReactDesc",
           color: "5",
@@ -57,11 +66,9 @@ final _appConfig = AllData(
           detailIcon: Icons.pin,
         ),
         DetailData(
+          quizId: const QuizId(resisterOrigin: "マス目で反応", modeType: "t"),
           sort: "grid",
           displayLabel: "gridReact",
-          displayRank: "gridReact",
-          resisterSub: "マス目で反応",
-          resisterOrigin: "マス目で反応",
           method: "reactMethodAverage",
           description: "gridReactDesc",
           color: "4",
@@ -82,14 +89,26 @@ final _appConfig = AllData(
         modeIcon: Icons.timer,
         modeDescription: "・1日1回限定！\n"
             "・集中して挑もう！",
+        rankingList: [
+          QuizTabInfo(
+              id: "色で反応",
+              display: "colorReact",
+              color: "3",
+              icon: Icons.palette),
+          QuizTabInfo(
+              id: "数字で反応", display: "numberReact", color: "1", icon: Icons.pin),
+          QuizTabInfo(
+              id: "マス目で反応",
+              display: "gridReact",
+              color: "6",
+              icon: Icons.grid_4x4)
+        ],
       ),
       detail: [
         DetailData(
+          quizId: const QuizId(resisterOrigin: "色で反応", modeType: "g"),
           sort: "color",
           displayLabel: "colorReact",
-          displayRank: "colorReact",
-          resisterSub: "色で反応",
-          resisterOrigin: "色で反応",
           method: "colorReactMethod",
           description: "colorReactDesc",
           color: "3",
@@ -97,11 +116,9 @@ final _appConfig = AllData(
           detailIcon: Icons.palette,
         ),
         DetailData(
+          quizId: const QuizId(resisterOrigin: "数字で反応", modeType: "g"),
           sort: "number",
           displayLabel: "numberReact",
-          displayRank: "numberReact",
-          resisterSub: "数字で反応",
-          resisterOrigin: "数字で反応",
           method: "reactMethodAverage",
           description: "numberReactDesc",
           color: "1",
@@ -109,11 +126,9 @@ final _appConfig = AllData(
           detailIcon: Icons.pin,
         ),
         DetailData(
+          quizId: const QuizId(resisterOrigin: "マス目で反応", modeType: "g"),
           sort: "grid",
           displayLabel: "gridReact",
-          displayRank: "gridReact",
-          resisterSub: "マス目で反応",
-          resisterOrigin: "マス目で反応",
           method: "reactMethodAverage",
           description: "gridReactDesc",
           color: "6",
@@ -129,11 +144,9 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   runApp(
-    ProviderScope(
-      child: Bootstrap(
-        appConfig: _appConfig,
-        firebaseOptions: DefaultFirebaseOptions.currentPlatform,
-      ),
+    Bootstrap(
+      appConfig: _appConfig,
+      firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     ),
   );
 }

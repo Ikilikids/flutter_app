@@ -14,15 +14,6 @@ class EngDisplayView extends HookConsumerWidget {
 
     if (question is! EngMakingData) return const SizedBox.shrink();
 
-    // 1文字あたりの幅を少し狭めに設定
-    // --- EngDisplayView の build メソッド内を以下に差し替え ---
-
-    // 1文字あたりの幅を少し広めに（m や w に対応）
-    // 下線の固定幅（全文字共通。これならバレない）
-    // --- EngDisplayView の build メソッド内 ---
-
-    // --- EngDisplayView の build メソッド内 ---
-
     return Center(
       child: Container(
         width: double.infinity,
@@ -195,10 +186,11 @@ class EngKeyboardView extends HookConsumerWidget {
                 child: ElevatedButton.icon(
                   onPressed: session.isAnswerChecked || session.isGameOver
                       ? null
-                      : () => ref
-                          .read(quizSessionNotifierProvider.notifier)
-                          .judge("peke", config,
-                              isHintUsed: inputState.isHintUsed),
+                      : () =>
+                          ref.read(quizSessionNotifierProvider.notifier).judge(
+                                QuizResult.cross,
+                                config,
+                              ),
                   icon: const Icon(Icons.skip_next),
                   label: const Text("パス"),
                   style: ElevatedButton.styleFrom(

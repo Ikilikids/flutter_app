@@ -326,9 +326,9 @@ class ReviewSetupPage extends HookConsumerWidget {
             selected.value = newSet;
           },
           selectedColor:
-              getQuizColor2(getSpeechNumber(part), context, 0.6, 0.2, 0.95),
+              getQuizColor2(getSpeechNumber(part), context, 1, 0.2, 0.95),
           checkmarkColor:
-              getQuizColor2(getSpeechNumber(part), context, 1, 0.7, 0.95),
+              getQuizColor2(getSpeechNumber(part), context, 1, 1, 0.95),
         );
       }).toList(),
     );
@@ -346,7 +346,8 @@ class ReviewSetupPage extends HookConsumerWidget {
     required bool heart,
   }) {
     Widget buildButton(int qCount) {
-      final isEnabled = count >= qCount;
+      final bool isEnabled = count >= qCount;
+      final Color buttonColor = getQuizColor2("6", context, 1, 0.65, 0.95);
       return Expanded(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -371,8 +372,7 @@ class ReviewSetupPage extends HookConsumerWidget {
                       ref
                           .read(userStatusNotifierProvider.notifier)
                           .updateQcount(
-                            "復習モード",
-                            "z",
+                            QuizId(resisterOrigin: "復習モード", modeType: "z"),
                             qCount,
                           );
 
@@ -384,12 +384,15 @@ class ReviewSetupPage extends HookConsumerWidget {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
+                backgroundColor: qCount == 5 ? buttonColor : bgColor1(context),
+                foregroundColor: qCount != 5 ? buttonColor : bgColor1(context),
                 disabledBackgroundColor: Colors.grey.withAlpha(50),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(8)),
                 elevation: 0,
+                side: (qCount == 10 && isEnabled)
+                    ? BorderSide(color: buttonColor, width: 2)
+                    : null,
               ),
               child: Text(
                 '$qCount問で開始',

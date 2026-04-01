@@ -16,9 +16,9 @@ class QuizSessionState {
   final int remainingTime;
   final double elapsedTime;
   final bool isGameOver;
-  final String resultMark;
+  final QuizResult resultMark;
   final bool isAnswerChecked;
-  final List<String> marks;
+  final List<QuizResult> marks;
   final List<MakingData> solvedQuestions;
   final DateTime? startTime;
   final int currentIndex;
@@ -32,7 +32,7 @@ class QuizSessionState {
     this.remainingTime = 60,
     this.elapsedTime = 0,
     this.isGameOver = false,
-    this.resultMark = '',
+    this.resultMark = QuizResult.unknown,
     this.isAnswerChecked = false,
     this.marks = const [],
     this.solvedQuestions = const [],
@@ -49,9 +49,9 @@ class QuizSessionState {
     int? remainingTime,
     double? elapsedTime,
     bool? isGameOver,
-    String? resultMark,
+    QuizResult? resultMark,
     bool? isAnswerChecked,
-    List<String>? marks,
+    List<QuizResult>? marks,
     List<MakingData>? solvedQuestions,
     DateTime? startTime,
     int? currentIndex,
@@ -77,6 +77,21 @@ class QuizSessionState {
   }
 }
 
+enum QuizResult { circle, cross, triangle, unknown }
+
+String quizResultToEmoji(QuizResult r) {
+  switch (r) {
+    case QuizResult.circle:
+      return '○';
+    case QuizResult.cross:
+      return '×';
+    case QuizResult.triangle:
+      return '△';
+    case QuizResult.unknown:
+      return '？';
+  }
+}
+
 @riverpod
 class QuizSessionNotifier extends _$QuizSessionNotifier {
   Timer? _timer;
@@ -91,7 +106,9 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     state = QuizSessionState(
       remainingTime: config.modeData.isbattle ? 60 : 0,
       elapsedTime: 0,
-      marks: List.filled(config.qcount, ""),
+      marks: config.modeData.isbattle
+          ? []
+          : List.filled(config.qcount, QuizResult.unknown),
       solvedQuestions: [],
       currentIndex: 0,
     );
@@ -115,7 +132,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (state.remainingTime > 1) {
           state = state.copyWith(remainingTime: state.remainingTime - 1);
-          ref.read(appSoundProvider).requireValue.playSound('ry.mp3');
+          ref.read(appSoundProvider).playSound('ry.mp3');
         } else {
           state = state.copyWith(remainingTime: 0, isGameOver: true);
           timer.cancel();
@@ -132,7 +149,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   void updateQuestion(MakingData question) {
     state = state.copyWith(
       currentQuestion: question,
-      resultMark: '',
+      resultMark: QuizResult.unknown,
       isAnswerChecked: false,
       startTime: DateTime.now(),
       scoreFeedback1: '',
@@ -160,29 +177,30 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     });
   }
 
-  void judge(String result, DetailConfig config, {bool isHintUsed = false}) {
+  void judge(
+    QuizResult quizResult,
+    DetailConfig config,
+  ) {
     if (state.isGameOver) return;
 
-    // 英単語の場合、統計情報を保存
+    final bool isHintUsed = quizResult == QuizResult.triangle;
     final currentQ = state.currentQuestion;
     if (currentQ is EngMakingData) {
       final statsNotifier = ref.read(wordStatsNotifierProvider.notifier);
-      String mark = "×";
-      if (result == "maru") {
-        mark = isHintUsed ? "△" : "○";
-      }
-      statsNotifier.recordResult(currentQ.word, mark);
+      statsNotifier.recordResult(currentQ.word, quizResult);
     }
-
-    final updatedMarks = List<String>.from(state.marks);
+    final updatedMarks = List<QuizResult>.from(state.marks);
     if (state.currentIndex < updatedMarks.length) {
-      updatedMarks[state.currentIndex] = result == "maru" ? "◯" : "×";
+      updatedMarks[state.currentIndex] = quizResult;
+    } else {
+      updatedMarks.add(quizResult);
     }
 
-    if (result == "peke") {
-      ref.read(appSoundProvider).requireValue.playSound('peke.mp3');
+    if (quizResult == QuizResult.cross) {
+      final manager = ref.read(appSoundProvider);
+      manager.playSound('peke.mp3');
       state = state.copyWith(
-        resultMark: '×',
+        resultMark: QuizResult.cross,
         isAnswerChecked: true,
         marks: updatedMarks,
         totalScore: (state.totalScore - 10).clamp(0, 999999),
@@ -223,7 +241,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       }
 
       state = state.copyWith(
-        resultMark: '◯',
+        resultMark: quizResult,
         isAnswerChecked: true,
         marks: updatedMarks,
         totalScore: state.totalScore + lastScore + bonus,
@@ -233,9 +251,9 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       );
 
       if (soundLevel > 1) {
-        ref.read(appSoundProvider).requireValue.playSound('marumaru.mp3');
+        ref.read(appSoundProvider).playSound('marumaru.mp3');
       } else {
-        ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
+        ref.read(appSoundProvider).playSound('maru.mp3');
       }
     }
   }
@@ -431,9 +449,9 @@ class LatexInputNotifier extends _$LatexInputNotifier {
 
       if (state.boxSubIndex == currentBoxTokens.length) {
         if (state.currentBoxIndex >= currentPath.length - 1) {
-          sessionNotifier.judge("maru", config);
+          sessionNotifier.judge(QuizResult.circle, config);
         } else {
-          ref.read(appSoundProvider).requireValue.playSound('maru.mp3');
+          ref.read(appSoundProvider).playSound('maru.mp3');
           sessionNotifier
               .handlePartPoint(currentPath[state.currentBoxIndex].score * 10);
           moveToNextBox(currentPath[state.currentBoxIndex + 1].button);
@@ -442,7 +460,7 @@ class LatexInputNotifier extends _$LatexInputNotifier {
         updateVisibility(symbol, state.boxSubIndex);
       }
     } else {
-      sessionNotifier.judge("peke", config);
+      sessionNotifier.judge(QuizResult.cross, config);
     }
   }
 
@@ -524,17 +542,18 @@ class EngInputNotifier extends Notifier<EngInputState> {
     if (targetWord.startsWith(nextText)) {
       if (nextText.length == targetWord.length) {
         // 完成時は judge でボーナス加算
-        sessionNotifier.judge("maru", config, isHintUsed: state.isHintUsed);
+        sessionNotifier.judge(
+            state.isHintUsed ? QuizResult.triangle : QuizResult.circle, config);
       } else {
         // 途中の正解入力：部分点（手動入力時のみ）
         if (!isHint) {
           sessionNotifier.handlePartPoint(nextText.length);
         }
         final sound = isHint ? 'pi.mp3' : 'maru.mp3';
-        ref.read(appSoundProvider).requireValue.playSound(sound);
+        ref.read(appSoundProvider).playSound(sound);
       }
     } else {
-      sessionNotifier.judge("peke", config);
+      sessionNotifier.judge(QuizResult.cross, config);
     }
   }
 

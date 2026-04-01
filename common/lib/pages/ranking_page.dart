@@ -15,11 +15,12 @@ class QuizTabInfo {
 }
 
 class RankingEntry {
+  final String uid;
   final String userName;
   final double score;
   final DateTime date;
   final String quizType;
-  RankingEntry(this.userName, this.score, this.date, this.quizType);
+  RankingEntry(this.uid, this.userName, this.score, this.date, this.quizType);
 }
 
 // --- メインWidget ---
@@ -63,22 +64,7 @@ class CommonRankingPage extends HookConsumerWidget {
 
     // --- クイズ種別タブの生成 ---
     final quizTabs = useMemoized(() {
-      final seen = <String>{};
-      final List<QuizTabInfo> tabs = gameData.detail
-          .where((d) => seen.add(d.resisterSub))
-          .map((d) => QuizTabInfo(
-              id: d.resisterSub,
-              display: l10n(context, d.displayRank),
-              color: d.color,
-              icon: d.detailIcon))
-          .toList();
-
-      if (!gameData.isbattle) {
-        tabs.insert(
-            0,
-            QuizTabInfo(
-                id: "全合計", display: "全合計", color: "9", icon: Icons.functions));
-      }
+      final List<QuizTabInfo> tabs = gameData.rankingList!;
       return tabs;
     }, [selectedModeIndex.value, context]);
 
@@ -99,9 +85,13 @@ class CommonRankingPage extends HookConsumerWidget {
 
         return QuizTabInfo(
           id: d.modeData.modeType,
-          display: l10n(context, d.modeData.modeTitle),
+          display: d.modeData.isbattle
+              ? l10n(context, d.modeData.modeTitle)
+              : l10n(context, 'scoreLabel'),
           color: colorCode,
-          icon: d.modeData.modeIcon,
+          icon: d.modeData.isbattle
+              ? d.modeData.modeIcon
+              : Icons.workspace_premium,
         );
       }).toList();
     }, [context]);
@@ -138,6 +128,7 @@ class CommonRankingPage extends HookConsumerWidget {
         // 直接IDを結合してキーを作成
         final rankingKey = "${subjectId}_${modeType}_$periodId";
 
+        // ScoreManager.getRanking を再び使用（uidが含まれるようになったため）
         final data = await ScoreManager.getRanking(
           context: context,
           rankingId: rankingKey,
@@ -148,6 +139,7 @@ class CommonRankingPage extends HookConsumerWidget {
           final entries = data
               .where((e) => (e['score'] ?? 0) > 0)
               .map((e) => RankingEntry(
+                    e['uid'] ?? "", // uidを格納
                     e['userName'] ?? l10n(context, 'defaultUsername'),
                     (e['score'] as num).toDouble(),
                     (e['date'] ?? DateTime.now()) as DateTime,
@@ -220,7 +212,7 @@ class CommonRankingPage extends HookConsumerWidget {
                               const SizedBox(width: 12),
                             ],
                             Text(
-                              tab.display,
+                              l10n(context, tab.display),
                               style: const TextStyle(
                                 fontSize: 50,
                                 fontWeight: FontWeight.bold,
@@ -305,12 +297,23 @@ class CommonRankingPage extends HookConsumerWidget {
     return ListView.builder(
       itemCount: data.length,
       itemBuilder: (context, index) {
-        return _RankingCard(
-          entry: data[index],
-          index: index,
-          tabColor: tabColor,
-          fix: gameData.fix,
-          unit: gameData.unit,
+        return InkWell(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => UserDetailDialog(
+                uid: data[index].uid,
+                userName: data[index].userName,
+              ),
+            );
+          },
+          child: _RankingCard(
+            entry: data[index],
+            index: index,
+            tabColor: tabColor,
+            fix: gameData.fix,
+            unit: gameData.unit,
+          ),
         );
       },
     );

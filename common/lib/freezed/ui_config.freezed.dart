@@ -221,7 +221,8 @@ mixin _$DetailConfig {
   ModeData get modeData => throw _privateConstructorUsedError;
   DetailData get detail => throw _privateConstructorUsedError; // 原本のカタログデータ
   num get highScore => throw _privateConstructorUsedError; // 状態：最新スコア
-  String get buttonText => throw _privateConstructorUsedError; // 状態：ボタンの文字
+  QuizButtonType get buttonType =>
+      throw _privateConstructorUsedError; // 状態：ボタンの種類
   int get qcount => throw _privateConstructorUsedError;
 
   /// Create a copy of DetailConfig
@@ -242,7 +243,7 @@ abstract class $DetailConfigCopyWith<$Res> {
       ModeData modeData,
       DetailData detail,
       num highScore,
-      String buttonText,
+      QuizButtonType buttonType,
       int qcount});
 
   $AppDataCopyWith<$Res> get appData;
@@ -269,7 +270,7 @@ class _$DetailConfigCopyWithImpl<$Res, $Val extends DetailConfig>
     Object? modeData = null,
     Object? detail = null,
     Object? highScore = null,
-    Object? buttonText = null,
+    Object? buttonType = null,
     Object? qcount = null,
   }) {
     return _then(_value.copyWith(
@@ -289,10 +290,10 @@ class _$DetailConfigCopyWithImpl<$Res, $Val extends DetailConfig>
           ? _value.highScore
           : highScore // ignore: cast_nullable_to_non_nullable
               as num,
-      buttonText: null == buttonText
-          ? _value.buttonText
-          : buttonText // ignore: cast_nullable_to_non_nullable
-              as String,
+      buttonType: null == buttonType
+          ? _value.buttonType
+          : buttonType // ignore: cast_nullable_to_non_nullable
+              as QuizButtonType,
       qcount: null == qcount
           ? _value.qcount
           : qcount // ignore: cast_nullable_to_non_nullable
@@ -344,7 +345,7 @@ abstract class _$$DetailConfigImplCopyWith<$Res>
       ModeData modeData,
       DetailData detail,
       num highScore,
-      String buttonText,
+      QuizButtonType buttonType,
       int qcount});
 
   @override
@@ -372,7 +373,7 @@ class __$$DetailConfigImplCopyWithImpl<$Res>
     Object? modeData = null,
     Object? detail = null,
     Object? highScore = null,
-    Object? buttonText = null,
+    Object? buttonType = null,
     Object? qcount = null,
   }) {
     return _then(_$DetailConfigImpl(
@@ -392,10 +393,10 @@ class __$$DetailConfigImplCopyWithImpl<$Res>
           ? _value.highScore
           : highScore // ignore: cast_nullable_to_non_nullable
               as num,
-      buttonText: null == buttonText
-          ? _value.buttonText
-          : buttonText // ignore: cast_nullable_to_non_nullable
-              as String,
+      buttonType: null == buttonType
+          ? _value.buttonType
+          : buttonType // ignore: cast_nullable_to_non_nullable
+              as QuizButtonType,
       qcount: null == qcount
           ? _value.qcount
           : qcount // ignore: cast_nullable_to_non_nullable
@@ -412,7 +413,7 @@ class _$DetailConfigImpl implements _DetailConfig {
       required this.modeData,
       required this.detail,
       required this.highScore,
-      required this.buttonText,
+      required this.buttonType,
       required this.qcount});
 
   @override
@@ -426,14 +427,14 @@ class _$DetailConfigImpl implements _DetailConfig {
   final num highScore;
 // 状態：最新スコア
   @override
-  final String buttonText;
-// 状態：ボタンの文字
+  final QuizButtonType buttonType;
+// 状態：ボタンの種類
   @override
   final int qcount;
 
   @override
   String toString() {
-    return 'DetailConfig(appData: $appData, modeData: $modeData, detail: $detail, highScore: $highScore, buttonText: $buttonText, qcount: $qcount)';
+    return 'DetailConfig(appData: $appData, modeData: $modeData, detail: $detail, highScore: $highScore, buttonType: $buttonType, qcount: $qcount)';
   }
 
   @override
@@ -447,14 +448,14 @@ class _$DetailConfigImpl implements _DetailConfig {
             (identical(other.detail, detail) || other.detail == detail) &&
             (identical(other.highScore, highScore) ||
                 other.highScore == highScore) &&
-            (identical(other.buttonText, buttonText) ||
-                other.buttonText == buttonText) &&
+            (identical(other.buttonType, buttonType) ||
+                other.buttonType == buttonType) &&
             (identical(other.qcount, qcount) || other.qcount == qcount));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, appData, modeData, detail, highScore, buttonText, qcount);
+      runtimeType, appData, modeData, detail, highScore, buttonType, qcount);
 
   /// Create a copy of DetailConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -471,7 +472,7 @@ abstract class _DetailConfig implements DetailConfig {
       required final ModeData modeData,
       required final DetailData detail,
       required final num highScore,
-      required final String buttonText,
+      required final QuizButtonType buttonType,
       required final int qcount}) = _$DetailConfigImpl;
 
   @override
@@ -483,7 +484,7 @@ abstract class _DetailConfig implements DetailConfig {
   @override
   num get highScore; // 状態：最新スコア
   @override
-  String get buttonText; // 状態：ボタンの文字
+  QuizButtonType get buttonType; // 状態：ボタンの種類
   @override
   int get qcount;
 

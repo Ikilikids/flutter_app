@@ -21,7 +21,9 @@ class CommonFirstPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // --- State & Controllers (Hooks) ---
-
+    final name = ref.watch(appUserNameProvider);
+    final status = ref.watch(userStatusNotifierProvider);
+    final isReady = name.hasValue && status.hasValue;
     final isNavigating = useState(false);
 
     // メインアニメーション（アイコン・タイトル）
@@ -63,10 +65,6 @@ class CommonFirstPage extends HookConsumerWidget {
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (!context.mounted) return;
 
-        // 重いデータ処理と広告初期化を遅延開始
-        ref.read(appUidProvider);
-        ref.read(appSoundProvider);
-
         if (!kIsWeb) {
           AdManager.initialize();
           InterstitialAdHelper.configure(allData);
@@ -81,6 +79,7 @@ class CommonFirstPage extends HookConsumerWidget {
     // --- Logic ---
 
     Future<void> navigateToDestination() async {
+      if (!isReady) return; // ← 追加
       // アニメーション中、または遷移中なら無視
       if (controller.isAnimating || isNavigating.value) return;
 
@@ -98,16 +97,6 @@ class CommonFirstPage extends HookConsumerWidget {
           }
           return;
         }
-
-        final uidAsync = ref.read(appUidProvider);
-        final soundAsync = ref.read(appSoundProvider);
-
-        // 初期化が終わるまで待機
-        await Future.wait([
-          if (uidAsync.isLoading) ref.read(appUidProvider.future),
-          if (soundAsync.isLoading) ref.read(appSoundProvider.future),
-          ref.read(userStatusNotifierProvider.notifier).initialized,
-        ]);
       } catch (e) {
         debugPrint('Navigation initialization error: $e');
         isNavigating.value = false;
@@ -217,7 +206,7 @@ class CommonFirstPage extends HookConsumerWidget {
           ),
 
           // インジケーター表示
-          if (isNavigating.value)
+          if (isNavigating.value || !isReady)
             Container(
               color: Colors.black.withAlpha(50),
               child: const Center(

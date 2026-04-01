@@ -52,10 +52,9 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
 
   /// サウンド再生の共通処理
   void _safePlaySound(String assetName) {
-    final soundAction = ref.read(appSoundProvider).valueOrNull;
-    if (soundAction != null) {
-      soundAction.playSound(assetName);
-    }
+    final soundAction = ref.read(appSoundProvider);
+
+    soundAction.playSound(assetName);
   }
 
   void startTrial() {

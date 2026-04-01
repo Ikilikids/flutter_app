@@ -6,12 +6,12 @@ part of 'app_sound.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appSoundHash() => r'72eaafcc5d1539b0bb48d28447a62ffc74ed5144';
+String _$appSoundHash() => r'f279414213086ca81ee21eed0fc2c794655bd173';
 
-/// See also [AppSound].
-@ProviderFor(AppSound)
-final appSoundProvider = AsyncNotifierProvider<AppSound, SoundManager>.internal(
-  AppSound.new,
+/// See also [appSound].
+@ProviderFor(appSound)
+final appSoundProvider = AutoDisposeProvider<SoundManager>.internal(
+  appSound,
   name: r'appSoundProvider',
   debugGetCreateSourceHash:
       const bool.fromEnvironment('dart.vm.product') ? null : _$appSoundHash,
@@ -19,6 +19,8 @@ final appSoundProvider = AsyncNotifierProvider<AppSound, SoundManager>.internal(
   allTransitiveDependencies: null,
 );
 
-typedef _$AppSound = AsyncNotifier<SoundManager>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AppSoundRef = AutoDisposeProviderRef<SoundManager>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

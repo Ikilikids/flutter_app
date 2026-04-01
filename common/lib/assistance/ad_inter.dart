@@ -115,8 +115,9 @@ class InterstitialAdHelper {
     _loading = true;
 
     await InterstitialAd.load(
-      adUnitId:
-          _config!.appData.interId ?? 'ca-app-pub-3940256099942544/1033173712',
+      adUnitId: kDebugMode || _config!.appData.interId == null
+          ? 'ca-app-pub-3940256099942544/1033173712'
+          : _config!.appData.interId!,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {

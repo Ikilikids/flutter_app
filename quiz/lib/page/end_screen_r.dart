@@ -13,7 +13,7 @@ import '../providers/eng_review_provider.dart';
 class NtEndScreen extends ConsumerStatefulWidget {
   final int correctCount;
   final List<MakingData> P;
-  final List<String> marks;
+  final List<QuizResult> marks;
   const NtEndScreen({
     super.key,
     required this.correctCount,
@@ -39,7 +39,7 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
 
   Future<void> _startSequence() async {
     await Future.delayed(const Duration(milliseconds: 800));
-    ref.read(appSoundProvider).requireValue.playSound('pipi.mp3');
+    ref.read(appSoundProvider).playSound('pipi.mp3');
     if (!mounted) return;
     setState(() => step = 1);
   }
@@ -239,7 +239,7 @@ class _ScoreSection extends StatelessWidget {
 
 class _RankSection extends StatelessWidget {
   final List<MakingData> P;
-  final List<String> marks;
+  final List<QuizResult> marks;
   final DetailConfig quizinfo;
 
   const _RankSection(
@@ -247,6 +247,7 @@ class _RankSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(5),
       child: Container(
@@ -261,7 +262,7 @@ class _RankSection extends StatelessWidget {
                 isScrollable: P.length > 5,
                 labelPadding: EdgeInsets.zero,
                 tabs: List.generate(min(P.length, 10), (index) {
-                  String isCorrect = marks[index];
+                  QuizResult isCorrect = marks[index];
                   return SizedBox(
                     width: P.length > 5 ? 80 : null, // ★ ここで制御
                     height: 40,
@@ -271,17 +272,12 @@ class _RankSection extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('問題${index + 1}'),
-                          isCorrect == "◯"
-                              ? Image.asset(
-                                  'assets/images/circle.png',
-                                  height: 20,
-                                )
-                              : isCorrect == "×"
-                                  ? Image.asset(
-                                      'assets/images/cross.png',
-                                      height: 20,
-                                    )
-                                  : Container(),
+                          Image.asset(
+                              isDark
+                                  ? 'assets/images/${isCorrect.name}_dark.png'
+                                  : 'assets/images/${isCorrect.name}.png',
+                              height: 20),
+                          Container(),
                         ],
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'package:quiz/providers/quiz_session_provider.dart';
+
 abstract class PartData {
   final String mode;
   final List<String> making;
@@ -29,7 +31,7 @@ abstract class PartData {
     int hintCount = 0,
     bool star = false,
     bool heart = false,
-    List<String> recentResults = const [],
+    List<QuizResult> recentResults = const [],
   }) {
     if (mode == "latex") {
       return LatexPartData(
@@ -76,7 +78,7 @@ class EngPartData extends PartData {
   int hintCount;
   bool star;
   bool heart;
-  List<String> recentResults;
+  List<QuizResult> recentResults;
 
   EngPartData({
     required super.mode,

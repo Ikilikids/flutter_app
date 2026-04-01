@@ -1,23 +1,25 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../common.dart';
 
 part 'app_number.g.dart';
 
 @Riverpod(keepAlive: true)
+String initialNumber(Ref ref) => throw UnimplementedError();
+
+@Riverpod(keepAlive: true, dependencies: [initialNumber])
 class AppNumber extends _$AppNumber {
   @override
-  Future<String> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    final code = prefs.getString('Number');
-    return code ?? "mobile";
+  String build() {
+    return ref.watch(initialNumberProvider);
   }
 
-  /// 言語変更 + 保存
-  Future<void> setNumber(String Number) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('Number', Number);
+  Future<void> setNumber(String number) async {
+    final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setString('Number', number);
 
-    // 保存完了後に state 更新
-    state = AsyncData(Number);
+    state = number;
   }
 }

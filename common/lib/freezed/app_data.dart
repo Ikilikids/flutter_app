@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'ui_config.dart';
+import '../common.dart';
 
 part 'app_data.freezed.dart';
 
@@ -87,6 +87,7 @@ class MidData with _$MidData {
 
   const MidData._();
 
+  // 既存のgetter
   String get unit => modeData.unit;
   int get fix => modeData.fix;
   bool get islimited => modeData.islimited;
@@ -94,6 +95,7 @@ class MidData with _$MidData {
   IconData get modeIcon => modeData.modeIcon;
   String get modeTitle => modeData.modeTitle;
   String? get modeDescription => modeData.modeDescription;
+  List<QuizTabInfo>? get rankingList => modeData.rankingList;
   bool get isSmallerBetter => modeData.isSmallerBetter;
   String get modeType => modeData.modeType;
 }
@@ -110,21 +112,23 @@ class ModeData with _$ModeData {
     required IconData modeIcon,
     required String modeTitle,
     String? modeDescription,
+    List<QuizTabInfo>? rankingList, // ← 追加
   }) = _ModeData;
 }
 
 @freezed
 class DetailData with _$DetailData {
   const factory DetailData({
+    required QuizId quizId, // ← 追加
     required String sort,
     required String displayLabel,
-    required String displayRank,
-    required String resisterSub,
-    required String resisterOrigin,
     required String method,
     required String description,
     required String color,
     required String circleColor,
     IconData? detailIcon,
   }) = _DetailData;
+
+  const DetailData._();
+  String get resisterOrigin => quizId.resisterOrigin; // 下位互換用
 }

@@ -19,7 +19,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
     useEffect(() {
       final gameBuilder = allData.mainGame;
       final loadBuilder = allData.loadGame;
-      final sound = ref.read(appSoundProvider).requireValue;
+      final sound = ref.read(appSoundProvider);
 
       // ゲームのロード処理
       if (loadBuilder != null) {

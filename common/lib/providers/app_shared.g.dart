@@ -1,27 +1,29 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user_status_provider.dart';
+part of 'app_shared.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$userStatusNotifierHash() =>
-    r'3244caf87dfbf8bcfcb4752f5c623d4af8c701d5';
+String _$sharedPreferencesHash() => r'6bbc55d4dc38d5979ff916112845bcc4a4a3a1ea';
 
-/// See also [UserStatusNotifier].
-@ProviderFor(UserStatusNotifier)
-final userStatusNotifierProvider =
-    AsyncNotifierProvider<UserStatusNotifier, UserStatus>.internal(
-  UserStatusNotifier.new,
-  name: r'userStatusNotifierProvider',
+/// SharedPreferencesの実体を受け取るためのProvider
+///
+/// Copied from [sharedPreferences].
+@ProviderFor(sharedPreferences)
+final sharedPreferencesProvider = Provider<SharedPreferences>.internal(
+  sharedPreferences,
+  name: r'sharedPreferencesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$userStatusNotifierHash,
+      : _$sharedPreferencesHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$UserStatusNotifier = AsyncNotifier<UserStatus>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef SharedPreferencesRef = ProviderRef<SharedPreferences>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

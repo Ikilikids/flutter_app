@@ -991,6 +991,7 @@ mixin _$ModeData {
   IconData get modeIcon => throw _privateConstructorUsedError;
   String get modeTitle => throw _privateConstructorUsedError;
   String? get modeDescription => throw _privateConstructorUsedError;
+  List<QuizTabInfo>? get rankingList => throw _privateConstructorUsedError;
 
   /// Create a copy of ModeData
   /// with the given fields replaced by the non-null parameter values.
@@ -1013,7 +1014,8 @@ abstract class $ModeDataCopyWith<$Res> {
       String modeType,
       IconData modeIcon,
       String modeTitle,
-      String? modeDescription});
+      String? modeDescription,
+      List<QuizTabInfo>? rankingList});
 }
 
 /// @nodoc
@@ -1040,6 +1042,7 @@ class _$ModeDataCopyWithImpl<$Res, $Val extends ModeData>
     Object? modeIcon = null,
     Object? modeTitle = null,
     Object? modeDescription = freezed,
+    Object? rankingList = freezed,
   }) {
     return _then(_value.copyWith(
       unit: null == unit
@@ -1078,6 +1081,10 @@ class _$ModeDataCopyWithImpl<$Res, $Val extends ModeData>
           ? _value.modeDescription
           : modeDescription // ignore: cast_nullable_to_non_nullable
               as String?,
+      rankingList: freezed == rankingList
+          ? _value.rankingList
+          : rankingList // ignore: cast_nullable_to_non_nullable
+              as List<QuizTabInfo>?,
     ) as $Val);
   }
 }
@@ -1099,7 +1106,8 @@ abstract class _$$ModeDataImplCopyWith<$Res>
       String modeType,
       IconData modeIcon,
       String modeTitle,
-      String? modeDescription});
+      String? modeDescription,
+      List<QuizTabInfo>? rankingList});
 }
 
 /// @nodoc
@@ -1124,6 +1132,7 @@ class __$$ModeDataImplCopyWithImpl<$Res>
     Object? modeIcon = null,
     Object? modeTitle = null,
     Object? modeDescription = freezed,
+    Object? rankingList = freezed,
   }) {
     return _then(_$ModeDataImpl(
       unit: null == unit
@@ -1162,6 +1171,10 @@ class __$$ModeDataImplCopyWithImpl<$Res>
           ? _value.modeDescription
           : modeDescription // ignore: cast_nullable_to_non_nullable
               as String?,
+      rankingList: freezed == rankingList
+          ? _value._rankingList
+          : rankingList // ignore: cast_nullable_to_non_nullable
+              as List<QuizTabInfo>?,
     ));
   }
 }
@@ -1178,7 +1191,9 @@ class _$ModeDataImpl implements _ModeData {
       required this.modeType,
       required this.modeIcon,
       required this.modeTitle,
-      this.modeDescription});
+      this.modeDescription,
+      final List<QuizTabInfo>? rankingList})
+      : _rankingList = rankingList;
 
   @override
   final String unit;
@@ -1198,10 +1213,19 @@ class _$ModeDataImpl implements _ModeData {
   final String modeTitle;
   @override
   final String? modeDescription;
+  final List<QuizTabInfo>? _rankingList;
+  @override
+  List<QuizTabInfo>? get rankingList {
+    final value = _rankingList;
+    if (value == null) return null;
+    if (_rankingList is EqualUnmodifiableListView) return _rankingList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'ModeData(unit: $unit, fix: $fix, islimited: $islimited, isbattle: $isbattle, isSmallerBetter: $isSmallerBetter, modeType: $modeType, modeIcon: $modeIcon, modeTitle: $modeTitle, modeDescription: $modeDescription)';
+    return 'ModeData(unit: $unit, fix: $fix, islimited: $islimited, isbattle: $isbattle, isSmallerBetter: $isSmallerBetter, modeType: $modeType, modeIcon: $modeIcon, modeTitle: $modeTitle, modeDescription: $modeDescription, rankingList: $rankingList)';
   }
 
   @override
@@ -1224,12 +1248,24 @@ class _$ModeDataImpl implements _ModeData {
             (identical(other.modeTitle, modeTitle) ||
                 other.modeTitle == modeTitle) &&
             (identical(other.modeDescription, modeDescription) ||
-                other.modeDescription == modeDescription));
+                other.modeDescription == modeDescription) &&
+            const DeepCollectionEquality()
+                .equals(other._rankingList, _rankingList));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, unit, fix, islimited, isbattle,
-      isSmallerBetter, modeType, modeIcon, modeTitle, modeDescription);
+  int get hashCode => Object.hash(
+      runtimeType,
+      unit,
+      fix,
+      islimited,
+      isbattle,
+      isSmallerBetter,
+      modeType,
+      modeIcon,
+      modeTitle,
+      modeDescription,
+      const DeepCollectionEquality().hash(_rankingList));
 
   /// Create a copy of ModeData
   /// with the given fields replaced by the non-null parameter values.
@@ -1250,7 +1286,8 @@ abstract class _ModeData implements ModeData {
       required final String modeType,
       required final IconData modeIcon,
       required final String modeTitle,
-      final String? modeDescription}) = _$ModeDataImpl;
+      final String? modeDescription,
+      final List<QuizTabInfo>? rankingList}) = _$ModeDataImpl;
 
   @override
   String get unit;
@@ -1270,6 +1307,8 @@ abstract class _ModeData implements ModeData {
   String get modeTitle;
   @override
   String? get modeDescription;
+  @override
+  List<QuizTabInfo>? get rankingList;
 
   /// Create a copy of ModeData
   /// with the given fields replaced by the non-null parameter values.
@@ -1281,11 +1320,9 @@ abstract class _ModeData implements ModeData {
 
 /// @nodoc
 mixin _$DetailData {
+  QuizId get quizId => throw _privateConstructorUsedError; // ← 追加
   String get sort => throw _privateConstructorUsedError;
   String get displayLabel => throw _privateConstructorUsedError;
-  String get displayRank => throw _privateConstructorUsedError;
-  String get resisterSub => throw _privateConstructorUsedError;
-  String get resisterOrigin => throw _privateConstructorUsedError;
   String get method => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   String get color => throw _privateConstructorUsedError;
@@ -1306,16 +1343,16 @@ abstract class $DetailDataCopyWith<$Res> {
       _$DetailDataCopyWithImpl<$Res, DetailData>;
   @useResult
   $Res call(
-      {String sort,
+      {QuizId quizId,
+      String sort,
       String displayLabel,
-      String displayRank,
-      String resisterSub,
-      String resisterOrigin,
       String method,
       String description,
       String color,
       String circleColor,
       IconData? detailIcon});
+
+  $QuizIdCopyWith<$Res> get quizId;
 }
 
 /// @nodoc
@@ -1333,11 +1370,9 @@ class _$DetailDataCopyWithImpl<$Res, $Val extends DetailData>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? quizId = null,
     Object? sort = null,
     Object? displayLabel = null,
-    Object? displayRank = null,
-    Object? resisterSub = null,
-    Object? resisterOrigin = null,
     Object? method = null,
     Object? description = null,
     Object? color = null,
@@ -1345,6 +1380,10 @@ class _$DetailDataCopyWithImpl<$Res, $Val extends DetailData>
     Object? detailIcon = freezed,
   }) {
     return _then(_value.copyWith(
+      quizId: null == quizId
+          ? _value.quizId
+          : quizId // ignore: cast_nullable_to_non_nullable
+              as QuizId,
       sort: null == sort
           ? _value.sort
           : sort // ignore: cast_nullable_to_non_nullable
@@ -1352,18 +1391,6 @@ class _$DetailDataCopyWithImpl<$Res, $Val extends DetailData>
       displayLabel: null == displayLabel
           ? _value.displayLabel
           : displayLabel // ignore: cast_nullable_to_non_nullable
-              as String,
-      displayRank: null == displayRank
-          ? _value.displayRank
-          : displayRank // ignore: cast_nullable_to_non_nullable
-              as String,
-      resisterSub: null == resisterSub
-          ? _value.resisterSub
-          : resisterSub // ignore: cast_nullable_to_non_nullable
-              as String,
-      resisterOrigin: null == resisterOrigin
-          ? _value.resisterOrigin
-          : resisterOrigin // ignore: cast_nullable_to_non_nullable
               as String,
       method: null == method
           ? _value.method
@@ -1387,6 +1414,16 @@ class _$DetailDataCopyWithImpl<$Res, $Val extends DetailData>
               as IconData?,
     ) as $Val);
   }
+
+  /// Create a copy of DetailData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $QuizIdCopyWith<$Res> get quizId {
+    return $QuizIdCopyWith<$Res>(_value.quizId, (value) {
+      return _then(_value.copyWith(quizId: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -1398,16 +1435,17 @@ abstract class _$$DetailDataImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String sort,
+      {QuizId quizId,
+      String sort,
       String displayLabel,
-      String displayRank,
-      String resisterSub,
-      String resisterOrigin,
       String method,
       String description,
       String color,
       String circleColor,
       IconData? detailIcon});
+
+  @override
+  $QuizIdCopyWith<$Res> get quizId;
 }
 
 /// @nodoc
@@ -1423,11 +1461,9 @@ class __$$DetailDataImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? quizId = null,
     Object? sort = null,
     Object? displayLabel = null,
-    Object? displayRank = null,
-    Object? resisterSub = null,
-    Object? resisterOrigin = null,
     Object? method = null,
     Object? description = null,
     Object? color = null,
@@ -1435,6 +1471,10 @@ class __$$DetailDataImplCopyWithImpl<$Res>
     Object? detailIcon = freezed,
   }) {
     return _then(_$DetailDataImpl(
+      quizId: null == quizId
+          ? _value.quizId
+          : quizId // ignore: cast_nullable_to_non_nullable
+              as QuizId,
       sort: null == sort
           ? _value.sort
           : sort // ignore: cast_nullable_to_non_nullable
@@ -1442,18 +1482,6 @@ class __$$DetailDataImplCopyWithImpl<$Res>
       displayLabel: null == displayLabel
           ? _value.displayLabel
           : displayLabel // ignore: cast_nullable_to_non_nullable
-              as String,
-      displayRank: null == displayRank
-          ? _value.displayRank
-          : displayRank // ignore: cast_nullable_to_non_nullable
-              as String,
-      resisterSub: null == resisterSub
-          ? _value.resisterSub
-          : resisterSub // ignore: cast_nullable_to_non_nullable
-              as String,
-      resisterOrigin: null == resisterOrigin
-          ? _value.resisterOrigin
-          : resisterOrigin // ignore: cast_nullable_to_non_nullable
               as String,
       method: null == method
           ? _value.method
@@ -1481,29 +1509,25 @@ class __$$DetailDataImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$DetailDataImpl implements _DetailData {
+class _$DetailDataImpl extends _DetailData {
   const _$DetailDataImpl(
-      {required this.sort,
+      {required this.quizId,
+      required this.sort,
       required this.displayLabel,
-      required this.displayRank,
-      required this.resisterSub,
-      required this.resisterOrigin,
       required this.method,
       required this.description,
       required this.color,
       required this.circleColor,
-      this.detailIcon});
+      this.detailIcon})
+      : super._();
 
+  @override
+  final QuizId quizId;
+// ← 追加
   @override
   final String sort;
   @override
   final String displayLabel;
-  @override
-  final String displayRank;
-  @override
-  final String resisterSub;
-  @override
-  final String resisterOrigin;
   @override
   final String method;
   @override
@@ -1517,7 +1541,7 @@ class _$DetailDataImpl implements _DetailData {
 
   @override
   String toString() {
-    return 'DetailData(sort: $sort, displayLabel: $displayLabel, displayRank: $displayRank, resisterSub: $resisterSub, resisterOrigin: $resisterOrigin, method: $method, description: $description, color: $color, circleColor: $circleColor, detailIcon: $detailIcon)';
+    return 'DetailData(quizId: $quizId, sort: $sort, displayLabel: $displayLabel, method: $method, description: $description, color: $color, circleColor: $circleColor, detailIcon: $detailIcon)';
   }
 
   @override
@@ -1525,15 +1549,10 @@ class _$DetailDataImpl implements _DetailData {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$DetailDataImpl &&
+            (identical(other.quizId, quizId) || other.quizId == quizId) &&
             (identical(other.sort, sort) || other.sort == sort) &&
             (identical(other.displayLabel, displayLabel) ||
                 other.displayLabel == displayLabel) &&
-            (identical(other.displayRank, displayRank) ||
-                other.displayRank == displayRank) &&
-            (identical(other.resisterSub, resisterSub) ||
-                other.resisterSub == resisterSub) &&
-            (identical(other.resisterOrigin, resisterOrigin) ||
-                other.resisterOrigin == resisterOrigin) &&
             (identical(other.method, method) || other.method == method) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -1545,18 +1564,8 @@ class _$DetailDataImpl implements _DetailData {
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      sort,
-      displayLabel,
-      displayRank,
-      resisterSub,
-      resisterOrigin,
-      method,
-      description,
-      color,
-      circleColor,
-      detailIcon);
+  int get hashCode => Object.hash(runtimeType, quizId, sort, displayLabel,
+      method, description, color, circleColor, detailIcon);
 
   /// Create a copy of DetailData
   /// with the given fields replaced by the non-null parameter values.
@@ -1567,29 +1576,24 @@ class _$DetailDataImpl implements _DetailData {
       __$$DetailDataImplCopyWithImpl<_$DetailDataImpl>(this, _$identity);
 }
 
-abstract class _DetailData implements DetailData {
+abstract class _DetailData extends DetailData {
   const factory _DetailData(
-      {required final String sort,
+      {required final QuizId quizId,
+      required final String sort,
       required final String displayLabel,
-      required final String displayRank,
-      required final String resisterSub,
-      required final String resisterOrigin,
       required final String method,
       required final String description,
       required final String color,
       required final String circleColor,
       final IconData? detailIcon}) = _$DetailDataImpl;
+  const _DetailData._() : super._();
 
+  @override
+  QuizId get quizId; // ← 追加
   @override
   String get sort;
   @override
   String get displayLabel;
-  @override
-  String get displayRank;
-  @override
-  String get resisterSub;
-  @override
-  String get resisterOrigin;
   @override
   String get method;
   @override

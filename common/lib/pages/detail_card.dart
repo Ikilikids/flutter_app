@@ -62,11 +62,11 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
                       context: context,
                       ref: ref,
                       config: detailConfig,
+                      index: index,
                       qcount: qcount,
                     ),
-            onWatchAd: _isNavigating
-                ? null
-                : () => _handleWatchAd(ref, detailConfig.detail.resisterOrigin),
+            onWatchAd:
+                _isNavigating ? null : () => _handleWatchAd(ref, detailConfig),
           ),
         );
       },
@@ -75,7 +75,7 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
 
   /// プレイ開始処理
   void handlePlay(BuildContext context, WidgetRef ref, DetailConfig config,
-      int? qcount) async {
+      int index, int? qcount) async {
     if (_isNavigating) return;
 
     setState(() => _isNavigating = true);
@@ -84,15 +84,16 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
       final notifier = ref.read(userStatusNotifierProvider.notifier);
       final String resisterOrigin = config.detail.resisterOrigin;
       final String modeType = config.modeData.modeType;
+      final quizId = QuizId(resisterOrigin: resisterOrigin, modeType: modeType);
 
-      notifier.selectDetail(resisterOrigin);
+      ref.read(selectedDetailIndexProvider.notifier).update(index);
 
       if (qcount != null) {
-        notifier.updateQcount(resisterOrigin, modeType, qcount);
+        notifier.updateQcount(quizId, qcount);
       }
 
       if (config.modeData.islimited) {
-        await notifier.recordPlay(resisterOrigin);
+        await notifier.recordPlay(quizId);
       }
 
       if (mounted) {
@@ -109,12 +110,14 @@ class _CommonDetailCardState extends ConsumerState<CommonDetailCard> {
   }
 
   /// 広告視聴処理
-  void _handleWatchAd(WidgetRef ref, String resisterOrigin) {
+  void _handleWatchAd(WidgetRef ref, DetailConfig config) {
     if (RewardedAdManager.isAdReady) {
       RewardedAdManager.showAd(onReward: () async {
-        await ref
-            .read(userStatusNotifierProvider.notifier)
-            .grantReward(resisterOrigin);
+        final quizId = QuizId(
+          resisterOrigin: config.detail.resisterOrigin,
+          modeType: config.modeData.modeType,
+        );
+        await ref.read(userStatusNotifierProvider.notifier).grantReward(quizId);
       });
     } else {
       RewardedAdManager.loadAd();
@@ -190,30 +193,30 @@ class _CommonSubjectCard extends HookConsumerWidget {
                   ),
                   if (mode.isbattle)
                     _PlayButton(
-                      buttonTextKey: detailConfig.buttonText,
+                      buttonType: detailConfig.buttonType,
                       accentColor: accentColor,
                       onPressed: onPlay != null
                           ? () => _handleOnPressed(
-                              context, detailConfig.buttonText, null)
+                              context, detailConfig.buttonType, null)
                           : null,
                     ),
                   if (!mode.isbattle) ...[
                     _PlayButton(
-                      buttonTextKey: detailConfig.buttonText,
+                      buttonType: detailConfig.buttonType,
                       accentColor: accentColor,
                       qcount: 5,
                       onPressed: onPlay != null
                           ? () => _handleOnPressed(
-                              context, detailConfig.buttonText, 5)
+                              context, detailConfig.buttonType, 5)
                           : null,
                     ),
                     _PlayButton(
-                      buttonTextKey: detailConfig.buttonText,
+                      buttonType: detailConfig.buttonType,
                       accentColor: accentColor,
                       qcount: 10,
                       onPressed: onPlay != null
                           ? () => _handleOnPressed(
-                              context, detailConfig.buttonText, 10)
+                              context, detailConfig.buttonType, 10)
                           : null,
                     ),
                   ],
@@ -226,10 +229,11 @@ class _CommonSubjectCard extends HookConsumerWidget {
     );
   }
 
-  void _handleOnPressed(BuildContext context, String btnKey, int? qcount) {
-    if (btnKey == 'watchAdToPlayButton') {
+  void _handleOnPressed(
+      BuildContext context, QuizButtonType bType, int? qcount) {
+    if (bType == QuizButtonType.watchAd) {
       _showAdDialog(context);
-    } else if (btnKey != 'playedTodayButton') {
+    } else if (bType != QuizButtonType.alreadyPlayed) {
       onPlay!(qcount);
     }
   }
@@ -437,25 +441,39 @@ class _ScoreDisplay extends HookConsumerWidget {
 }
 
 class _PlayButton extends StatelessWidget {
-  final String buttonTextKey;
+  final QuizButtonType buttonType;
   final Color accentColor;
   final int? qcount;
   final VoidCallback? onPressed;
 
   const _PlayButton({
-    required this.buttonTextKey,
+    required this.buttonType,
     required this.accentColor,
     this.qcount,
     this.onPressed,
   });
 
+  String _getButtonTextKey(QuizButtonType type) {
+    switch (type) {
+      case QuizButtonType.play:
+        return 'playButton';
+      case QuizButtonType.playSecond:
+        return 'playButtonSecondTime';
+      case QuizButtonType.watchAd:
+        return 'watchAdToPlayButton';
+      case QuizButtonType.alreadyPlayed:
+        return 'playedTodayButton';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    String buttonText = (qcount != null && buttonTextKey == 'playButton')
+    final buttonTextKey = _getButtonTextKey(buttonType);
+    String buttonText = (qcount != null && buttonType == QuizButtonType.play)
         ? AppLocalizations.of(context)!.playButtonWithCount(qcount!)
         : l10n(context, buttonTextKey);
 
-    final isPlayedToday = buttonTextKey == 'playedTodayButton';
+    final isPlayedToday = buttonType == QuizButtonType.alreadyPlayed;
 
     return Expanded(
       child: Padding(
@@ -494,25 +512,26 @@ Future<void> globalHandlePlay({
   required BuildContext context,
   required WidgetRef ref,
   required DetailConfig config,
+  required int index,
   int? qcount,
 }) async {
   final notifier = ref.read(userStatusNotifierProvider.notifier);
+  final quizId = QuizId(
+    resisterOrigin: config.detail.resisterOrigin,
+    modeType: config.modeData.modeType,
+  );
 
   // 1. 選択状態を更新
-  notifier.selectDetail(config.detail.resisterOrigin);
-
+  ref.read(selectedDetailIndexProvider.notifier).update(index);
+  print("Selected quizId: $index, qcount: $qcount");
   // 2. 問題数があれば更新
   if (qcount != null) {
-    notifier.updateQcount(
-      config.detail.resisterOrigin,
-      config.modeData.modeType,
-      qcount,
-    );
+    notifier.updateQcount(quizId, qcount);
   }
 
   // 3. 制限モードの記録（あれば）
   if (config.modeData.islimited) {
-    await notifier.recordPlay(config.detail.resisterOrigin);
+    await notifier.recordPlay(quizId);
   }
 
   // 4. 画面遷移

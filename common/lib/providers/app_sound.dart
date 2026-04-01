@@ -1,32 +1,11 @@
 import 'package:common/common.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_sound.g.dart';
 
-@Riverpod(keepAlive: true)
-class AppSound extends _$AppSound {
-  @override
-  Future<SoundManager> build() async {
-    print('AppSound: Building and initializing SoundManager...');
-    // 1. インスタンス作成
-    final manager = SoundManager();
-
-    // 2. 音源のロード完了を待つ
-    await manager.firstLoadSounds();
-    Future.delayed(const Duration(milliseconds: 500), () {
-      manager.secondloadSounds();
-    });
-    // 3. お片付け（dispose）の登録
-    // クラス形式でも ref.onDispose は build 内で登録します
-    ref.onDispose(() {
-      manager.dispose();
-    });
-
-    // 4. ロード済みの manager を state として返す
-    print('AppSound: SoundManager loaded and ready');
-    return manager;
-  }
-
-  // 今後、例えば「全消音」などの操作を足したくなったらここに書ける
-  // Future<void> muteAll() async { ... }
+@riverpod
+SoundManager appSound(Ref ref) {
+  // ここで throw しておくことで、Bootstrapでの上書きを強制する
+  throw UnimplementedError('BootstrapでappSoundProviderを上書きしてください');
 }

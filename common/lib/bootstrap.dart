@@ -1,9 +1,32 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:common/common.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class Bootstrap extends ConsumerStatefulWidget {
+// 初期化結果をまとめる型
+class _InitResult {
+  final SharedPreferences prefs;
+  final Locale locale;
+  final String number;
+  final ThemeMode themeMode;
+
+  final SoundManager soundManager;
+
+  _InitResult(
+    this.prefs,
+    this.locale,
+    this.number,
+    this.themeMode,
+    this.soundManager,
+  );
+}
+
+class Bootstrap extends HookConsumerWidget {
   final AllData appConfig;
   final FirebaseOptions firebaseOptions;
 
@@ -14,59 +37,69 @@ class Bootstrap extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<Bootstrap> createState() => _BootstrapState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1回だけ実行される初期化処理を useMemoized で定義
+    final Future<_InitResult> initFuture = useMemoized(() async {
+      allData = appConfig;
+      // SharedPreferences の取得
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-class _BootstrapState extends ConsumerState<Bootstrap> {
-  bool _isInitialized = false;
+      // 言語判定ロジック
+      const List<String> supported = ['en', 'ja', 'ko', 'es', 'pt'];
+      final String deviceCode = PlatformDispatcher.instance.locale.languageCode;
+      final String? savedCode = prefs.getString('languageCode');
+      final String finalCode = savedCode != null
+          ? savedCode
+          : supported.contains(deviceCode)
+              ? deviceCode
+              : 'en';
+      final Locale locale = Locale(finalCode);
 
-  @override
-  void initState() {
-    super.initState();
-    allData = widget.appConfig;
-    _initialize();
-  }
+      // ボタン判定
+      final String? savedNumber = prefs.getString('Number');
+      final String finalNumber = savedNumber != null ? savedNumber : "mobile";
 
-  Future<void> _initialize() async {
-    // 最小限の初期化
+      //ライト・ダーク判定
+      final String? savedTheme = prefs.getString('ThemeMode');
+      final String finalTheme = savedTheme != null ? savedTheme : "system";
+      final ThemeMode themeMode = ThemeMode.values.byName(finalTheme);
+      // Firebase とその他の初期化
+      await Firebase.initializeApp(options: firebaseOptions);
 
-    await Firebase.initializeApp(options: widget.firebaseOptions);
+      //音ロード
+      final manager = SoundManager();
+      await manager.firstLoadSounds();
+      unawaited(manager.secondloadSounds());
 
-    // アップデートチェックと基本設定の読み込みを先に行う
-    await Future.wait([
-      UpdateManager.checkUpdate(),
-      ref.read(appThemeProvider.future),
-      ref.read(appLocaleProvider.future),
-    ]);
+      return _InitResult(prefs, locale, finalNumber, themeMode, manager);
+    });
 
-    // ユーザーデータの読み込みを開始 (await しないことで、タイトル画面をすぐに出しつつ裏で通信する)
-    ref.read(userStatusNotifierProvider.notifier).initializeData();
+    // Future の状態を監視
+    final AsyncSnapshot<_InitResult> snapshot = useFuture(initFuture);
 
-    if (mounted) {
-      setState(() {
-        _isInitialized = true;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // 最小限の初期化が終わるまで待つ (この間はプラットフォームの背景色を表示)
-    if (!_isInitialized) {
-      final brightness =
-          WidgetsBinding.instance.platformDispatcher.platformBrightness;
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
+    // 完了するまではローディング画面
+    if (!snapshot.hasData) {
+      return const MaterialApp(
         home: Scaffold(
-          backgroundColor:
-              brightness == Brightness.dark ? Colors.black : Colors.white,
-          body: const SizedBox.shrink(),
+          body: Center(child: CircularProgressIndicator()),
         ),
       );
     }
 
-    return CommonApp(
-      home: const CommonFirstPage(),
+    final _InitResult result = snapshot.data!;
+
+    // 完了したら ProviderScope で上書きしてアプリを開始
+    return ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(result.prefs),
+        initialLocaleProvider.overrideWithValue(result.locale),
+        initialNumberProvider.overrideWithValue(result.number),
+        initialThemeProvider.overrideWithValue(result.themeMode),
+        appSoundProvider.overrideWithValue(result.soundManager)
+      ],
+      child: CommonApp(
+        home: const CommonFirstPage(),
+      ),
     );
   }
 }

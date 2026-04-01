@@ -7,205 +7,167 @@ part 'user_status_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class UserStatusNotifier extends _$UserStatusNotifier {
-  Future<void>? _initFuture;
-
-  /// 初期化が完了するのを待機するための Future
-  Future<void> get initialized => _initFuture ?? Future.value();
-
+  // ---------------------------------------------------------
+  // ① 初期化ロジック (起動時に一回だけ実行される)
+  // ---------------------------------------------------------
   @override
-  UserStatus build() {
-    // 最初は空の状態で作成 (Bootstrapで後から上書きされる)
-    return _createInitialStatus([], [], '', '');
-  }
+  Future<UserStatus> build() async {
+    final prefs = ref.watch(sharedPreferencesProvider);
 
-  String _getDateKey() {
-    final now = DateTime.now();
-    return "${now.year}-${now.month}-${now.day}";
-  }
-
-  /// 外部（Bootstrap）から初期データを注入するためのメソッド
-  Future<void> initializeData() async {
-    // 二重初期化を防ぎつつ Future を保存
-    _initFuture ??= _doInitialize();
-    return _initFuture;
-  }
-
-  Future<void> _doInitialize() async {
-    final prefs = await SharedPreferences.getInstance();
-    final allScoresMap = await ScoreManager.getAllScores();
-    final dateKey = _getDateKey();
-
-    final List<QuizStatus> initialQuizzes = [];
+    // 1. 全クイズIDを収集
+    final Set<String> targetIdSet = {};
     for (var mid in allData.mid) {
       for (var detail in mid.detail) {
-        final uniqueId = "${detail.resisterOrigin}_${mid.modeData.modeType}";
-        final score = allScoresMap[uniqueId] ?? 0.0;
-        final playCount =
-            prefs.getInt('playCount_${dateKey}_${detail.resisterOrigin}') ?? 0;
+        targetIdSet.add(detail.quizId.toString());
+      }
+    }
 
-        initialQuizzes.add(QuizStatus(
-          id: uniqueId,
-          highScore: score,
-          playCount: playCount,
+    // 2. スコアを一括取得
+    final allScoresMap =
+        await ScoreManager.getScoresByIds(targetIdSet.toList());
+    final dateKey = _getDateKey();
+
+    final List<MapEntry<QuizId, QuizStatus>> quizEntries = [];
+    for (var mid in allData.mid) {
+      for (var detail in mid.detail) {
+        final quizId = detail.quizId;
+        final score = allScoresMap[quizId.toString()] ?? 0.0;
+        final playCount =
+            prefs.getInt('playCount_${dateKey}_${quizId.toString()}') ?? 0;
+
+        quizEntries.add(MapEntry(
+          quizId,
+          QuizStatus(
+            id: quizId,
+            highScore: score,
+            playCount: playCount,
+            buttonType: _computeButtonType(
+              id: quizId,
+              playCount: playCount,
+              prefs: prefs,
+            ),
+          ),
         ));
       }
     }
 
-    final List<ModeStatus> initialModes = allData.mid.map((m) {
-      return ModeStatus(modeType: m.modeData.modeType);
-    }).toList();
-
-    final firstModeId = allData.mid.first.modeData.modeType;
-    final firstDetailId = allData.mid.first.detail.first.resisterOrigin;
-
-    state = _calculateAllStatus(
-      initialQuizzes,
-      initialModes,
-      firstModeId,
-      firstDetailId,
-      prefs,
-      dateKey,
-    );
-  }
-
-  UserStatus _createInitialStatus(List<QuizStatus> quizzes,
-      List<ModeStatus> modes, String selectedModeId, String selectedDetailId) {
     return UserStatus(
-      quizzes: quizzes,
-      modes: modes,
-      selectedModeId: selectedModeId,
-      selectedDetailId: selectedDetailId,
+      quizzes: Map.fromEntries(quizEntries),
     );
   }
 
-  // --- ② 状態計算ロジック（ボタン文字・モードバッジ） ---
-  UserStatus _calculateAllStatus(
-    List<QuizStatus> quizzes,
-    List<ModeStatus> modes,
-    String selectedModeId,
-    String selectedDetailId,
-    SharedPreferences prefs,
-    String dateKey,
-  ) {
-    final updatedQuizzes = quizzes.map((q) {
-      final parts = q.id.split('_');
-      final quizId = parts[0];
-      final modeType = parts[1];
+  // ---------------------------------------------------------
+  // ② 更新アクション (state.requireValue を使って同期的に更新)
+  // ---------------------------------------------------------
 
-      final masterMode =
-          allData.mid.firstWhere((m) => m.modeData.modeType == modeType);
+  /// プレイ回数を記録し、ボタン状態を再計算
+  Future<void> recordPlay(QuizId id) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final dateKey = _getDateKey();
+    final String storageKey = 'playCount_${dateKey}_${id.toString()}';
 
-      if (!masterMode.modeData.islimited) {
-        return q.copyWith(buttonText: 'playButton');
-      } else {
-        final isAdWatched = prefs.getString('rewardGranted_$quizId') == dateKey;
-        if (q.playCount == 0) {
-          return q.copyWith(buttonText: 'playButton');
-        } else if (q.playCount == 1 && isAdWatched) {
-          return q.copyWith(buttonText: 'playButtonSecondTime');
-        } else if (q.playCount == 1 && !isAdWatched) {
-          return q.copyWith(buttonText: 'watchAdToPlayButton');
-        } else {
-          return q.copyWith(buttonText: 'playedTodayButton');
-        }
-      }
-    }).toList();
+    int nextCount = (prefs.getInt(storageKey) ?? 0) + 1;
+    await prefs.setInt(storageKey, nextCount);
 
-    return UserStatus(
-      quizzes: updatedQuizzes,
-      modes: modes,
-      selectedModeId: selectedModeId,
-      selectedDetailId: selectedDetailId,
-    );
+    // 現在の状態を取得（ロード済み前提なので requireValue）
+    final currentStatus = state.requireValue;
+    final updatedQuizzes = Map<QuizId, QuizStatus>.from(currentStatus.quizzes);
+    final current = updatedQuizzes[id];
+
+    if (current != null) {
+      updatedQuizzes[id] = current.copyWith(
+        playCount: nextCount,
+        buttonType: _computeButtonType(
+          id: id,
+          playCount: nextCount,
+          prefs: prefs,
+        ),
+      );
+      // stateを直接上書き（UIに即反映）
+      state = AsyncData(currentStatus.copyWith(quizzes: updatedQuizzes));
+    }
   }
 
-  // --- ③ セレクター更新アクション ---
-
-  void selectDetail(String resisterOrigin) {
-    state = state.copyWith(selectedDetailId: resisterOrigin);
-  }
-
-  // --- ④ データ更新アクション ---
-
-  /// 現在選択されているクイズのプレイ回数を記録
-  /// 【修正】特定のクイズIDを指定してプレイ回数を記録
-  Future<void> recordPlay(String quizId) async {
-    final prefs = await SharedPreferences.getInstance();
+  /// 報酬付与（広告視聴済みフラグを立ててボタン更新）
+  Future<void> grantReward(QuizId id) async {
+    final prefs = ref.read(sharedPreferencesProvider);
     final dateKey = _getDateKey();
 
-    // IDをキーにしてプレイ回数を保存・更新
-    int nextCount = ((prefs.getInt('playCount_${dateKey}_$quizId') ?? 0) + 1);
-    print("Recording play for $quizId, next count: $nextCount");
-    await prefs.setInt('playCount_${dateKey}_$quizId', nextCount);
+    await prefs.setString('rewardGranted_${id.toString()}', dateKey);
 
-    // 状態（quizzesリスト）の中の、該当するIDを持つすべてのデータを更新
-    final newQuizzes = state.quizzes
-        .map((q) => q.id.startsWith('${quizId}_')
-            ? q.copyWith(playCount: nextCount)
-            : q)
-        .toList();
+    final currentStatus = state.requireValue;
+    final updatedQuizzes = Map<QuizId, QuizStatus>.from(currentStatus.quizzes);
+    final current = updatedQuizzes[id];
 
-    state = _calculateAllStatus(
-      newQuizzes,
-      state.modes,
-      state.selectedModeId,
-      state.selectedDetailId,
-      prefs,
-      dateKey,
-    );
+    if (current != null) {
+      updatedQuizzes[id] = current.copyWith(
+        buttonType: _computeButtonType(
+          id: id,
+          playCount: current.playCount,
+          prefs: prefs,
+        ),
+      );
+      state = AsyncData(currentStatus.copyWith(quizzes: updatedQuizzes));
+    }
   }
 
-  /// 現在選択されているクイズに報酬を付与（広告視聴）
-  Future<void> grantReward(String quizId) async {
-    print("granting reward for $quizId");
-    final prefs = await SharedPreferences.getInstance();
+  /// 問題数のカウントを更新
+  void updateQcount(QuizId id, int qcount) {
+    final currentStatus = state.requireValue;
+    final updatedQuizzes = Map<QuizId, QuizStatus>.from(currentStatus.quizzes);
+    final current = updatedQuizzes[id];
+
+    if (current != null) {
+      updatedQuizzes[id] = current.copyWith(qCount: qcount);
+      state = AsyncData(currentStatus.copyWith(quizzes: updatedQuizzes));
+    }
+  }
+
+  /// スコアをローカル状態に即時反映
+  Future<void> updateScoreLocally(QuizId id, num newScore) async {
+    final currentStatus = state.requireValue;
+    final updatedQuizzes = Map<QuizId, QuizStatus>.from(currentStatus.quizzes);
+    final current = updatedQuizzes[id];
+
+    if (current != null) {
+      updatedQuizzes[id] = current.copyWith(highScore: newScore);
+      state = AsyncData(currentStatus.copyWith(quizzes: updatedQuizzes));
+    }
+  }
+
+  // ---------------------------------------------------------
+  // ③ 内部ロジック (整理のため private に集約)
+  // ---------------------------------------------------------
+
+  static String _getDateKey() {
+    final now = DateTime.now();
+    return "${now.year}-${now.month}-${now.day}";
+  }
+
+  static QuizButtonType _computeButtonType({
+    required QuizId id,
+    required int playCount,
+    required SharedPreferences prefs,
+  }) {
+    final masterMode =
+        allData.mid.firstWhere((m) => m.modeData.modeType == id.modeType);
+
+    if (!masterMode.modeData.islimited) {
+      return QuizButtonType.play;
+    }
+
     final dateKey = _getDateKey();
+    final isAdWatched =
+        prefs.getString('rewardGranted_${id.toString()}') == dateKey;
 
-    // 特定のIDに対してフラグを立てる
-    await prefs.setString('rewardGranted_$quizId', dateKey);
-
-    state = _calculateAllStatus(
-      state.quizzes,
-      state.modes,
-      state.selectedModeId,
-      state.selectedDetailId,
-      prefs,
-      dateKey,
-    );
-  }
-
-  /// 【修正】特定のクイズID（resisterOrigin）の問題数を更新
-  void updateQcount(String resisterOrigin, String modeType, int qcount) {
-    final targetId = "${resisterOrigin}_$modeType";
-
-    state = state.copyWith(
-      quizzes: state.quizzes
-          .map((q) => q.id == targetId ? q.copyWith(qCount: qcount) : q)
-          .toList(),
-    );
-  }
-
-  /// 【修正】特定のクイズID（resisterOrigin）のスコアを更新
-  Future<void> updateScoreLocally(
-      String resisterOrigin, String modeType, num newScore) async {
-    final targetId = "${resisterOrigin}_$modeType";
-
-    // 1. まずクイズリストを更新
-    final newQuizzes = state.quizzes
-        .map((q) => q.id == targetId ? q.copyWith(highScore: newScore) : q)
-        .toList();
-
-    // 2. 最新の SharedPreferences を取得
-    final prefs = await SharedPreferences.getInstance();
-
-    // 3. 状態を更新
-    state = _calculateAllStatus(
-      newQuizzes,
-      state.modes,
-      state.selectedModeId,
-      state.selectedDetailId,
-      prefs,
-      _getDateKey(),
-    );
+    if (playCount == 0) {
+      return QuizButtonType.play;
+    } else if (playCount == 1 && isAdWatched) {
+      return QuizButtonType.playSecond;
+    } else if (playCount == 1 && !isAdWatched) {
+      return QuizButtonType.watchAd;
+    } else {
+      return QuizButtonType.alreadyPlayed;
+    }
   }
 }

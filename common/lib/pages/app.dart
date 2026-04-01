@@ -10,42 +10,30 @@ class CommonApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. SoundManager も追加で監視
-    final themeAsync = ref.watch(appThemeProvider);
-    final localeAsync = ref.watch(appLocaleProvider);
-    ref.watch(appUidProvider);
+    // 1. 同期 Provider (Locale)
+    final Locale currentLocale = ref.watch(appLocaleProvider);
+
+    // 2. 非同期 Provider (Theme)
+    final ThemeMode themeAsync = ref.watch(appThemeProvider);
+
+    // その他の監視
     ref.watch(appSoundProvider);
 
-    // 2. 最低限必要なものだけチェック（テーマとロケールのみ）
-    final bool isReady = themeAsync.hasValue && localeAsync.hasValue;
-
-    // appTitle が特定文字列なら日本語固定
-    final isJapaneseTitle = allData.appData.appTitle == "とことん高校数学";
-    final localeToUse =
-        isJapaneseTitle ? const Locale('ja') : localeAsync.valueOrNull;
+    // 特定のタイトルなら日本語固定、そうでなければ現在の設定(Locale)を使う
+    final bool isJapaneseTitle = allData.appData.appTitle == "とことん高校数学";
+    final Locale localeToUse =
+        isJapaneseTitle ? const Locale('ja') : currentLocale;
 
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      locale: localeToUse,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: themeAsync.valueOrNull ?? ThemeMode.system,
+        debugShowCheckedModeBanner: false,
+        locale: localeToUse,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: themeAsync,
 
-      // ★ 最低限（テーマと言語）が揃ったらタイトルを出し、他は裏で待つ
-      home: isReady
-          ? home
-          : Scaffold(
-              backgroundColor: _getInitialBgColor(),
-              body: const SizedBox.shrink(),
-            ),
-    );
-  }
-
-  Color _getInitialBgColor() {
-    final brightness =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    return brightness == Brightness.dark ? Colors.black : Colors.white;
+        // テーマが揃ったら中身を表示
+        home: home);
   }
 }

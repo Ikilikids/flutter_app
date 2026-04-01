@@ -36,17 +36,17 @@ class _CommonEndScreenState extends ConsumerState<CommonEndScreen> {
 
   Future<void> _startSequence() async {
     await Future.delayed(const Duration(milliseconds: 700));
-    ref.read(appSoundProvider).requireValue.playSound('pi.mp3');
+    ref.read(appSoundProvider).playSound('pi.mp3');
     if (!mounted) return;
     setState(() => step = 1);
 
     await Future.delayed(const Duration(milliseconds: 700));
-    ref.read(appSoundProvider).requireValue.playSound('pi.mp3');
+    ref.read(appSoundProvider).playSound('pi.mp3');
     if (!mounted) return;
     setState(() => step = 2);
 
     await Future.delayed(const Duration(milliseconds: 700));
-    ref.read(appSoundProvider).requireValue.playSound('pipi.mp3');
+    ref.read(appSoundProvider).playSound('pipi.mp3');
     if (!mounted) return;
     setState(() => step = 3);
   }
