@@ -5,7 +5,7 @@ import '../common.dart';
 
 part 'ui_provider.g.dart';
 
-/// ① 今どのタブ（モード）を選択しているか (0:無制限, 1:1日限定, 2:ランキング, 3:設定)
+/// ① タブ選択
 @Riverpod(keepAlive: true)
 class SelectedModeIndex extends _$SelectedModeIndex {
   @override
@@ -13,57 +13,42 @@ class SelectedModeIndex extends _$SelectedModeIndex {
   void update(int index) => state = index;
 }
 
-/// ② 今どの詳細（詳細カード）を選択しているか
+/// ② 選ばれている QuizId (初期値を設定して Non-nullable に)
 @Riverpod(keepAlive: true)
-class SelectedDetailIndex extends _$SelectedDetailIndex {
+class SelectedQuizId extends _$SelectedQuizId {
   @override
-  int build() => 0;
-  void update(int index) => state = index;
+  QuizId build() {
+    // 初期値として「最初のモードの最初の項目」を返す
+    return allData.mid[0].detail[0].quizId;
+  }
+
+  void update(QuizId id) => state = id;
 }
 
-/// ③ 原本と成績を合体させた「現在のモード」の全データ
-@Riverpod(
-    keepAlive: true, dependencies: [UserStatusNotifier, SelectedModeIndex])
-MidConfig currentMidConfig(Ref ref) {
-  // ユーザー状態を監視 (同期)
-  final status = ref.watch(userStatusNotifierProvider).requireValue;
-  // 現在のタブIndexを監視
-  final selectedIndex = ref.watch(selectedModeIndexProvider);
+/// ③ 1件合体工場 (Family)
+@Riverpod(keepAlive: true, dependencies: [UserStatusNotifier])
+DetailConfig quizDetail(Ref ref, QuizId id) {
+  final masterMid =
+      allData.mid.firstWhere((m) => m.modeData.modeType == id.modeType);
+  final detailData = masterMid.detail.firstWhere((d) => d.quizId == id);
 
-  // タブIndexに基づいて、原本から該当するモードを取得
-  final midIndex = selectedIndex < allData.mid.length ? selectedIndex : 0;
-  final masterMid = allData.mid[midIndex];
+  final status =
+      ref.watch(userStatusNotifierProvider.select((s) => s.value?.quizzes[id]));
 
-  // 個別のクイズ原本に成績を合体させる
-  final details = masterMid.detail.map((d) {
-    final qStatus = status.quizzes[d.quizId];
-
-    return DetailConfig(
-      appData: allData.appData,
-      modeData: masterMid.modeData,
-      detail: d,
-      highScore: qStatus?.highScore ?? 0.0,
-      buttonType: qStatus?.buttonType ?? QuizButtonType.play,
-      qcount: qStatus?.qCount ?? 5,
-    );
-  }).toList();
-
-  return MidConfig(
+  return DetailConfig(
     appData: allData.appData,
     modeData: masterMid.modeData,
-    details: details,
+    detail: detailData,
+    highScore: status?.highScore ?? 0.0,
+    buttonType: status?.buttonType ?? QuizButtonType.play,
+    qcount: status?.qCount ?? 5,
   );
 }
 
-/// ④ 今まさに「選ばれている1件」の DetailConfig
-@Riverpod(
-    keepAlive: true, dependencies: [currentMidConfig, SelectedDetailIndex])
+/// ④ 現在選ばれている 1 件 (絶対に DetailConfig を返す)
+@Riverpod(keepAlive: true, dependencies: [SelectedQuizId, quizDetail])
 DetailConfig currentDetailConfig(Ref ref) {
-  final midConfig = ref.watch(currentMidConfigProvider);
-  final selectedIndex = ref.watch(selectedDetailIndexProvider);
-
-  // インデックスが範囲内かチェック、範囲外なら0番目を返す
-  final index = (selectedIndex < midConfig.details.length) ? selectedIndex : 0;
-
-  return midConfig.details[index];
+  final id = ref.watch(selectedQuizIdProvider);
+  // id は必ず存在するので、そのまま watch して返すだけ
+  return ref.watch(quizDetailProvider(id));
 }

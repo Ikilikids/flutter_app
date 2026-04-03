@@ -6,37 +6,179 @@ part of 'ui_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentMidConfigHash() => r'2653b58829da4ffd6eef2b8e587926b7d0bd1d02';
+String _$quizDetailHash() => r'883dac864ae47cf9cae2950eac5194b979f6a89d';
 
-/// ③ 原本と成績を合体させた「現在のモード」の全データ
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// ③ 1件合体工場 (Family)
 ///
-/// Copied from [currentMidConfig].
-@ProviderFor(currentMidConfig)
-final currentMidConfigProvider = Provider<MidConfig>.internal(
-  currentMidConfig,
-  name: r'currentMidConfigProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$currentMidConfigHash,
-  dependencies: <ProviderOrFamily>[
+/// Copied from [quizDetail].
+@ProviderFor(quizDetail)
+const quizDetailProvider = QuizDetailFamily();
+
+/// ③ 1件合体工場 (Family)
+///
+/// Copied from [quizDetail].
+class QuizDetailFamily extends Family<DetailConfig> {
+  /// ③ 1件合体工場 (Family)
+  ///
+  /// Copied from [quizDetail].
+  const QuizDetailFamily();
+
+  /// ③ 1件合体工場 (Family)
+  ///
+  /// Copied from [quizDetail].
+  QuizDetailProvider call(
+    QuizId id,
+  ) {
+    return QuizDetailProvider(
+      id,
+    );
+  }
+
+  @override
+  QuizDetailProvider getProviderOverride(
+    covariant QuizDetailProvider provider,
+  ) {
+    return call(
+      provider.id,
+    );
+  }
+
+  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
+    userStatusNotifierProvider
+  ];
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
+      <ProviderOrFamily>{
     userStatusNotifierProvider,
-    selectedModeIndexProvider
-  ],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    userStatusNotifierProvider,
-    ...?userStatusNotifierProvider.allTransitiveDependencies,
-    selectedModeIndexProvider,
-    ...?selectedModeIndexProvider.allTransitiveDependencies
-  },
-);
+    ...?userStatusNotifierProvider.allTransitiveDependencies
+  };
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'quizDetailProvider';
+}
+
+/// ③ 1件合体工場 (Family)
+///
+/// Copied from [quizDetail].
+class QuizDetailProvider extends Provider<DetailConfig> {
+  /// ③ 1件合体工場 (Family)
+  ///
+  /// Copied from [quizDetail].
+  QuizDetailProvider(
+    QuizId id,
+  ) : this._internal(
+          (ref) => quizDetail(
+            ref as QuizDetailRef,
+            id,
+          ),
+          from: quizDetailProvider,
+          name: r'quizDetailProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$quizDetailHash,
+          dependencies: QuizDetailFamily._dependencies,
+          allTransitiveDependencies:
+              QuizDetailFamily._allTransitiveDependencies,
+          id: id,
+        );
+
+  QuizDetailProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final QuizId id;
+
+  @override
+  Override overrideWith(
+    DetailConfig Function(QuizDetailRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: QuizDetailProvider._internal(
+        (ref) => create(ref as QuizDetailRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  ProviderElement<DetailConfig> createElement() {
+    return _QuizDetailProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is QuizDetailProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef CurrentMidConfigRef = ProviderRef<MidConfig>;
-String _$currentDetailConfigHash() =>
-    r'd4c19774dbb18e739a9b52a2cbdbc435ebb0873c';
+mixin QuizDetailRef on ProviderRef<DetailConfig> {
+  /// The parameter `id` of this provider.
+  QuizId get id;
+}
 
-/// ④ 今まさに「選ばれている1件」の DetailConfig
+class _QuizDetailProviderElement extends ProviderElement<DetailConfig>
+    with QuizDetailRef {
+  _QuizDetailProviderElement(super.provider);
+
+  @override
+  QuizId get id => (origin as QuizDetailProvider).id;
+}
+
+String _$currentDetailConfigHash() =>
+    r'4a94f1d048cb7f36efcb955983115738596a69bc';
+
+/// ④ 現在選ばれている 1 件 (絶対に DetailConfig を返す)
 ///
 /// Copied from [currentDetailConfig].
 @ProviderFor(currentDetailConfig)
@@ -46,15 +188,12 @@ final currentDetailConfigProvider = Provider<DetailConfig>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$currentDetailConfigHash,
-  dependencies: <ProviderOrFamily>[
-    currentMidConfigProvider,
-    selectedDetailIndexProvider
-  ],
+  dependencies: <ProviderOrFamily>[selectedQuizIdProvider, quizDetailProvider],
   allTransitiveDependencies: <ProviderOrFamily>{
-    currentMidConfigProvider,
-    ...?currentMidConfigProvider.allTransitiveDependencies,
-    selectedDetailIndexProvider,
-    ...?selectedDetailIndexProvider.allTransitiveDependencies
+    selectedQuizIdProvider,
+    ...?selectedQuizIdProvider.allTransitiveDependencies,
+    quizDetailProvider,
+    ...?quizDetailProvider.allTransitiveDependencies
   },
 );
 
@@ -63,7 +202,7 @@ final currentDetailConfigProvider = Provider<DetailConfig>.internal(
 typedef CurrentDetailConfigRef = ProviderRef<DetailConfig>;
 String _$selectedModeIndexHash() => r'6e2118a35d398b1cde8c186ff1361d0f32ca3bf8';
 
-/// ① 今どのタブ（モード）を選択しているか (0:無制限, 1:1日限定, 2:ランキング, 3:設定)
+/// ① タブ選択
 ///
 /// Copied from [SelectedModeIndex].
 @ProviderFor(SelectedModeIndex)
@@ -79,24 +218,23 @@ final selectedModeIndexProvider =
 );
 
 typedef _$SelectedModeIndex = Notifier<int>;
-String _$selectedDetailIndexHash() =>
-    r'7ce5b482c96013852b0ef753190ba04fa0f3e092';
+String _$selectedQuizIdHash() => r'ef1a736ce7d4f75d795b19e98a8d6405323e7519';
 
-/// ② 今どの詳細（詳細カード）を選択しているか
+/// ② 選ばれている QuizId (初期値を設定して Non-nullable に)
 ///
-/// Copied from [SelectedDetailIndex].
-@ProviderFor(SelectedDetailIndex)
-final selectedDetailIndexProvider =
-    NotifierProvider<SelectedDetailIndex, int>.internal(
-  SelectedDetailIndex.new,
-  name: r'selectedDetailIndexProvider',
+/// Copied from [SelectedQuizId].
+@ProviderFor(SelectedQuizId)
+final selectedQuizIdProvider =
+    NotifierProvider<SelectedQuizId, QuizId>.internal(
+  SelectedQuizId.new,
+  name: r'selectedQuizIdProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$selectedDetailIndexHash,
+      : _$selectedQuizIdHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$SelectedDetailIndex = Notifier<int>;
+typedef _$SelectedQuizId = Notifier<QuizId>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

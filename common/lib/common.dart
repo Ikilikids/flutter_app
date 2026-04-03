@@ -18,8 +18,12 @@ export 'freezed/user_status.dart';
 
 //pages
 export 'pages/app.dart';
+export 'pages/card/card.dart';
+export 'pages/card/part/circleicon.dart';
+export 'pages/card/part/discripsion.dart';
+export 'pages/card/part/playbutton.dart';
+export 'pages/card/part/score.dart';
 export 'pages/countdown_screen.dart';
-export 'pages/detail_card.dart';
 export 'pages/end_screen.dart';
 export 'pages/first_page.dart';
 export 'pages/mode_selection_page.dart';
@@ -38,7 +42,6 @@ export 'providers/user_status_provider.dart';
 export 'src/generated/l10n/app_localizations.dart';
 // widgets
 export 'widgets/app_ad_scaffold.dart';
-export 'widgets/circle_icon.dart';
 export 'widgets/color.dart';
 export 'widgets/common_widget.dart';
 export 'widgets/dialog.dart';

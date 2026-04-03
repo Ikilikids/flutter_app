@@ -356,6 +356,8 @@ class ReviewSetupPage extends HookConsumerWidget {
             child: ElevatedButton(
               onPressed: isEnabled
                   ? () {
+                      ref.read(selectedQuizIdProvider.notifier).update(
+                          QuizId(resisterOrigin: "復習モード", modeType: "z"));
                       // 1. 英単語専用のフィルタを「登録」
                       ref.read(engReviewFilterProvider.notifier).state =
                           EngReviewFilter(

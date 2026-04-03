@@ -12,6 +12,7 @@ class Quizscreen extends HookConsumerWidget {
     final session = ref.watch(quizSessionNotifierProvider);
     final notifier = ref.read(quizSessionNotifierProvider.notifier);
     final activeConfig = ref.read(currentDetailConfigProvider);
+    print(activeConfig.modeData.isbattle);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 初期化
