@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import '../providers/eng_provider.dart';
+
 class EngDisplayView extends HookConsumerWidget {
   const EngDisplayView({super.key});
 

@@ -57,7 +57,7 @@ class WordListPage extends HookConsumerWidget {
 
         // カテゴリ（domain）とレベル（totalScore）のユニークな値を取得
         final filterOptions = useMemoized(() {
-          final domains = wordListData.map((e) => e.domain).toSet().toList()
+          final domains = wordListData.map((e) => e.middle).toSet().toList()
             ..sort();
           final levels = wordListData.map((e) => e.totalScore).toSet().toList()
             ..sort();
@@ -71,7 +71,7 @@ class WordListPage extends HookConsumerWidget {
           // 1. カテゴリ絞り込み
           if (selectedDomains.value.isNotEmpty) {
             list = list
-                .where((item) => selectedDomains.value.contains(item.domain))
+                .where((item) => selectedDomains.value.contains(item.middle))
                 .toList();
           }
 
@@ -418,7 +418,7 @@ class WordListPage extends HookConsumerWidget {
       itemBuilder: (context, index) {
         final part = data[index];
         // 各単語のsubjectに基づいたカラーを取得
-        final cardThemeColor = getQuizColor2(part.subject, context, 1, 0.65, 1);
+        final cardThemeColor = getQuizColor2(part.top, context, 1, 0.65, 1);
 
         return _WordCard(
           part: part,

@@ -3,16 +3,16 @@ import 'package:quiz/providers/quiz_session_provider.dart';
 abstract class PartData {
   final String mode;
   final List<String> making;
-  final String subject;
-  final String domain;
+  final String top;
+  final String middle;
   final String field;
   final int totalScore;
 
   PartData({
     required this.mode,
     required this.making,
-    required this.subject,
-    required this.domain,
+    required this.top,
+    required this.middle,
     required this.field,
     required this.totalScore,
   });
@@ -37,8 +37,8 @@ abstract class PartData {
       return LatexPartData(
         mode: mode,
         making: making,
-        subject: subject,
-        domain: domain,
+        top: subject,
+        middle: domain,
         field: field,
         totalScore: totalScore,
         holes: holes!,
@@ -48,8 +48,8 @@ abstract class PartData {
       return EngPartData(
         mode: mode,
         making: making,
-        subject: subject,
-        domain: domain,
+        top: subject,
+        middle: domain,
         field: field,
         totalScore: totalScore,
         correctCount: correctCount,
@@ -63,8 +63,8 @@ abstract class PartData {
       return OptionPartData(
         mode: mode,
         making: making,
-        subject: subject,
-        domain: domain,
+        top: subject,
+        middle: domain,
         field: field,
         totalScore: totalScore,
       );
@@ -83,8 +83,8 @@ class EngPartData extends PartData {
   EngPartData({
     required super.mode,
     required super.making,
-    required super.subject,
-    required super.domain,
+    required super.top,
+    required super.middle,
     required super.field,
     required super.totalScore,
     this.correctCount = 0,
@@ -112,8 +112,8 @@ class LatexPartData extends PartData {
   LatexPartData({
     required super.mode,
     required super.making,
-    required super.subject,
-    required super.domain,
+    required super.top,
+    required super.middle,
     required super.field,
     required super.totalScore,
     required this.holes,
@@ -125,8 +125,8 @@ class OptionPartData extends PartData {
   OptionPartData({
     required super.mode,
     required super.making,
-    required super.subject,
-    required super.domain,
+    required super.top,
+    required super.middle,
     required super.field,
     required super.totalScore,
   });

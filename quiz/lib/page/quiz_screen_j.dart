@@ -12,7 +12,6 @@ class Quizscreen extends HookConsumerWidget {
     final session = ref.watch(quizSessionNotifierProvider);
     final notifier = ref.read(quizSessionNotifierProvider.notifier);
     final activeConfig = ref.read(currentDetailConfigProvider);
-    print(activeConfig.modeData.isbattle);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 初期化
@@ -240,12 +239,9 @@ class Quizscreen extends HookConsumerWidget {
           if (i < session.marks.length &&
               session.marks[i] == QuizResult.circle) {
             final p = solved[i];
-            final domain = p.pt.domain;
-            final subject = p.pt.subject;
-            print(p);
-            // 英単語アプリ特有のマッピングロジック
+            final domain = p.pt.middle;
+            final subject = p.pt.top;
             String? category;
-            print("Domain: $domain, Subject: $subject");
             if (domain == "動詞") {
               category = "動詞";
             } else if (domain == "形容詞" || domain == "副詞") {
@@ -255,7 +251,6 @@ class Quizscreen extends HookConsumerWidget {
             } else {
               category = generateRankLabel(subject);
             }
-
             counts[category] = (counts[category] ?? 0) + 1;
           }
         }

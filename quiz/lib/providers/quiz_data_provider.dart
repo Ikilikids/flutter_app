@@ -21,7 +21,7 @@ Future<Map<int, List<EngPartData>>> integratedEngQuiz(Ref ref) async {
   // 英単語専用のプロバイダーを監視
   final rows = await ref.watch(juniorEngRawCsvProvider.future);
   // 可変データの初期値を監視 (初回のみ実行されるように)
-  final statsMap = await ref.watch(wordStatsInitialProvider.future);
+  final statsMap = await ref.watch(wordStatsNotifierProvider.future);
 
   final Map<int, List<EngPartData>> scoreMap = {};
 
@@ -38,8 +38,8 @@ Future<Map<int, List<EngPartData>>> integratedEngQuiz(Ref ref) async {
     final p = EngPartData(
       mode: "eng",
       making: [word, meaning],
-      subject: getSpeechNumber(row[3].toString()),
-      domain: row[3].toString(),
+      top: getSpeechNumber(row[3].toString()),
+      middle: row[3].toString(),
       field: row[0].toString(),
       totalScore: totalScore,
       correctCount: stats.correctCount,

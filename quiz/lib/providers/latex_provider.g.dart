@@ -1,26 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'word_stats_provider.dart';
+part of 'latex_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$wordStatsNotifierHash() => r'b0201f1d66c1462cab9f2994b3a31be9851e5090';
+String _$latexInputNotifierHash() =>
+    r'792071b9d3f2775e4c1f3e99e424e3bb0b5f3d15';
 
-/// See also [WordStatsNotifier].
-@ProviderFor(WordStatsNotifier)
-final wordStatsNotifierProvider =
-    AsyncNotifierProvider<WordStatsNotifier, Map<String, WordStats>>.internal(
-  WordStatsNotifier.new,
-  name: r'wordStatsNotifierProvider',
+/// See also [LatexInputNotifier].
+@ProviderFor(LatexInputNotifier)
+final latexInputNotifierProvider =
+    AutoDisposeNotifierProvider<LatexInputNotifier, LatexInputState>.internal(
+  LatexInputNotifier.new,
+  name: r'latexInputNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$wordStatsNotifierHash,
+      : _$latexInputNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$WordStatsNotifier = AsyncNotifier<Map<String, WordStats>>;
+typedef _$LatexInputNotifier = AutoDisposeNotifier<LatexInputState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

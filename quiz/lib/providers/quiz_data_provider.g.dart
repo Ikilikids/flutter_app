@@ -25,7 +25,7 @@ final juniorEngRawCsvProvider = FutureProvider<List<List<dynamic>>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef JuniorEngRawCsvRef = FutureProviderRef<List<List<dynamic>>>;
-String _$integratedEngQuizHash() => r'2a3be8185e53e6c21eb74305f47b7f019dd19220';
+String _$integratedEngQuizHash() => r'f628684d3bad73419f321aedb33947232df7b876';
 
 /// 3. 統合データ: 固定CSVデータ + 可変統計データをマージ (非同期)
 ///

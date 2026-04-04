@@ -87,11 +87,11 @@ class ReviewSetupPage extends HookConsumerWidget {
           bool levelMatch = selectedLevels.value.contains(word.totalScore);
 
           // 4. 品詞
-          bool partMatch = selectedParts.value.contains(word.domain) ||
-              (word.domain != "名詞" &&
-                  word.domain != "動詞" &&
-                  word.domain != "形容詞" &&
-                  word.domain != "副詞" &&
+          bool partMatch = selectedParts.value.contains(word.middle) ||
+              (word.middle != "名詞" &&
+                  word.middle != "動詞" &&
+                  word.middle != "形容詞" &&
+                  word.middle != "副詞" &&
                   selectedParts.value.contains("その他"));
 
           return tagMatch && metricMatch && levelMatch && partMatch;

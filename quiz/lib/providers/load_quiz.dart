@@ -18,11 +18,11 @@ class LoadQuiz {
 
     if (title == "とことん高校数学") {
       // Case 1: 高校数学
-      filterdQuizData = await MathQuizLoader.load(quizinfo);
+      filterdQuizData = await load(quizinfo);
     } else if (title == "appTitle") {
       // Case 2: 特殊モード (appTitle)
-      final raw = await MathQuizLoader.load(quizinfo);
-      MathQuizLoader.expandForAppTitle(ref, quizinfo, raw);
+      final raw = await load(quizinfo);
+      expandForAppTitle(ref, quizinfo, raw);
       filterdQuizData = raw;
     } else if (title.contains("英単語")) {
       // Case 3: 英単語

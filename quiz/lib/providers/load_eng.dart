@@ -28,7 +28,7 @@ class EngQuizLoader {
           if (sortParts.length < 2) continue;
 
           // 品詞・レベルの基本チェック
-          if (!sortParts[0].contains(part.subject)) continue;
+          if (!sortParts[0].contains(part.top)) continue;
           if (!sortParts[1].contains(part.totalScore.toString())) continue;
 
           // 復習モードの詳細条件（後方互換のため残す）
@@ -49,7 +49,7 @@ class EngQuizLoader {
   static bool _checkCustomFilter(EngReviewFilter filter, EngPartData part,
       Map<String, WordStats> statsMap) {
     // 1. 品詞チェック
-    final domain = part.domain;
+    final domain = part.middle;
     bool partMatch = filter.parts.contains(domain) ||
         (domain != "名詞" &&
             domain != "動詞" &&

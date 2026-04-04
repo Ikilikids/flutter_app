@@ -5,6 +5,8 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import '../providers/latex_provider.dart';
+
 // --- 表示部分 ---
 class LatexDisplayView extends HookConsumerWidget {
   const LatexDisplayView({super.key});

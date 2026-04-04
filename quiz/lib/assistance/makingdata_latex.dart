@@ -19,8 +19,8 @@ abstract class MakingData {
   // ★ getter で素材から引っ張る。
   // これにより、P.mode や P.totalScore がどこでも使える！
   String get mode => pt.mode;
-  String get subject => pt.subject;
-  String get domain => pt.domain;
+  String get subject => pt.top;
+  String get domain => pt.middle;
   String get field => pt.field;
   int get totalScore => pt.totalScore;
   List<String> get making => pt.making;
