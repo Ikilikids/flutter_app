@@ -40,18 +40,6 @@ final _appConfig = AllData(
     },
     mainGame: (BuildContext context, DetailConfig quizinfo) =>
         const Quizscreen(), // const を追加
-
-    endBuilder: (context, totalScore, originalData, quizinfo) {
-      // 念のため、中身をキャストして渡す
-      final List<MakingData> pData = List<MakingData>.from(originalData[0]);
-      final List<QuizResult> markData = List<QuizResult>.from(originalData[1]);
-
-      return NtEndScreen(
-        correctCount: totalScore.round(),
-        P: pData,
-        marks: markData,
-      );
-    },
   ),
   mid: [
     MidData(

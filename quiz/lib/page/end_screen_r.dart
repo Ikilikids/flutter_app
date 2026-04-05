@@ -11,14 +11,8 @@ import '../providers/eng_review_provider.dart';
 // These typedefs are local to this file for now.
 
 class NtEndScreen extends ConsumerStatefulWidget {
-  final int correctCount;
-  final List<MakingData> P;
-  final List<QuizResult> marks;
   const NtEndScreen({
     super.key,
-    required this.correctCount,
-    required this.P,
-    required this.marks,
   });
 
   @override
@@ -53,8 +47,6 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
       0.35,
       0.95,
     );
-    String unit = _quizinfo.modeData.unit;
-    int fix = _quizinfo.modeData.fix;
     return PopScope(
       canPop: false,
       child: AppAdScaffold(
@@ -65,32 +57,20 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
               children: [
                 Expanded(
                   flex: 1,
-                  child: _QuizNameSection(
-                    quizName: _quizinfo.detail.displayLabel,
-                    backgroundColor: quizColor,
-                  ),
+                  child: _QuizNameSection(),
                 ),
                 const SizedBox(height: 20),
                 Expanded(
                   flex: 3,
-                  child: _ScoreSection(
-                    score: step >= 1 ? widget.correctCount : null,
-                    borderColor: quizColor,
-                    fix: fix,
-                    unit: unit,
-                  ),
+                  child: _ScoreSection(step: step),
                 ),
                 SizedBox(
                   height: 420,
-                  child: _RankSection(
-                      P: widget.P, quizinfo: _quizinfo, marks: widget.marks),
+                  child: _RankSection(),
                 ),
                 Expanded(
                   flex: 2,
-                  child: _ActionSection(
-                    backgroundColor: quizColor,
-                    isLimitedMode: false,
-                  ),
+                  child: _ActionSection(),
                 ),
               ],
             ),
@@ -101,17 +81,18 @@ class _NtEndScreenState extends ConsumerState<NtEndScreen> {
   }
 }
 
-class _QuizNameSection extends StatelessWidget {
-  final String quizName;
-  final Color backgroundColor;
-
-  const _QuizNameSection({
-    required this.quizName,
-    required this.backgroundColor,
-  });
-
+class _QuizNameSection extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quizinfo = ref.watch(currentDetailConfigProvider);
+    final quizName = quizinfo.detail.displayLabel;
+    Color backgroundColor = getQuizColor2(
+      quizinfo.detail.color,
+      context,
+      1,
+      0.35,
+      0.95,
+    );
     return Center(
       child: Row(
         children: [
@@ -150,21 +131,33 @@ class _QuizNameSection extends StatelessWidget {
   }
 }
 
-class _ScoreSection extends StatelessWidget {
-  final num? score;
-  final Color borderColor;
-  final int fix;
-  final String unit;
+class _ScoreSection extends ConsumerWidget {
+  final int step;
 
-  const _ScoreSection({
-    required this.score,
-    required this.borderColor,
-    required this.fix,
-    required this.unit,
-  });
+  const _ScoreSection({required this.step});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quizinfo = ref.watch(currentDetailConfigProvider);
+    final elapsed = ref.watch(quizElapsedTimerProvider);
+    final session = ref.watch(quizSessionNotifierProvider);
+
+// 2. switch 式で、どの値を「スコア」として採用するか決める
+    final num score = switch (quizinfo.timeMode) {
+      TimeMode.timeAttack => elapsed,
+      TimeMode.countDown => session.totalScore,
+      TimeMode.learning => session.correctCount, // その他のモード用（必要なら）
+    };
+    Color borderColor = getQuizColor2(
+      quizinfo.detail.color,
+      context,
+      1,
+      0.35,
+      0.95,
+    );
+    String unit = quizinfo.modeData.unit;
+    int fix = quizinfo.modeData.fix;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: SizedBox(
@@ -209,7 +202,7 @@ class _ScoreSection extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        score == null ? " " : score!.toStringAsFixed(fix),
+                        step == 0 ? " " : score.toStringAsFixed(fix),
                         style: TextStyle(
                           fontSize: 1000,
                           fontWeight: FontWeight.w600,
@@ -237,16 +230,12 @@ class _ScoreSection extends StatelessWidget {
   }
 }
 
-class _RankSection extends StatelessWidget {
-  final List<MakingData> P;
-  final List<QuizResult> marks;
-  final DetailConfig quizinfo;
-
-  const _RankSection(
-      {required this.P, required this.quizinfo, required this.marks});
-
+class _RankSection extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(quizSessionNotifierProvider);
+    final P = session.historyQuestions;
+    final marks = session.historyMarks;
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(5),
@@ -297,7 +286,7 @@ class _RankSection extends StatelessWidget {
                           SizedBox(
                             height: 240,
                             width: double.infinity,
-                            child: buildChildWidget(context, P[index]),
+                            child: QuestionDisplayArea(index: index),
                           ),
                           Container(
                             height: 120,
@@ -357,18 +346,18 @@ class _RankSection extends StatelessWidget {
 }
 
 class _ActionSection extends ConsumerWidget {
-  final Color backgroundColor;
-  final bool isLimitedMode;
-
-  const _ActionSection({
-    required this.backgroundColor,
-    required this.isLimitedMode,
-  });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeMap = ref.watch(activeGameMapProvider);
     final quizinfo = ref.watch(currentDetailConfigProvider);
+    Color backgroundColor = getQuizColor2(
+      quizinfo.detail.color,
+      context,
+      1,
+      0.35,
+      0.95,
+    );
+    final isLimitedMode = quizinfo.modeData.islimited;
     final availableCount = activeMap[1]?.length ?? 0;
     final isReviewMode = quizinfo.detail.resisterOrigin == "復習モード";
 

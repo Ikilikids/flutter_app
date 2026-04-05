@@ -10,6 +10,16 @@ class Quizscreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(quizSessionNotifierProvider);
+    print(ref.watch(quizRemainingTimerProvider));
+
+    // build が何度走っても、この値は保持される
+    final listenCount = useRef(0);
+
+    ref.listen(quizSessionNotifierProvider, (prev, next) {
+      listenCount.value++; // .value を増やす
+      print("Listen発火回数: ${listenCount.value}");
+    });
+
     final notifier = ref.read(quizSessionNotifierProvider.notifier);
     final activeConfig = ref.read(currentDetailConfigProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -18,57 +28,26 @@ class Quizscreen extends HookConsumerWidget {
     useEffect(() {
       Future.microtask(() {
         notifier.init(activeConfig);
-        _updateQuestion(ref, isInitial: true);
+        notifier.updateQuestionFlow(isInitial: true); // これだけ
       });
       return null;
     }, []);
 
-    // 正誤判定後の処理
-    ref.listen(quizSessionNotifierProvider.select((s) => s.isAnswerChecked),
-        (prev, checked) {
-      if (checked) {
-        Future.delayed(
-            Duration(
-                milliseconds: activeConfig.appData.appTitle == "とことん高校数学"
-                    ? 400
-                    : 150), () {
-          final currentSession = ref.read(quizSessionNotifierProvider);
-          if (!context.mounted) return;
-          if (currentSession.isGameOver) return;
-          if (activeConfig.appData.appTitle == "appTitle") {
-            if (currentSession.correctCount >= activeConfig.qcount) {
-              _finishGame(context, ref, activeConfig, currentSession);
-            } else {
-              _updateQuestion(ref);
-            }
-          } else if (activeConfig.modeData.isbattle) {
-            _updateQuestion(ref);
-          } else {
-            if (currentSession.currentIndex >= activeConfig.qcount - 1) {
-              _finishGame(context, ref, activeConfig, currentSession);
-            } else {
-              _updateQuestion(ref);
-            }
-          }
-        });
-      }
-    });
-
-    // ゲームオーバー判定
     ref.listen(quizSessionNotifierProvider.select((s) => s.isGameOver),
         (prev, isOver) {
-      if (isOver && context.mounted) {
-        final currentSession = ref.read(quizSessionNotifierProvider);
-        _finishGame(context, ref, activeConfig, currentSession);
+      final session = ref.read(quizSessionNotifierProvider);
+      if (isOver &&
+          session.status == QuizSessionStatus.finished &&
+          context.mounted) {
+        _performTransition(context, ref);
       }
     });
-
     if (session.currentQuestion == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final P = session.currentQuestion!;
-    final childWidget = buildChildWidget(context, P);
+    final childWidget = QuestionDisplayArea();
 
     return PopScope(
       canPop: false,
@@ -77,7 +56,7 @@ class Quizscreen extends HookConsumerWidget {
         if (!session.isGameOver) {
           showMenuDialog(context,
               onTap: () =>
-                  ref.read(quizSessionNotifierProvider.notifier).endGame(),
+                  ref.read(quizSessionNotifierProvider.notifier).cancelGame(),
               isLimitedMode: activeConfig.modeData.islimited);
         }
       },
@@ -97,12 +76,7 @@ class Quizscreen extends HookConsumerWidget {
                             // appTotleの場合
                             Expanded(
                               flex: 3,
-                              child: timewidget(
-                                activeConfig.detail.sort,
-                                session.elapsedTime,
-                                session.correctCount,
-                                context,
-                              ),
+                              child: TimeWidget(),
                             ),
                             Expanded(
                               flex: 2,
@@ -110,16 +84,12 @@ class Quizscreen extends HookConsumerWidget {
                                   onTap: () => ref
                                       .read(
                                           quizSessionNotifierProvider.notifier)
-                                      .endGame(),
+                                      .cancelGame(),
                                   isLimitedMode:
                                       activeConfig.modeData.islimited,
                                   istap: !session.isGameOver),
                             ),
-                            Expanded(
-                                flex: 3,
-                                child: pointwidget(
-                                    context, session.correctCount,
-                                    remainingTime: session.remainingTime)),
+                            Expanded(flex: 3, child: PointWidget()),
                           ] else ...[
                             // それ以外の場合
                             if (activeConfig.modeData.isbattle) ...[
@@ -130,41 +100,31 @@ class Quizscreen extends HookConsumerWidget {
                                   child: CustomPaint(
                                     size: const Size(100, 100),
                                     painter: TimeCirclePainter(
-                                        remainingTime: session.remainingTime,
-                                        isDark: isDark),
+                                        ref: ref, isDark: isDark),
                                   ),
                                 ),
                               )
                             ],
-                            Expanded(flex: 2, child: quizInfo(context, P)),
+                            Expanded(flex: 2, child: QuizInfoWidget()),
                             Expanded(
                               flex: 1,
                               child: menuButton(context,
                                   onTap: () => ref
                                       .read(
                                           quizSessionNotifierProvider.notifier)
-                                      .endGame(),
+                                      .cancelGame(),
                                   isLimitedMode:
                                       activeConfig.modeData.islimited,
                                   istap: !session.isGameOver),
                             ),
                             if (activeConfig.modeData.isbattle) ...[
-                              Expanded(
-                                  flex: 2,
-                                  child: pointwidget(
-                                      context, session.totalScore,
-                                      remainingTime: session.remainingTime)),
+                              Expanded(flex: 2, child: PointWidget()),
                               Expanded(
                                 flex: 1,
-                                child: increasewidget(
-                                  session.scoreFeedback1,
-                                  session.scoreFeedback2,
-                                ),
+                                child: IncreaseFeedbackWidget(),
                               ),
                             ] else
-                              Expanded(
-                                  flex: 4,
-                                  child: marupekelist(context, session.marks)),
+                              Expanded(flex: 4, child: MaruPekeListWidget()),
                           ],
                         ],
                       )),
@@ -186,8 +146,7 @@ class Quizscreen extends HookConsumerWidget {
                         flex: 7,
                         child: QuizOptions(
                             quizData: P,
-                            onCorrect: (res) =>
-                                notifier.judge(res, activeConfig))),
+                            onCorrect: (res) => notifier.judge(res))),
                 ],
               ),
               if (session.isAnswerChecked)
@@ -206,82 +165,24 @@ class Quizscreen extends HookConsumerWidget {
     );
   }
 
-  void _updateQuestion(WidgetRef ref, {bool isInitial = false}) {
-    final sessionNotifier = ref.read(quizSessionNotifierProvider.notifier);
-
-    if (!isInitial) {
-      sessionNotifier.nextQuestionIndex();
-    }
-
-    final ct = ChooseQuizData(ref: ref).chooseRandombyScoreRange();
-
-    final question = MakingData.fromPart(ct);
-
-    sessionNotifier.updateQuestion(question);
-  }
-
-  void _finishGame(BuildContext context, WidgetRef ref, DetailConfig config,
-      QuizSessionState session) {
-    ref.read(quizSessionNotifierProvider.notifier).endGame();
-
-    Future.delayed(const Duration(milliseconds: 200), () {
+  void _performTransition(BuildContext context, WidgetRef ref) {
+    final config = ref.read(currentDetailConfigProvider);
+    int delay =
+        config.appData.appTitle == "appTitle" || !config.modeData.isbattle
+            ? 300
+            : 0;
+    Future.delayed(Duration(milliseconds: delay), () {
+      if (!context.mounted) return;
       ref.read(appSoundProvider).playSound('hoi.mp3');
-      final solved = [
-        ...session.solvedQuestions,
-        if (session.currentQuestion != null) session.currentQuestion!
-      ];
-
-      // 品詞・レベル別の加算スコアを集計
-      Map<String, int>? categoryScores;
-      if (config.appData.appTitle != "appTitle") {
-        final Map<String, int> counts = {};
-        for (int i = 0; i < solved.length; i++) {
-          if (i < session.marks.length &&
-              session.marks[i] == QuizResult.circle) {
-            final p = solved[i];
-            final domain = p.pt.middle;
-            final subject = p.pt.top;
-            String? category;
-            if (domain == "動詞") {
-              category = "動詞";
-            } else if (domain == "形容詞" || domain == "副詞") {
-              category = "形容詞・副詞";
-            } else if (domain == "名詞" || domain.contains("詞")) {
-              category = "名詞・その他";
-            } else {
-              category = generateRankLabel(subject);
-            }
-            counts[category] = (counts[category] ?? 0) + 1;
-          }
-        }
-        if (counts.isNotEmpty) categoryScores = counts;
-      }
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => config.appData.appTitle == "appTitle"
-              ? PipiScreen(totalScore: session.elapsedTime)
-              : config.modeData.isbattle
-                  ? PipiScreen(
-                      totalScore: session.totalScore,
-                      originalData: [solved, session.marks],
-                      categoryScores: categoryScores,
-                    )
-                  : PipiScreen(
-                      totalScore: session.correctCount,
-                      originalData: [solved, session.marks],
-                      categoryScores: categoryScores,
-                    ),
+          builder: (context) {
+            return PipiScreen();
+          },
         ),
       );
     });
   }
-}
-
-String generateRankLabel(String sort) {
-  if (sort == "1" || sort == "A") return "数Ⅰ・数A";
-  if (sort == "2" || sort == "B") return "数Ⅱ・数B";
-  if (sort == "3" || sort == "C") return "数Ⅲ・数C";
-  return sort;
 }

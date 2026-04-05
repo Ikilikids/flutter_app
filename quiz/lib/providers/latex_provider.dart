@@ -194,9 +194,8 @@ class LatexInputNotifier extends _$LatexInputNotifier {
 
       if (state.boxSubIndex == currentBoxTokens.length) {
         if (state.currentBoxIndex >= currentPath.length - 1) {
-          sessionNotifier.judge(QuizResult.circle, config);
+          sessionNotifier.judge(QuizResult.circle);
         } else {
-          ref.read(appSoundProvider).playSound('maru.mp3');
           sessionNotifier
               .handlePartPoint(currentPath[state.currentBoxIndex].score * 10);
           moveToNextBox(currentPath[state.currentBoxIndex + 1].button);
@@ -205,7 +204,7 @@ class LatexInputNotifier extends _$LatexInputNotifier {
         updateVisibility(symbol, state.boxSubIndex);
       }
     } else {
-      sessionNotifier.judge(QuizResult.cross, config);
+      sessionNotifier.judge(QuizResult.cross);
     }
   }
 

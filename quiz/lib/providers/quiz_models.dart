@@ -1,7 +1,9 @@
-import 'package:quiz/providers/quiz_session_provider.dart';
+import 'dart:math';
+
+import '../quiz.dart';
 
 abstract class PartData {
-  final String mode;
+  final QuizMode mode;
   final List<String> making;
   final String top;
   final String middle;
@@ -18,7 +20,7 @@ abstract class PartData {
   });
 
   factory PartData.create({
-    required String mode,
+    required QuizMode mode,
     required List<String> making,
     required String subject,
     required String domain,
@@ -33,7 +35,7 @@ abstract class PartData {
     bool heart = false,
     List<QuizResult> recentResults = const [],
   }) {
-    if (mode == "latex") {
+    if (mode == QuizMode.latex || mode == QuizMode.alice) {
       return LatexPartData(
         mode: mode,
         making: making,
@@ -44,7 +46,7 @@ abstract class PartData {
         holes: holes!,
         firstButton: firstButton!,
       );
-    } else if (mode == "eng") {
+    } else if (mode == QuizMode.eng) {
       return EngPartData(
         mode: mode,
         making: making,
@@ -97,12 +99,6 @@ class EngPartData extends PartData {
 
   String get word => making[0];
   String get meaning => making[1];
-
-  double get accuracyRate {
-    final total = correctCount + hintCount + incorrectCount;
-    if (total == 0) return 0.0;
-    return ((correctCount + hintCount * 0.5) / total) * 100;
-  }
 }
 
 class LatexPartData extends PartData {
@@ -156,5 +152,85 @@ String getSpeechNumber(String speech) {
       return "2";
     default:
       return "4";
+  }
+}
+
+enum QuizMode {
+  latex,
+  option,
+  eng,
+  alice;
+
+  bool get isMath => this == QuizMode.latex || this == QuizMode.option;
+
+  /// 各モードの特性に応じた問題選出
+  PartData pick({
+    required Map<int, List<PartData>> filteredMapByScore,
+    required int currentIndex,
+    required int correctCount,
+    required String sortKey,
+    required bool isBattleMode,
+  }) {
+    return switch (this) {
+      // Alice または 英語 (特定のリストから順次またはランダム)
+      QuizMode.alice || QuizMode.eng => _pickSequentialOrRandom(
+          list: filteredMapByScore[1]!,
+          currentIndex: currentIndex,
+        ),
+
+      // 数学系 (Latex / Option)
+      QuizMode.latex || QuizMode.option => _pickMathStrategy(
+          filteredMapByScore: filteredMapByScore,
+          correctCount: correctCount,
+          sortKey: sortKey,
+          isBattleMode: isBattleMode,
+        ),
+    };
+  }
+
+  // --- 内部ヘルパー ---
+
+  PartData _pickSequentialOrRandom({
+    required List<PartData> list,
+    required int currentIndex,
+  }) {
+    Random random = Random();
+    if (currentIndex < list.length) {
+      return list[currentIndex];
+    }
+    return list[random.nextInt(list.length)];
+  }
+
+  PartData _pickMathStrategy({
+    required Map<int, List<PartData>> filteredMapByScore,
+    required int correctCount,
+    required String sortKey,
+    required bool isBattleMode,
+  }) {
+    Random random = Random();
+    final List<PartData> candidates = [];
+
+    if (!isBattleMode) {
+      candidates.addAll(filteredMapByScore.values.expand((list) => list));
+    } else {
+      final scoreRange = getScoreRange(correctCount, sortKey);
+      filteredMapByScore.forEach((score, list) {
+        if (score >= scoreRange[0] && score <= scoreRange[1]) {
+          candidates.addAll(list);
+        }
+      });
+    }
+
+    // 分野(field)ごとにグループ化して均等抽選
+    final Map<String, List<PartData>> fieldMap = {};
+    for (final part in candidates) {
+      fieldMap.putIfAbsent(part.field, () => []).add(part);
+    }
+
+    final fields = fieldMap.keys.toList();
+    final chosenField = fields[random.nextInt(fields.length)];
+    final partsInField = fieldMap[chosenField]!;
+
+    return partsInField[random.nextInt(partsInField.length)];
   }
 }

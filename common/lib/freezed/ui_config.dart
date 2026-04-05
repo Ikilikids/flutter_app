@@ -16,12 +16,35 @@ class MidConfig with _$MidConfig {
 
 @freezed
 class DetailConfig with _$DetailConfig {
+  // ★ これを追加することで、Getterやメソッドが定義可能になります
+  const DetailConfig._();
+
   const factory DetailConfig({
     required AppData appData,
     required ModeData modeData,
-    required DetailData detail, // 原本のカタログデータ
-    required num highScore, // 状態：最新スコア
-    required QuizButtonType buttonType, // 状態：ボタンの種類
-    required int qcount, // 状態：選択された問題数
+    required DetailData detail,
+    required num highScore,
+    required QuizButtonType buttonType,
+    required int qcount,
   }) = _DetailConfig;
+
+  // --- 追加したいGetterの例 ---
+
+  /// 例：特定のアプリタイトルかどうか
+  TimeMode get timeMode {
+    final title = appData.appTitle;
+    final isBattle = modeData.isbattle;
+
+    if (title == "appTitle" || title == "reflectTitle") {
+      return TimeMode.timeAttack;
+    } else if (isBattle) {
+      return TimeMode.countDown;
+    } else if (!isBattle) {
+      return TimeMode.learning;
+    } else {
+      return TimeMode.learning; // デフォルト
+    }
+  }
 }
+
+enum TimeMode { timeAttack, countDown, learning }

@@ -72,18 +72,14 @@ class EngInputNotifier extends Notifier<EngInputState> {
     if (targetWord.startsWith(nextText)) {
       if (nextText.length == targetWord.length) {
         // 完成時は judge でボーナス加算
-        sessionNotifier.judge(
-            state.isHintUsed ? QuizResult.triangle : QuizResult.circle, config);
+        sessionNotifier
+            .judge(state.isHintUsed ? QuizResult.triangle : QuizResult.circle);
       } else {
-        // 途中の正解入力：部分点（手動入力時のみ）
-        if (!isHint) {
-          sessionNotifier.handlePartPoint(nextText.length);
-        }
-        final sound = isHint ? 'pi.mp3' : 'maru.mp3';
-        ref.read(appSoundProvider).playSound(sound);
+        sessionNotifier.handlePartPoint(isHint ? 0 : nextText.length,
+            isHintUsed: isHint);
       }
     } else {
-      sessionNotifier.judge(QuizResult.cross, config);
+      sessionNotifier.judge(QuizResult.cross);
     }
   }
 

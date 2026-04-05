@@ -2,22 +2,18 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz/quiz.dart';
 
 class PipiScreen extends HookConsumerWidget {
-  final num totalScore;
-  final dynamic originalData;
-  final Map<String, int>? categoryScores; // 外部で集計されたスコアを受け取る
-
-  const PipiScreen({
-    super.key,
-    required this.totalScore,
-    this.originalData,
-    this.categoryScores,
-  });
+  final num? finishScore;
+  const PipiScreen({super.key, this.finishScore});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print(categoryScores);
+    num score = finishScore ??
+        ref.watch(quizSessionNotifierProvider.select((s) => s.totalScore));
+    final categoryScores =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.categortScore));
     // 内部的な状態管理（画面遷移に使うデータ）
     final highScore = useRef(0.0);
     final myRank = useRef([0, 0, 0]);
@@ -26,13 +22,12 @@ class PipiScreen extends HookConsumerWidget {
       // データのロードと画面遷移のロジック
       Future<void> loadAndNavigate() async {
         final quizinfo = ref.read(currentDetailConfigProvider);
-        final endBuilder = allData.endBuilder;
         final startTime = DateTime.now();
         final userName = ref.read(appUserNameProvider).requireValue;
 
         try {
           await ScoreManager.updateAllScores(
-            score: totalScore.toDouble(),
+            score: score.toDouble(),
             resisterOrigin: quizinfo.detail.resisterOrigin,
             modeType: quizinfo.modeData.modeType,
             isBattle: quizinfo.modeData.isbattle,
@@ -60,7 +55,7 @@ class PipiScreen extends HookConsumerWidget {
           myRank.value = await ScoreManager.getMyRank(
             resisterOrigin: quizinfo.detail.resisterOrigin,
             modeType: quizinfo.modeData.modeType,
-            myScore: totalScore.toDouble(),
+            myScore: score.toDouble(),
             isSmallerBetter: quizinfo.modeData.isSmallerBetter,
             targetPeriods: buildPeriod(), // 全期間・今月・今週を取得
           );
@@ -83,7 +78,7 @@ class PipiScreen extends HookConsumerWidget {
           quizinfo.modeData.isbattle
               ? MaterialPageRoute(
                   builder: (_) => CommonEndScreen(
-                    totalScore: totalScore,
+                    totalScore: score,
                     highScore: highScore.value,
                     rankAll: myRank.value[0],
                     rankMonthly: myRank.value[1],
@@ -91,12 +86,7 @@ class PipiScreen extends HookConsumerWidget {
                   ),
                 )
               : MaterialPageRoute(
-                  builder: (context) => endBuilder!(
-                    context,
-                    totalScore,
-                    originalData,
-                    quizinfo,
-                  ),
+                  builder: (context) => NtEndScreen(),
                 ),
         );
       }

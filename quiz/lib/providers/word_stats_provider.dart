@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../quiz.dart';
+import 'quiz_session_state.dart';
 
 part 'word_stats_provider.g.dart';
 

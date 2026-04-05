@@ -2,12 +2,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../quiz.dart';
 
 class TimeCirclePainter extends CustomPainter {
   final bool isDark;
-  final int remainingTime;
+  final WidgetRef ref;
 
-  TimeCirclePainter({required this.isDark, required this.remainingTime});
+  TimeCirclePainter({required this.isDark, required this.ref});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -22,7 +25,7 @@ class TimeCirclePainter extends CustomPainter {
 
     // 進捗の色を変えるロジック
     Color progressColor;
-
+    int remainingTime = ref.watch(quizRemainingTimerProvider); // 残り時間を取得
     if (remainingTime > 20) {
       progressColor = isDark
           ? const Color(0xFF388E3C) // ダーク: 深緑

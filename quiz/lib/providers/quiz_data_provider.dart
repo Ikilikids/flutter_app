@@ -36,7 +36,7 @@ Future<Map<int, List<EngPartData>>> integratedEngQuiz(Ref ref) async {
     final stats = statsMap[statsKey] ?? const WordStats();
 
     final p = EngPartData(
-      mode: "eng",
+      mode: QuizMode.eng,
       making: [word, meaning],
       top: getSpeechNumber(row[3].toString()),
       middle: row[3].toString(),

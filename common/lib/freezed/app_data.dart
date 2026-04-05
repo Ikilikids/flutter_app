@@ -11,12 +11,7 @@ typedef GamePageBuilder = Widget Function(
     BuildContext context, DetailConfig quizinfo);
 typedef LoadBuilder = void Function(
     BuildContext context, WidgetRef ref, DetailConfig quizinfo);
-typedef EndBuilder = Widget Function(
-  BuildContext context,
-  num totalScore,
-  dynamic originalData,
-  DetailConfig quizinfo,
-);
+typedef EndBuilder = Widget Function();
 typedef SettingWidgetsBuilder = List<Widget> Function(
     BuildContext, String, Function);
 

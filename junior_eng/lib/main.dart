@@ -19,16 +19,6 @@ final _appConfig = AllData(
     },
     mainGame: (BuildContext context, DetailConfig quizinfo) =>
         const Quizscreen(),
-    endBuilder: (context, totalScore, originalData, quizinfo) {
-      final List<MakingData> pData = List<MakingData>.from(originalData[0]);
-      final List<QuizResult> markData = List<QuizResult>.from(originalData[1]);
-
-      return NtEndScreen(
-        correctCount: totalScore.round(),
-        P: pData,
-        marks: markData,
-      );
-    },
     additionalPage1: AdditionalPageConfig(
         builder: (BuildContext context) => const ReviewSetupPage(),
         title: "復習モード",

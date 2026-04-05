@@ -31,13 +31,13 @@ Future<Map<int, List<PartData>>> load(DetailConfig quizinfo) async {
 
     // --- 通ったものだけ解析（ビット全探索など）を実行 ---
     final mode = row[0].toString();
-    if (mode == "latex") {
+    if (mode == "latex" || mode == "alice") {
       _processLatex(row, scoreIndexMap);
     } else {
       final score = int.parse(row[13].toString());
       scoreIndexMap.putIfAbsent(score, () => []).add(
             PartData.create(
-                mode: mode,
+                mode: QuizMode.option,
                 making: [
                   row[1].toString(),
                   row[2].toString(),
@@ -113,7 +113,7 @@ void _processLatex(List<dynamic> row, Map<int, List<PartData>> map) {
     }
 
     final p = PartData.create(
-      mode: row[0].toString(),
+      mode: row[0].toString() == "alice" ? QuizMode.alice : QuizMode.latex,
       making: [row[1].toString(), row[2].toString(), row[3].toString()],
       subject: row[5].toString(),
       domain: row[6].toString(),

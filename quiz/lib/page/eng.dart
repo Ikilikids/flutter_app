@@ -191,7 +191,6 @@ class EngKeyboardView extends HookConsumerWidget {
                       : () =>
                           ref.read(quizSessionNotifierProvider.notifier).judge(
                                 QuizResult.cross,
-                                config,
                               ),
                   icon: const Icon(Icons.skip_next),
                   label: const Text("パス"),

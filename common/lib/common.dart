@@ -43,7 +43,6 @@ export 'src/generated/l10n/app_localizations.dart';
 // widgets
 export 'widgets/app_ad_scaffold.dart';
 export 'widgets/color.dart';
-export 'widgets/common_widget.dart';
 export 'widgets/dialog.dart';
 export 'widgets/math_background.dart';
 export 'widgets/user_detail_dialog.dart';

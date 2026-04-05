@@ -186,7 +186,7 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => PipiScreen(totalScore: finalScore)),
+      MaterialPageRoute(builder: (_) => PipiScreen(finishScore: finalScore)),
     );
   }
 

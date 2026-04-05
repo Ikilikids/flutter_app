@@ -219,10 +219,9 @@ abstract class _MidConfig implements MidConfig {
 mixin _$DetailConfig {
   AppData get appData => throw _privateConstructorUsedError;
   ModeData get modeData => throw _privateConstructorUsedError;
-  DetailData get detail => throw _privateConstructorUsedError; // 原本のカタログデータ
-  num get highScore => throw _privateConstructorUsedError; // 状態：最新スコア
-  QuizButtonType get buttonType =>
-      throw _privateConstructorUsedError; // 状態：ボタンの種類
+  DetailData get detail => throw _privateConstructorUsedError;
+  num get highScore => throw _privateConstructorUsedError;
+  QuizButtonType get buttonType => throw _privateConstructorUsedError;
   int get qcount => throw _privateConstructorUsedError;
 
   /// Create a copy of DetailConfig
@@ -407,14 +406,15 @@ class __$$DetailConfigImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$DetailConfigImpl implements _DetailConfig {
+class _$DetailConfigImpl extends _DetailConfig {
   const _$DetailConfigImpl(
       {required this.appData,
       required this.modeData,
       required this.detail,
       required this.highScore,
       required this.buttonType,
-      required this.qcount});
+      required this.qcount})
+      : super._();
 
   @override
   final AppData appData;
@@ -422,13 +422,10 @@ class _$DetailConfigImpl implements _DetailConfig {
   final ModeData modeData;
   @override
   final DetailData detail;
-// 原本のカタログデータ
   @override
   final num highScore;
-// 状態：最新スコア
   @override
   final QuizButtonType buttonType;
-// 状態：ボタンの種類
   @override
   final int qcount;
 
@@ -466,7 +463,7 @@ class _$DetailConfigImpl implements _DetailConfig {
       __$$DetailConfigImplCopyWithImpl<_$DetailConfigImpl>(this, _$identity);
 }
 
-abstract class _DetailConfig implements DetailConfig {
+abstract class _DetailConfig extends DetailConfig {
   const factory _DetailConfig(
       {required final AppData appData,
       required final ModeData modeData,
@@ -474,17 +471,18 @@ abstract class _DetailConfig implements DetailConfig {
       required final num highScore,
       required final QuizButtonType buttonType,
       required final int qcount}) = _$DetailConfigImpl;
+  const _DetailConfig._() : super._();
 
   @override
   AppData get appData;
   @override
   ModeData get modeData;
   @override
-  DetailData get detail; // 原本のカタログデータ
+  DetailData get detail;
   @override
-  num get highScore; // 状態：最新スコア
+  num get highScore;
   @override
-  QuizButtonType get buttonType; // 状態：ボタンの種類
+  QuizButtonType get buttonType;
   @override
   int get qcount;
 

@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   soundpool:
     path: ../common/soundpool_local
+  quiz:
+    path: ../quiz
   provider: ^6.0.0
   shared_preferences: ^2.0.0
   google_mobile_ads: ^5.0.0

@@ -1,27 +1,26 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'latex_provider.dart';
+part of 'timer_elapsed_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$latexInputNotifierHash() =>
-    r'd2fcd72e544bcb4d64b93f140f58117ed4d6d90c';
+String _$quizElapsedTimerHash() => r'3ad206ec043663ca107a45b21f477d219ba51821';
 
-/// See also [LatexInputNotifier].
-@ProviderFor(LatexInputNotifier)
-final latexInputNotifierProvider =
-    AutoDisposeNotifierProvider<LatexInputNotifier, LatexInputState>.internal(
-  LatexInputNotifier.new,
-  name: r'latexInputNotifierProvider',
+/// See also [QuizElapsedTimer].
+@ProviderFor(QuizElapsedTimer)
+final quizElapsedTimerProvider =
+    AutoDisposeNotifierProvider<QuizElapsedTimer, double>.internal(
+  QuizElapsedTimer.new,
+  name: r'quizElapsedTimerProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$latexInputNotifierHash,
+      : _$quizElapsedTimerHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$LatexInputNotifier = AutoDisposeNotifier<LatexInputState>;
+typedef _$QuizElapsedTimer = AutoDisposeNotifier<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
