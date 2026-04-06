@@ -76,7 +76,7 @@ class ScoreManager {
     return (snap.docs.first.data()['score'] as num).toDouble();
   }
 
-  static Future<void> updateAllScores({
+  static Future<List<double>> updateAllScores({
     required double score,
     required String resisterOrigin,
     required String modeType,
@@ -87,20 +87,27 @@ class ScoreManager {
     required String userName,
     Map<String, int>? categoryScores,
   }) async {
-    // 0. バリデーション
-    if (score <= 0 && (categoryScores == null || categoryScores.isEmpty))
-      return;
+    if (score <= 0 && (categoryScores == null || categoryScores.isEmpty)) {
+      return [0, 0, 0];
+    }
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) return [0, 0, 0];
 
     final uid = user.uid;
     final periods = buildPeriod();
 
-    // パスをキーにして、スコアと「加算フラグ」を保存するMap
     final Map<DocumentReference, Map<String, dynamic>> refData = {};
 
-// --- 1. メインの設定 ---
+    // 👇 追加（結果保持）
+    double resultAll = 0;
+    double resultMonth = 0;
+    double resultWeek = 0;
+    double totalAll = 0;
+    double totalMonth = 0;
+    double totalWeek = 0;
+
+    // --- 1. メイン ---
     final roundedMainScore = (score * fix).roundToDouble() / fix;
 
     final docId = '${resisterOrigin}_$modeType';
@@ -115,6 +122,9 @@ class ScoreManager {
       'forceAdd': !isBattle,
     };
 
+    // 👇 ここで period ごとに ref を保持（後で判定に使う）
+    final Map<DocumentReference, String> periodMap = {};
+
     for (var period in periods) {
       final rankRef = _firestore
           .collection('rankings_v5')
@@ -126,14 +136,15 @@ class ScoreManager {
         'score': roundedMainScore,
         'forceAdd': !isBattle,
       };
+
+      periodMap[rankRef] = period; // 👈 追加
     }
 
-    // --- 2. カテゴリ別スコア & 全合計の登録先設定 ---
+    // --- 2. カテゴリ ---
     if (categoryScores != null) {
       double total =
           categoryScores.values.fold(0, (sum, value) => sum + value).toDouble();
 
-      // 全合計_t を登録
       final totalUserRef = _firestore
           .collection('users2')
           .doc(uid)
@@ -147,13 +158,15 @@ class ScoreManager {
             .doc("全合計_t_$period")
             .collection('users')
             .doc(uid);
+
         refData[totalRankRef] = {'score': total, 'forceAdd': true};
+
+        periodMap[totalRankRef] = period; // 👈 追加
       }
 
       categoryScores.forEach((catName, catScore) {
         final roundedCatScore = (catScore * fix).roundToDouble() / fix;
 
-        // カテゴリ個別の保存先のみ作成
         final catUserRef = _firestore
             .collection('users2')
             .doc(uid)
@@ -168,32 +181,38 @@ class ScoreManager {
               .doc("${catName}_t_$period")
               .collection('users')
               .doc(uid);
+
           refData[rankRef] = {'score': roundedCatScore, 'forceAdd': true};
+
+          periodMap[rankRef] = period; // 👈 追加
         }
       });
     }
 
     final allRefs = refData.keys.toList();
 
-    // --- 3. トランザクション実行 ---
     try {
       await _firestore.runTransaction((tx) async {
-        // 読み取りフェーズ
         final snapshots = <DocumentReference, DocumentSnapshot>{};
+
         for (final ref in allRefs) {
           snapshots[ref] = await tx.get(ref);
         }
 
-        // 書き込みフェーズ
         for (final ref in allRefs) {
           final snapshot = snapshots[ref]!;
           final info = refData[ref]!;
+
           final targetScore = info['score'] as double;
           final forceAdd = info['forceAdd'] as bool;
 
+          double newScore;
+
           if (!snapshot.exists) {
+            newScore = targetScore;
+
             tx.set(ref, {
-              'score': targetScore,
+              'score': newScore,
               'userName': userName,
               'updatedAt': FieldValue.serverTimestamp(),
             });
@@ -203,26 +222,48 @@ class ScoreManager {
                 0.0;
 
             if (forceAdd) {
-              // 加算モード（!isBattle の時、またはカテゴリ別スコアの時）
-              tx.update(ref, {
-                'score': prev + targetScore,
-                'userName': userName,
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+              newScore = prev + targetScore;
             } else if (isBetter(targetScore, prev, isSmallerBetter)) {
-              // ハイスコア更新モード（isBattle が true かつ メインスコアの時）
-              tx.update(ref, {
-                'score': targetScore,
-                'userName': userName,
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+              newScore = targetScore;
+            } else {
+              newScore = prev;
+            }
+
+            tx.update(ref, {
+              'score': newScore,
+              'userName': userName,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+
+          // 👇 ここだけ追加（3種拾う）
+          final period = periodMap[ref];
+
+          if (period != null) {
+            // 通常
+            if (ref.path.contains('${resisterOrigin}_$modeType')) {
+              if (period == 'all') resultAll = newScore;
+              if (period.contains('_m')) resultMonth = newScore;
+              if (period.contains('_w')) resultWeek = newScore;
+            }
+
+            // 👇 全合計_t
+            if (ref.path.contains('全合計_t')) {
+              if (period == 'all') totalAll = newScore;
+              if (period.contains('_m')) totalMonth = newScore;
+              if (period.contains('_w')) totalWeek = newScore;
             }
           }
         }
       });
-      print("✅ Update Success!");
-    } catch (e, stack) {
-      print("❌ Update Failed: $e\n$stack");
+
+      if (!isBattle) {
+        return [totalAll, totalMonth, totalWeek];
+      }
+
+      return [resultAll, resultMonth, resultWeek];
+    } catch (e) {
+      return [0, 0, 0];
     }
   }
 

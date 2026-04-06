@@ -6,11 +6,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../quiz.dart';
 
+class TimeCircle extends ConsumerWidget {
+  const TimeCircle({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    int remainingTime = ref.watch(quizRemainingTimerProvider); // 残り時間を取得
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: CustomPaint(
+        size: const Size(100, 100), // 円のサイズを指定
+        painter:
+            TimeCirclePainter(isDark: isDark, remainingTime: remainingTime),
+      ),
+    );
+  }
+}
+
 class TimeCirclePainter extends CustomPainter {
   final bool isDark;
-  final WidgetRef ref;
+  final int remainingTime;
 
-  TimeCirclePainter({required this.isDark, required this.ref});
+  TimeCirclePainter({required this.isDark, required this.remainingTime});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -25,7 +43,7 @@ class TimeCirclePainter extends CustomPainter {
 
     // 進捗の色を変えるロジック
     Color progressColor;
-    int remainingTime = ref.watch(quizRemainingTimerProvider); // 残り時間を取得
+
     if (remainingTime > 20) {
       progressColor = isDark
           ? const Color(0xFF388E3C) // ダーク: 深緑

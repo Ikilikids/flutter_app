@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'timer_elapsed_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class QuizElapsedTimer extends _$QuizElapsedTimer {
   Timer? _timer;
 
@@ -24,4 +24,9 @@ class QuizElapsedTimer extends _$QuizElapsedTimer {
   }
 
   void stop() => _timer?.cancel();
+
+  void setElapsed(double elapsed) {
+    _timer?.cancel();
+    state = elapsed;
+  }
 }

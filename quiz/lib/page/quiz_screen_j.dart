@@ -10,14 +10,10 @@ class Quizscreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(quizSessionNotifierProvider);
-    print(ref.watch(quizRemainingTimerProvider));
-
-    // build が何度走っても、この値は保持される
     final listenCount = useRef(0);
 
     ref.listen(quizSessionNotifierProvider, (prev, next) {
-      listenCount.value++; // .value を増やす
-      print("Listen発火回数: ${listenCount.value}");
+      listenCount.value++;
     });
 
     final notifier = ref.read(quizSessionNotifierProvider.notifier);
@@ -54,10 +50,7 @@ class Quizscreen extends HookConsumerWidget {
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (!session.isGameOver) {
-          showMenuDialog(context,
-              onTap: () =>
-                  ref.read(quizSessionNotifierProvider.notifier).cancelGame(),
-              isLimitedMode: activeConfig.modeData.islimited);
+          MenuButton.openDialog(context);
         }
       },
       child: AppAdScaffold(
@@ -80,42 +73,18 @@ class Quizscreen extends HookConsumerWidget {
                             ),
                             Expanded(
                               flex: 2,
-                              child: menuButton(context,
-                                  onTap: () => ref
-                                      .read(
-                                          quizSessionNotifierProvider.notifier)
-                                      .cancelGame(),
-                                  isLimitedMode:
-                                      activeConfig.modeData.islimited,
-                                  istap: !session.isGameOver),
+                              child: MenuButton(),
                             ),
                             Expanded(flex: 3, child: PointWidget()),
                           ] else ...[
                             // それ以外の場合
                             if (activeConfig.modeData.isbattle) ...[
-                              Expanded(
-                                flex: 1,
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: CustomPaint(
-                                    size: const Size(100, 100),
-                                    painter: TimeCirclePainter(
-                                        ref: ref, isDark: isDark),
-                                  ),
-                                ),
-                              )
+                              Expanded(flex: 1, child: TimeCircle())
                             ],
                             Expanded(flex: 2, child: QuizInfoWidget()),
                             Expanded(
                               flex: 1,
-                              child: menuButton(context,
-                                  onTap: () => ref
-                                      .read(
-                                          quizSessionNotifierProvider.notifier)
-                                      .cancelGame(),
-                                  isLimitedMode:
-                                      activeConfig.modeData.islimited,
-                                  istap: !session.isGameOver),
+                              child: MenuButton(),
                             ),
                             if (activeConfig.modeData.isbattle) ...[
                               Expanded(flex: 2, child: PointWidget()),

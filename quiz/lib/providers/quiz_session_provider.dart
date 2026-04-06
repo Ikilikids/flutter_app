@@ -17,7 +17,6 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
 
   void init(DetailConfig config) {
     state = QuizSessionState(
-      config: config,
       historyMarks: config.modeData.isbattle
           ? []
           : List.filled(config.qcount, QuizResult.unknown),
@@ -38,6 +37,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   }
 
   void cancelGame() {
+    print("Game cancelled by user.");
     _stopAllTimers();
     state = state.copyWith(
       status: QuizSessionStatus.cancelled,
@@ -104,9 +104,12 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
 
   // --- 内部計算用ロジック（値を返すだけで state は触らない） ---
   void updateSound(QuizResult quizResult) {
+    final timeMode = ref.read(currentDetailConfigProvider).timeMode;
+
     if (quizResult == QuizResult.cross) {
       ref.read(appSoundProvider).playSound('peke.mp3');
-    } else if (quizResult == QuizResult.triangle) {
+    } else if (quizResult == QuizResult.triangle ||
+        timeMode == TimeMode.timeAttack) {
       ref.read(appSoundProvider).playSound('maru.mp3');
     } else if (quizResult == QuizResult.circle) {
       ref.read(appSoundProvider).playSound('marumaru.mp3');
@@ -219,8 +222,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   PartData _chooseRandomByScoreRange() {
     final quizinfo = ref.read(currentDetailConfigProvider);
     final filteredMapByScore = ref.read(activeGameMapProvider);
-    // 現在の問題の mode から Enum を特定 (String の場合は QuizMode.values.byName(mode) 等で変換)
-    final mode = filteredMapByScore[1]!.first.mode; // 例として、スコア1の最初の問題の mode を取得
+    final mode = filteredMapByScore[1]!.first.mode;
 
     return mode.pick(
       filteredMapByScore: filteredMapByScore,

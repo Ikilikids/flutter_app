@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz/providers/timer_elapsed_provider.dart';
 
 import 'games/color_game.dart';
 import 'games/grid_game.dart';
@@ -151,8 +152,7 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
     // 判定無効化
     setState(() => isReadyToAct = false);
     isGameOver = false;
-    showMenuDialog(context,
-        isLimitedMode: widget.quizinfo.modeData.islimited, isFlying: true);
+    MenuButton.openDialog(context, isFlying: true);
   }
 
   void handleSuccess(int elapsed) {
@@ -183,7 +183,9 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
     final int finalScore = (mode == "color")
         ? results.reduce(max) // 最も遅い記録
         : (results.reduce((a, b) => a + b) / results.length).round(); // 平均
-
+    ref
+        .read(quizElapsedTimerProvider.notifier)
+        .setElapsed(finalScore.toDouble());
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => PipiScreen(finishScore: finalScore)),
@@ -226,9 +228,7 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
                           : FontWeight.normal)),
             );
           }),
-          menuButton(context,
-              isLimitedMode: widget.quizinfo.modeData.islimited,
-              istap: !isGameOver),
+          MenuButton(),
         ],
       ),
     );
@@ -279,8 +279,7 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || isGameOver) return;
-        showMenuDialog(context,
-            isLimitedMode: widget.quizinfo.modeData.islimited);
+        MenuButton.openDialog(context);
       },
       child: AppAdScaffold(
         body: SafeArea(

@@ -1,4 +1,3 @@
-import 'package:common/common.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../quiz.dart';
@@ -11,7 +10,6 @@ class QuizSessionState with _$QuizSessionState {
 
   const factory QuizSessionState({
     MakingData? currentQuestion,
-    DetailConfig? config,
     @Default([]) List<MakingData> historyQuestions,
     @Default({}) Map<String, int> categortScore, // タイポも今のうちに修正！
     @Default(0) int totalScore,

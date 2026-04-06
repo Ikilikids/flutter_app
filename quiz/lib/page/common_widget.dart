@@ -16,6 +16,20 @@ class PointWidget extends HookConsumerWidget {
     final remainingTime = ref.watch(quizRemainingTimerProvider);
     final totalScore =
         ref.watch(quizSessionNotifierProvider.select((s) => s.totalScore));
+    final correctCount =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.correctCount));
+    final timeMode =
+        ref.watch(currentDetailConfigProvider.select((s) => s.timeMode));
+    final num score = switch (timeMode) {
+      TimeMode.timeAttack => correctCount,
+      TimeMode.countDown => totalScore,
+      TimeMode.learning => totalScore,
+    };
+    final bool hidden = switch (timeMode) {
+      TimeMode.timeAttack => false,
+      TimeMode.countDown => remainingTime <= 15,
+      TimeMode.learning => false,
+    };
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
@@ -27,8 +41,7 @@ class PointWidget extends HookConsumerWidget {
             isDark: isDark,
           ),
           _StatValueBox(
-            // ロジック：残り時間が15秒以下になるとスコアを隠す
-            value: remainingTime > 15 ? '$totalScore' : '??',
+            value: hidden ? '??' : '$score',
             isDark: isDark,
           ),
         ],

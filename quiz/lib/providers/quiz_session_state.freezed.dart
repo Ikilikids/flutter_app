@@ -17,7 +17,6 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$QuizSessionState {
   MakingData? get currentQuestion => throw _privateConstructorUsedError;
-  DetailConfig? get config => throw _privateConstructorUsedError;
   List<MakingData> get historyQuestions => throw _privateConstructorUsedError;
   Map<String, int> get categortScore =>
       throw _privateConstructorUsedError; // タイポも今のうちに修正！
@@ -47,7 +46,6 @@ abstract class $QuizSessionStateCopyWith<$Res> {
   @useResult
   $Res call(
       {MakingData? currentQuestion,
-      DetailConfig? config,
       List<MakingData> historyQuestions,
       Map<String, int> categortScore,
       int totalScore,
@@ -60,8 +58,6 @@ abstract class $QuizSessionStateCopyWith<$Res> {
       int currentIndex,
       String scoreFeedback1,
       String scoreFeedback2});
-
-  $DetailConfigCopyWith<$Res>? get config;
 }
 
 /// @nodoc
@@ -80,7 +76,6 @@ class _$QuizSessionStateCopyWithImpl<$Res, $Val extends QuizSessionState>
   @override
   $Res call({
     Object? currentQuestion = freezed,
-    Object? config = freezed,
     Object? historyQuestions = null,
     Object? categortScore = null,
     Object? totalScore = null,
@@ -99,10 +94,6 @@ class _$QuizSessionStateCopyWithImpl<$Res, $Val extends QuizSessionState>
           ? _value.currentQuestion
           : currentQuestion // ignore: cast_nullable_to_non_nullable
               as MakingData?,
-      config: freezed == config
-          ? _value.config
-          : config // ignore: cast_nullable_to_non_nullable
-              as DetailConfig?,
       historyQuestions: null == historyQuestions
           ? _value.historyQuestions
           : historyQuestions // ignore: cast_nullable_to_non_nullable
@@ -153,20 +144,6 @@ class _$QuizSessionStateCopyWithImpl<$Res, $Val extends QuizSessionState>
               as String,
     ) as $Val);
   }
-
-  /// Create a copy of QuizSessionState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $DetailConfigCopyWith<$Res>? get config {
-    if (_value.config == null) {
-      return null;
-    }
-
-    return $DetailConfigCopyWith<$Res>(_value.config!, (value) {
-      return _then(_value.copyWith(config: value) as $Val);
-    });
-  }
 }
 
 /// @nodoc
@@ -179,7 +156,6 @@ abstract class _$$QuizSessionStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {MakingData? currentQuestion,
-      DetailConfig? config,
       List<MakingData> historyQuestions,
       Map<String, int> categortScore,
       int totalScore,
@@ -192,9 +168,6 @@ abstract class _$$QuizSessionStateImplCopyWith<$Res>
       int currentIndex,
       String scoreFeedback1,
       String scoreFeedback2});
-
-  @override
-  $DetailConfigCopyWith<$Res>? get config;
 }
 
 /// @nodoc
@@ -211,7 +184,6 @@ class __$$QuizSessionStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? currentQuestion = freezed,
-    Object? config = freezed,
     Object? historyQuestions = null,
     Object? categortScore = null,
     Object? totalScore = null,
@@ -230,10 +202,6 @@ class __$$QuizSessionStateImplCopyWithImpl<$Res>
           ? _value.currentQuestion
           : currentQuestion // ignore: cast_nullable_to_non_nullable
               as MakingData?,
-      config: freezed == config
-          ? _value.config
-          : config // ignore: cast_nullable_to_non_nullable
-              as DetailConfig?,
       historyQuestions: null == historyQuestions
           ? _value._historyQuestions
           : historyQuestions // ignore: cast_nullable_to_non_nullable
@@ -291,7 +259,6 @@ class __$$QuizSessionStateImplCopyWithImpl<$Res>
 class _$QuizSessionStateImpl extends _QuizSessionState {
   const _$QuizSessionStateImpl(
       {this.currentQuestion,
-      this.config,
       final List<MakingData> historyQuestions = const [],
       final Map<String, int> categortScore = const {},
       this.totalScore = 0,
@@ -311,8 +278,6 @@ class _$QuizSessionStateImpl extends _QuizSessionState {
 
   @override
   final MakingData? currentQuestion;
-  @override
-  final DetailConfig? config;
   final List<MakingData> _historyQuestions;
   @override
   @JsonKey()
@@ -371,7 +336,7 @@ class _$QuizSessionStateImpl extends _QuizSessionState {
 
   @override
   String toString() {
-    return 'QuizSessionState(currentQuestion: $currentQuestion, config: $config, historyQuestions: $historyQuestions, categortScore: $categortScore, totalScore: $totalScore, isGameOver: $isGameOver, status: $status, resultMark: $resultMark, isAnswerChecked: $isAnswerChecked, historyMarks: $historyMarks, startTime: $startTime, currentIndex: $currentIndex, scoreFeedback1: $scoreFeedback1, scoreFeedback2: $scoreFeedback2)';
+    return 'QuizSessionState(currentQuestion: $currentQuestion, historyQuestions: $historyQuestions, categortScore: $categortScore, totalScore: $totalScore, isGameOver: $isGameOver, status: $status, resultMark: $resultMark, isAnswerChecked: $isAnswerChecked, historyMarks: $historyMarks, startTime: $startTime, currentIndex: $currentIndex, scoreFeedback1: $scoreFeedback1, scoreFeedback2: $scoreFeedback2)';
   }
 
   @override
@@ -381,7 +346,6 @@ class _$QuizSessionStateImpl extends _QuizSessionState {
             other is _$QuizSessionStateImpl &&
             (identical(other.currentQuestion, currentQuestion) ||
                 other.currentQuestion == currentQuestion) &&
-            (identical(other.config, config) || other.config == config) &&
             const DeepCollectionEquality()
                 .equals(other._historyQuestions, _historyQuestions) &&
             const DeepCollectionEquality()
@@ -411,7 +375,6 @@ class _$QuizSessionStateImpl extends _QuizSessionState {
   int get hashCode => Object.hash(
       runtimeType,
       currentQuestion,
-      config,
       const DeepCollectionEquality().hash(_historyQuestions),
       const DeepCollectionEquality().hash(_categortScore),
       totalScore,
@@ -438,7 +401,6 @@ class _$QuizSessionStateImpl extends _QuizSessionState {
 abstract class _QuizSessionState extends QuizSessionState {
   const factory _QuizSessionState(
       {final MakingData? currentQuestion,
-      final DetailConfig? config,
       final List<MakingData> historyQuestions,
       final Map<String, int> categortScore,
       final int totalScore,
@@ -455,8 +417,6 @@ abstract class _QuizSessionState extends QuizSessionState {
 
   @override
   MakingData? get currentQuestion;
-  @override
-  DetailConfig? get config;
   @override
   List<MakingData> get historyQuestions;
   @override
