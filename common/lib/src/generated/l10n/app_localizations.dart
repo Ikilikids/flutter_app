@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @highScorePrefix.
   ///
   /// In en, this message translates to:
-  /// **'High Score: '**
+  /// **'High Score '**
   String get highScorePrefix;
 
   /// No description provided for @rankUnit.

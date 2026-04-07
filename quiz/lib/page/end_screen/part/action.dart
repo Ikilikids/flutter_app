@@ -35,7 +35,7 @@ class ActionSection extends ConsumerWidget {
           _ActionItem(
             backgroundColor: backgroundColor,
             icon: Icons.refresh,
-            label: 'もう一度',
+            label: l10n(context, 'retryButton'),
             availableCount: availableCount,
             showCount: isReviewMode,
             onTap: (isLimitedMode || !hasEnoughQuestions)
@@ -50,7 +50,7 @@ class ActionSection extends ConsumerWidget {
           _ActionItem(
             backgroundColor: backgroundColor,
             icon: Icons.home,
-            label: 'メニュー',
+            label: l10n(context, 'menuButton'),
             onTap: () {
               ref.read(engReviewFilterProvider.notifier).state = null;
               InterstitialAdHelper.navigate(context, null);
@@ -106,8 +106,14 @@ class _ActionItem extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onTap,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: backgroundColor,
-                  shape: const CircleBorder(),
+                  shape: CircleBorder(
+                    side: onTap == null
+                        ? BorderSide.none
+                        : BorderSide(
+                            color: backgroundColor,
+                            width: 2, // ← 太さ
+                          ),
+                  ),
                   padding: const EdgeInsets.all(12),
                   disabledBackgroundColor: Theme.of(context).disabledColor,
                   disabledForegroundColor: Theme.of(

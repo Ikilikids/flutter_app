@@ -185,7 +185,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreLabel => '점수';
 
   @override
-  String get highScorePrefix => '최고 기록: ';
+  String get highScorePrefix => '최고 기록';
 
   @override
   String get rankUnit => '위';

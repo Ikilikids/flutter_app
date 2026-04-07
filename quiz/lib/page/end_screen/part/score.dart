@@ -20,7 +20,12 @@ class ScoreSection extends ConsumerWidget {
     final num score = switch (quizinfo.timeMode) {
       TimeMode.timeAttack => elapsed,
       TimeMode.countDown => session.totalScore,
-      TimeMode.learning => session.correctCount, // その他のモード用（必要なら）
+      TimeMode.learning => session.correctCount,
+    };
+    final label = switch (quizinfo.timeMode) {
+      TimeMode.learning => "正解数",
+      TimeMode.countDown => 'timeLabel',
+      TimeMode.timeAttack => 'timeLabel',
     };
     Color borderColor = getQuizColor2(
       quizinfo.detail.color,
@@ -29,7 +34,8 @@ class ScoreSection extends ConsumerWidget {
       0.35,
       0.95,
     );
-    String unit = quizinfo.modeData.unit;
+    String useLabel = l10n(context, label);
+    String unit = l10n(context, quizinfo.modeData.unit);
     int fix = quizinfo.modeData.fix;
 
     return Padding(
@@ -50,7 +56,7 @@ class ScoreSection extends ConsumerWidget {
                 ),
                 child: FittedBox(
                   child: Text(
-                    '正解数',
+                    useLabel,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: textColor1(context),
@@ -67,7 +73,7 @@ class ScoreSection extends ConsumerWidget {
                   color: bgColor2(context),
                   border: Border.all(color: borderColor, width: 3),
                   borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(16),
+                    bottom: Radius.circular(10),
                   ),
                 ),
                 child: FittedBox(

@@ -184,7 +184,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreLabel => '正解数';
 
   @override
-  String get highScorePrefix => '最高記録：';
+  String get highScorePrefix => '最高記録';
 
   @override
   String get rankUnit => '位';

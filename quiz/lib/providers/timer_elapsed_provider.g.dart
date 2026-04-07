@@ -6,7 +6,7 @@ part of 'timer_elapsed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$quizElapsedTimerHash() => r'5ad40acb85295ac208d30100ac2e52dc169dd790';
+String _$quizElapsedTimerHash() => r'79e65c84d7cb19bde8be3dc87558e4789976af95';
 
 /// See also [QuizElapsedTimer].
 @ProviderFor(QuizElapsedTimer)

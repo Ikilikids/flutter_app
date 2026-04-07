@@ -7,7 +7,7 @@ part of 'quiz_session_provider.dart';
 // **************************************************************************
 
 String _$quizSessionNotifierHash() =>
-    r'ff74fd22f68f165ad59e9339537354be5c2731e4';
+    r'465490f3e52fa4c1a9f8a01e7094bee8f316e0e3';
 
 /// See also [QuizSessionNotifier].
 @ProviderFor(QuizSessionNotifier)

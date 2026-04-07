@@ -10,60 +10,25 @@ class PipiScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 内部的な状態管理（画面遷移に使うデータ）
-    final highScore = useRef(0.0);
 
     useEffect(() {
       // データのロードと画面遷移のロジック
       Future<void> loadAndNavigate() async {
         final quizinfo = ref.read(currentDetailConfigProvider);
-        final session = ref.read(quizSessionNotifierProvider);
-        final elapsedTime = ref.read(quizElapsedTimerProvider);
-        final categoryScores = session.categortScore;
 
-        final num score = switch (quizinfo.timeMode) {
-          TimeMode.timeAttack => elapsedTime,
-          TimeMode.countDown => session.totalScore,
-          TimeMode.learning => session.correctCount,
-        };
         final startTime = DateTime.now();
-        final userName = ref.read(appUserNameProvider).requireValue;
 
         try {
-          List<double> myscore = await ScoreManager.updateAllScores(
-            score: score.toDouble(),
-            resisterOrigin: quizinfo.detail.resisterOrigin,
-            modeType: quizinfo.modeData.modeType,
+          final myscore = await ScoreManager.updateAllScores(ref: ref);
+
+          final myRank = await ScoreManager.getMyRank(
+            quizId: quizinfo.detail.quizId,
+            myScoreMap: myscore,
             isBattle: quizinfo.modeData.isbattle,
             isSmallerBetter: quizinfo.modeData.isSmallerBetter,
-            isLimitedMode: quizinfo.modeData.islimited,
-            fix: 100,
-            userName: userName,
-            categoryScores: categoryScores, // 渡されたものをそのまま使う
           );
-
-          highScore.value = await ScoreManager.getScore(
-            resisterOriginOrSub: quizinfo.detail.resisterOrigin,
-            modeType: quizinfo.modeData.modeType,
-          );
-
-          // ローカルのスコア更新
-          ref.read(userStatusNotifierProvider.notifier).updateScoreLocally(
-                QuizId(
-                  resisterOrigin: quizinfo.detail.resisterOrigin,
-                  modeType: quizinfo.modeData.modeType,
-                ),
-                highScore.value,
-              );
-
-          List<int> myRank = await ScoreManager.getMyRank(
-            resisterOrigin: quizinfo.detail.resisterOrigin,
-            modeType: quizinfo.modeData.modeType,
-            myScore: score.toDouble(),
-            isSmallerBetter: quizinfo.modeData.isSmallerBetter,
-            targetPeriods: buildPeriod(),
-          );
-          ref.read(myRankListProvider.notifier).setList(myRank);
-          ref.read(myScoreListProvider.notifier).setList(myscore);
+          ref.read(myRankMapProvider.notifier).setMap(myRank);
+          ref.read(myScoreMapProvider.notifier).setMap(myscore);
         } catch (e) {
           debugPrint('Error loading data: $e');
         }

@@ -19,8 +19,11 @@ class RankingEntry {
   final String userName;
   final double score;
   final DateTime date;
-  final String quizType;
-  RankingEntry(this.uid, this.userName, this.score, this.date, this.quizType);
+  RankingEntry(
+      {required this.uid,
+      required this.userName,
+      required this.score,
+      required this.date});
 }
 
 // --- メインWidget ---
@@ -44,17 +47,17 @@ class CommonRankingPage extends HookConsumerWidget {
     final periodTabs = useMemoized(
       () => [
         QuizTabInfo(
-          id: buildPeriod()[0],
+          id: PeriodType.all.value,
           display: l10n(context, 'allPeriod'),
           icon: Icons.history, // 全期間
         ),
         QuizTabInfo(
-          id: buildPeriod()[1],
+          id: PeriodType.month.value,
           display: l10n(context, 'monthlyPeriod'),
           icon: Icons.calendar_month, // 月間
         ),
         QuizTabInfo(
-          id: buildPeriod()[2],
+          id: PeriodType.week.value,
           display: l10n(context, 'weeklyPeriod'),
           icon: Icons.view_week, // 週間
         ),
@@ -130,22 +133,12 @@ class CommonRankingPage extends HookConsumerWidget {
 
         // ScoreManager.getRanking を再び使用（uidが含まれるようになったため）
         final data = await ScoreManager.getRanking(
-          context: context,
           rankingId: rankingKey,
           isSmallerBetter: gameData.isSmallerBetter,
         );
 
         if (context.mounted) {
-          final entries = data
-              .where((e) => (e['score'] ?? 0) > 0)
-              .map((e) => RankingEntry(
-                    e['uid'] ?? "", // uidを格納
-                    e['userName'] ?? l10n(context, 'defaultUsername'),
-                    (e['score'] as num).toDouble(),
-                    (e['date'] ?? DateTime.now()) as DateTime,
-                    modeType,
-                  ))
-              .toList();
+          final entries = data;
 
           // 取得したデータを保存
           rankingData.value = {...rankingData.value, subjectId: entries};
@@ -399,7 +392,7 @@ class _RankingCard extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      entry.userName,
+                      l10n(context, entry.userName),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,

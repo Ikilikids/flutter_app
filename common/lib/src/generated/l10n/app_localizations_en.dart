@@ -190,7 +190,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scoreLabel => 'Score';
 
   @override
-  String get highScorePrefix => 'High Score: ';
+  String get highScorePrefix => 'High Score ';
 
   @override
   String get rankUnit => 'th';

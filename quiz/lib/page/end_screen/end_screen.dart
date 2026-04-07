@@ -36,16 +36,16 @@ class EndScreen extends HookConsumerWidget {
             child: Column(
               children: [
                 Expanded(
-                  flex: 1,
+                  flex: 2,
                   child: QuizNameSection(),
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  flex: 3,
+                  flex: 6,
                   child: ScoreSection(step: step.value),
                 ),
                 SizedBox(
-                  height: 420,
+                  height: timeMode == TimeMode.timeAttack ? 350 : 420,
                   child: switch (timeMode) {
                     TimeMode.countDown => const MidSection(),
                     TimeMode.learning => const MidSection(),
@@ -53,8 +53,8 @@ class EndScreen extends HookConsumerWidget {
                   },
                 ),
                 const SizedBox(height: 10),
-                Expanded(
-                  flex: 2,
+                SizedBox(
+                  height: 100,
                   child: ActionSection(),
                 ),
               ],

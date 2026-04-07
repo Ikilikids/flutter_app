@@ -1,29 +1,31 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../common.dart';
+
 part 'my_rank_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-class MyRankList extends _$MyRankList {
+class MyRankMap extends _$MyRankMap {
   @override
-  List<int> build() {
-    return [];
+  Map<PeriodType, int> build() {
+    return {};
   }
 
   // 上書き
-  void setList(List<int> newList) {
-    state = newList;
+  void setMap(Map<PeriodType, int> newMap) {
+    state = newMap;
   }
 }
 
 @Riverpod(keepAlive: true)
-class MyScoreList extends _$MyScoreList {
+class MyScoreMap extends _$MyScoreMap {
   @override
-  List<double> build() {
-    return [];
+  Map<PeriodType, double> build() {
+    return {};
   }
 
   // 上書き
-  void setList(List<double> newList) {
-    state = newList;
+  void setMap(Map<PeriodType, double> newMap) {
+    state = newMap;
   }
 }

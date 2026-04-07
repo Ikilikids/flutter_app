@@ -188,7 +188,7 @@ class _GamescreenState extends ConsumerState<Gamescreen> {
         .setElapsed(finalScore.toDouble());
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => PipiScreen(finishScore: finalScore)),
+      MaterialPageRoute(builder: (_) => PipiScreen()),
     );
   }
 

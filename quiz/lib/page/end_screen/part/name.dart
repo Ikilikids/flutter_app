@@ -8,13 +8,17 @@ class QuizNameSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quizinfo = ref.watch(currentDetailConfigProvider);
-    final quizName = quizinfo.detail.displayLabel;
+    final quizName = l10n(context, quizinfo.detail.displayLabel);
     Color backgroundColor = getQuizColor2(
       quizinfo.detail.color,
       context,
       1,
       0.35,
       0.95,
+    );
+    final sideIcon = Icon(
+      quizinfo.detail.detailIcon,
+      size: 100,
     );
     return Center(
       child: Row(
@@ -23,26 +27,30 @@ class QuizNameSection extends ConsumerWidget {
           Expanded(
             flex: 2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
               decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                    color: Color.fromARGB(22, 0, 0, 0),
-                  ),
-                ],
+                color: bgColor1(context),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: backgroundColor,
+                  width: 2,
+                ),
               ),
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  '★$quizName★',
-                  style: const TextStyle(
-                    fontSize: 100,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // 必要な分だけ幅を取る
+                  children: [
+                    sideIcon,
+                    const SizedBox(width: 20),
+                    Text(
+                      l10n(context, quizName),
+                      style: TextStyle(
+                        fontSize: 100,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -34,8 +34,13 @@ class MidSection extends HookConsumerWidget {
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 250),
             child: tabIndex.value == 0
-                ? const ReviewSection(key: ValueKey('review'))
-                : RankSection(),
+                ? const ReviewSection()
+                : Center(
+                    child: SizedBox(
+                      height: 350,
+                      child: const RankSection(),
+                    ),
+                  ),
           ),
         ),
       ],

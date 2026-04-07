@@ -22,7 +22,7 @@ final appUidProvider = FutureProvider<String>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AppUidRef = FutureProviderRef<String>;
-String _$appUserNameHash() => r'8b8aa182b9a40c93b7d121382989528356cfa159';
+String _$appUserNameHash() => r'b6662dbaf3b5de7e366f840af8e69308b34e861c';
 
 /// See also [AppUserName].
 @ProviderFor(AppUserName)

@@ -57,7 +57,7 @@
     "mathC": "Matemática III/C",
     "timeLabel": "Tempo",
     "scoreLabel": "Pontuação",
-    "highScorePrefix": "Pontuação Máxima: ",
+    "highScorePrefix": "Pontuação Máxima",
     "rankUnit": "º",
     "retryButton": "Tentar Novamente",
     "menuButton": "Menu",

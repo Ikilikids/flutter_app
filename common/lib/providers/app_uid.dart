@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:common/common.dart' show buildPeriod;
+import 'package:common/common.dart' show PeriodType;
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -65,15 +65,14 @@ class AppUserName extends _$AppUserName {
         .toList();
     rankLabels.add("全合計");
 
-    final periods = buildPeriod();
     final modeTypes = ['t', 'g'];
 
     for (var rType in rankLabels) {
       for (var mType in modeTypes) {
-        for (var period in periods) {
+        for (var type in PeriodType.values) {
           final docRef = firestore
               .collection("rankings_v5")
-              .doc("${rType}_${mType}_$period")
+              .doc("${rType}_${mType}_${type.value}")
               .collection("users")
               .doc(uid);
 

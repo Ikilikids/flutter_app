@@ -57,7 +57,7 @@
     "mathC": "数Ⅲ・数C",
     "timeLabel": "タイム",
     "scoreLabel": "正解数",
-    "highScorePrefix": "最高記録：",
+    "highScorePrefix": "最高記録",
     "rankUnit": "位",
     "retryButton": "もう一度",
     "menuButton": "メニュー",

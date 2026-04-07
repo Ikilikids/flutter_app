@@ -191,7 +191,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get scoreLabel => 'Puntuación';
 
   @override
-  String get highScorePrefix => 'Puntuación Máxima: ';
+  String get highScorePrefix => 'Puntuación Máxima';
 
   @override
   String get rankUnit => 'º';

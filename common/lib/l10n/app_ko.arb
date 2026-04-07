@@ -57,7 +57,7 @@
     "mathC": "수학 III/C",
     "timeLabel": "시간",
     "scoreLabel": "점수",
-    "highScorePrefix": "최고 기록: ",
+    "highScorePrefix": "최고 기록",
     "rankUnit": "위",
     "retryButton": "다시 시도",
     "menuButton": "메뉴",

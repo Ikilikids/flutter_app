@@ -57,7 +57,7 @@
     "mathC": "Math III/C",
     "timeLabel": "Time",
     "scoreLabel": "Score",
-    "highScorePrefix": "High Score: ",
+    "highScorePrefix": "High Score ",
     "rankUnit": "th",
     "retryButton": "Retry",
     "menuButton": "Menu",

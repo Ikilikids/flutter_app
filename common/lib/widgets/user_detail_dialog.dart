@@ -61,13 +61,14 @@ class UserDetailDialog extends HookConsumerWidget {
 
                   if (score > 0) {
                     final res = await ScoreManager.getMyRank(
-                      resisterOrigin: tab.id,
-                      modeType: modeType,
-                      myScore: score,
+                      quizId:
+                          QuizId(resisterOrigin: tab.id, modeType: modeType),
+                      myScoreMap: {PeriodType.all: score},
                       isSmallerBetter: midData.modeData.isSmallerBetter,
-                      targetPeriods: ['all'],
+                      targetPeriods: [PeriodType.all],
                     );
-                    if (res.isNotEmpty && res[0] > 0) ranks[docId] = res[0];
+                    if (res.isNotEmpty && res[PeriodType.all]! > 0)
+                      ranks[docId] = res[PeriodType.all]!;
                   }
                 }
 
