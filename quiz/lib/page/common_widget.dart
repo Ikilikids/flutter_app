@@ -332,29 +332,26 @@ class _FeedbackText extends StatelessWidget {
 // --- Main Question Builder ---
 
 class QuestionDisplayArea extends ConsumerWidget {
-  /// 復習モードなどで特定のインデックスを表示したい場合のみ指定。
-  /// 指定がない（null）場合は、セッションの「現在の進行中の問題」を表示する。
   final int? index;
-
   const QuestionDisplayArea({super.key, this.index});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(quizSessionNotifierProvider);
-    print(
-        "QuestionDisplayArea build: index=$index, historyLength=${session.historyQuestions.length}");
-    // index指定があれば履歴から、なければ現在の進行中の問題を取得
-    final P = index != null
-        ? (index! < session.historyQuestions.length
-            ? session.historyQuestions[index!]
-            : null)
-        : session.currentQuestion;
-    print("Selected Question Data: ${P?.mode}, ${P?.making}");
+    // 1. indexの有無によって、監視対象を「完全に」切り分ける
+    final MakingData? P = index != null
+        ? ref.watch(quizSessionNotifierProvider.select((s) =>
+            index! < s.historyQuestions.length
+                ? s.historyQuestions[index!]
+                : null))
+        : ref.watch(
+            quizSessionNotifierProvider.select((s) => s.currentQuestion));
+
+    // P が決まった後は、以前と同じ描画ロジック
     if (P == null) return const SizedBox.shrink();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // --- 以下、描画ロジック ---
+    // --- 以下、描画ロジック (変更なし) ---
     if (P is SekimenMakingData ||
         P is PointLinedMakingData ||
         P is CyebaMakingData ||

@@ -13,9 +13,9 @@ class LatexDisplayView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(quizSessionNotifierProvider);
     final inputState = ref.watch(latexInputNotifierProvider);
-    final question = session.currentQuestion;
+    final question =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.currentQuestion));
 
     if (question is! LatexMakingData) {
       return const SizedBox.shrink();

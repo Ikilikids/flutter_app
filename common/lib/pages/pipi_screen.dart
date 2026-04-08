@@ -14,21 +14,9 @@ class PipiScreen extends HookConsumerWidget {
     useEffect(() {
       // データのロードと画面遷移のロジック
       Future<void> loadAndNavigate() async {
-        final quizinfo = ref.read(currentDetailConfigProvider);
-
         final startTime = DateTime.now();
-
         try {
-          final myscore = await ScoreManager.updateAllScores(ref: ref);
-
-          final myRank = await ScoreManager.getMyRank(
-            quizId: quizinfo.detail.quizId,
-            myScoreMap: myscore,
-            isBattle: quizinfo.modeData.isbattle,
-            isSmallerBetter: quizinfo.modeData.isSmallerBetter,
-          );
-          ref.read(myRankMapProvider.notifier).setMap(myRank);
-          ref.read(myScoreMapProvider.notifier).setMap(myscore);
+          await ScoreManager.updateAllScores(ref: ref);
         } catch (e) {
           debugPrint('Error loading data: $e');
         }

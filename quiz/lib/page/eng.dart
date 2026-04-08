@@ -10,9 +10,9 @@ class EngDisplayView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(quizSessionNotifierProvider);
     final inputState = ref.watch(engInputNotifierProvider);
-    final question = session.currentQuestion;
+    final question =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.currentQuestion));
 
     if (question is! EngMakingData) return const SizedBox.shrink();
 
@@ -90,9 +90,13 @@ class EngKeyboardView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(quizSessionNotifierProvider);
     final inputState = ref.watch(engInputNotifierProvider);
-    final question = session.currentQuestion;
+    final question =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.currentQuestion));
+    final isAnswerChecked =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.isAnswerChecked));
+    final isGameOver =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.isGameOver));
 
     if (question is! EngMakingData) return const SizedBox.shrink();
 
@@ -105,9 +109,8 @@ class EngKeyboardView extends HookConsumerWidget {
     final maxHintLen = config.modeData.isbattle
         ? 1
         : (targetWord.length - 2).clamp(1, targetWord.length);
-    final isHintDisabled = session.isAnswerChecked ||
-        session.isGameOver ||
-        currentLen >= maxHintLen;
+    final isHintDisabled =
+        isAnswerChecked || isGameOver || currentLen >= maxHintLen;
 
     // 状態から最新のボタンリストを取得
     final buttons = inputState.availableButtons;
@@ -116,8 +119,7 @@ class EngKeyboardView extends HookConsumerWidget {
     Widget buildButton(String char, int index) {
       final isUsed = char.endsWith('*');
       final displayChar = isUsed ? char.substring(0, char.length - 1) : char;
-      final isDisabled =
-          session.isAnswerChecked || session.isGameOver || isUsed;
+      final isDisabled = isAnswerChecked || isGameOver || isUsed;
 
       return Expanded(
         child: Padding(
@@ -186,7 +188,7 @@ class EngKeyboardView extends HookConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: ElevatedButton.icon(
-                  onPressed: session.isAnswerChecked || session.isGameOver
+                  onPressed: isAnswerChecked || isGameOver
                       ? null
                       : () =>
                           ref.read(quizSessionNotifierProvider.notifier).judge(

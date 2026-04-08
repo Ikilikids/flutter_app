@@ -222,7 +222,10 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   PartData _chooseRandomByScoreRange() {
     final quizinfo = ref.read(currentDetailConfigProvider);
     final filteredMapByScore = ref.read(activeGameMapProvider);
-    final mode = filteredMapByScore[1]!.first.mode;
+    final mode = filteredMapByScore.values
+        .firstWhere((list) => list.isNotEmpty)
+        .first
+        .mode;
 
     return mode.pick(
       filteredMapByScore: filteredMapByScore,

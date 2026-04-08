@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 // --- データモデル定義 ---
 
 class QuizTabInfo {
-  final String id;
+  final id;
   final String display;
   final String? color; // 科目ごとの色を保持
   final IconData? icon; // アイコンを保持
@@ -47,17 +47,17 @@ class CommonRankingPage extends HookConsumerWidget {
     final periodTabs = useMemoized(
       () => [
         QuizTabInfo(
-          id: PeriodType.all.value,
+          id: PeriodType.all,
           display: l10n(context, 'allPeriod'),
           icon: Icons.history, // 全期間
         ),
         QuizTabInfo(
-          id: PeriodType.month.value,
+          id: PeriodType.month,
           display: l10n(context, 'monthlyPeriod'),
           icon: Icons.calendar_month, // 月間
         ),
         QuizTabInfo(
-          id: PeriodType.week.value,
+          id: PeriodType.week,
           display: l10n(context, 'weeklyPeriod'),
           icon: Icons.view_week, // 週間
         ),
@@ -123,17 +123,18 @@ class CommonRankingPage extends HookConsumerWidget {
     useEffect(() {
       // 現在のインデックスから必要なIDを取得
       final subjectId = quizTabs[selectedSubjectIndex.value].id;
-      final periodId = periodTabs[selectedPeriodIndex.value].id;
+      final periodType = periodTabs[selectedPeriodIndex.value].id;
 
       Future<void> fetch() async {
         isLoading.value = true;
         final modeType = gameData.modeData.modeType;
         // 直接IDを結合してキーを作成
-        final rankingKey = "${subjectId}_${modeType}_$periodId";
+        final rankingKey = "${subjectId}_${modeType}";
 
         // ScoreManager.getRanking を再び使用（uidが含まれるようになったため）
         final data = await ScoreManager.getRanking(
           rankingId: rankingKey,
+          periodType: periodType,
           isSmallerBetter: gameData.isSmallerBetter,
         );
 

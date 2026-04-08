@@ -9,7 +9,14 @@ class Quizscreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(quizSessionNotifierProvider);
+    final P =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.currentQuestion));
+    final isGameOver =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.isGameOver));
+    final isAnswerChecked =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.isAnswerChecked));
+    final resultMark =
+        ref.watch(quizSessionNotifierProvider.select((s) => s.resultMark));
     final listenCount = useRef(0);
 
     ref.listen(quizSessionNotifierProvider, (prev, next) {
@@ -38,18 +45,12 @@ class Quizscreen extends HookConsumerWidget {
         _performTransition(context, ref);
       }
     });
-    if (session.currentQuestion == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    final P = session.currentQuestion!;
-    final childWidget = QuestionDisplayArea();
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (!session.isGameOver) {
+        if (!isGameOver) {
           MenuButton.openDialog(context);
         }
       },
@@ -101,7 +102,7 @@ class Quizscreen extends HookConsumerWidget {
                       flex: 4,
                       child: Padding(
                           padding: const EdgeInsets.only(top: 10),
-                          child: childWidget)),
+                          child: QuestionDisplayArea())),
                   if (P is LatexMakingData) ...[
                     const Expanded(flex: 2, child: LatexDisplayView()),
                     const Expanded(flex: 5, child: LatexKeyboardView()),
@@ -111,19 +112,15 @@ class Quizscreen extends HookConsumerWidget {
                     const Expanded(flex: 4, child: EngKeyboardView()),
                   ],
                   if (P is OptionMakingData)
-                    Expanded(
-                        flex: 7,
-                        child: QuizOptions(
-                            quizData: P,
-                            onCorrect: (res) => notifier.judge(res))),
+                    Expanded(flex: 7, child: QuizOptions()),
                 ],
               ),
-              if (session.isAnswerChecked)
+              if (isAnswerChecked)
                 Center(
                   child: Image.asset(
                     isDark
-                        ? 'assets/images/${session.resultMark.name}_dark.png'
-                        : 'assets/images/${session.resultMark.name}.png',
+                        ? 'assets/images/${resultMark.name}_dark.png'
+                        : 'assets/images/${resultMark.name}.png',
                     height: 300,
                   ),
                 ),

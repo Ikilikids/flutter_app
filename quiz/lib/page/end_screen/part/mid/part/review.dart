@@ -208,6 +208,8 @@ List<String> restoreSymbols(MakingData P) {
     return sb.toString().split(';');
   } else if (P is EngMakingData) {
     return [P.word];
+  } else if (P is OptionMakingData) {
+    return P.optionList[0].split(';');
   } else {
     return [];
   }
