@@ -137,36 +137,40 @@ class ScoreManager {
     final targetIdForReturn = isBattle ? quizId.toString() : '全合計_t';
 
     try {
-      for (final data in registers) {
-        // 1. 現在のスコアを普通に取得 (await)
+      // 全てのリクエストを並列で実行
+      await Future.wait(registers.map((data) async {
+        // 1. 現在のスコアを取得
         final snap = await data.rankRef(uid).get();
         double prev = (snap.data()?['score'] as num?)?.toDouble() ?? 0.0;
         double newScore = prev;
 
         if (mainScore > 0) {
-          // 2. 更新ロジックの計算
+          // 2. スコア計算
           newScore = data.forceAdd
               ? prev + data.score
               : (isBetter(data.score, prev, isSmallerBetter)
                   ? data.score
                   : prev);
 
-          // 3. 普通に保存 (await)
-          await data.rankRef(uid).set({
+          // 3. 保存 (Future.wait内なのでこれらも並列)
+          final rankSet = data.rankRef(uid).set({
             'score': newScore,
             'userName': userName,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
 
-          await data.userRef(uid).set({
+          final userSet = data.userRef(uid).set({
             'score': newScore,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
+
+          await Future.wait([rankSet, userSet]);
         }
-        // 4. その場で順位を数える（ここが targetIdForReturn の時だけ動く）
+
+        // 4. 順位取得 (targetId かつ PeriodType.all の時だけに限定)
+        // もし月間・週間の順位も欲しければ、ここを調整
         if (data.id == targetIdForReturn) {
           final q = commonRank(data.id, data.periodType);
-
           final countSnap = isSmallerBetter
               ? await q.where('score', isLessThan: newScore).count().get()
               : await q.where('score', isGreaterThan: newScore).count().get();
@@ -175,15 +179,15 @@ class ScoreManager {
           ranks[data.periodType] = (countSnap.count ?? 0) + 1;
         }
 
-        // 5. ローカル更新 (全期間のメインスコアのみ)
+        // 5. ローカル更新
         if (data.id == quizId.toString() && data.periodType == PeriodType.all) {
           ref
               .read(userStatusNotifierProvider.notifier)
               .updateScoreLocally(quizId, newScore);
         }
-      }
+      }));
 
-      // 最後にまとめてProviderを更新
+      // プロバイダー更新
       ref.read(myScoreMapProvider.notifier).setMap(scores);
       ref.read(myRankMapProvider.notifier).setMap(ranks);
     } catch (e) {

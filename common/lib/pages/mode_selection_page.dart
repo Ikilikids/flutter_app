@@ -8,6 +8,8 @@ class CommonModeSelectionPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedModeIndexProvider);
+    final uid = ref.watch(appUidProvider).requireValue;
+    final userName = ref.watch(appUserNameProvider).requireValue;
     final additionalPage1 = allData.additionalPage1;
     final additionalPage2 = allData.additionalPage2;
 
@@ -53,27 +55,50 @@ class CommonModeSelectionPage extends HookConsumerWidget {
         advisible: true,
         // --- 2. AppBarは現在のページ設定から取得 ---
         appBar: AppBar(
-          centerTitle: true,
           // 中央：アイコンとタイトル
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(currentPage.icon),
-              const SizedBox(width: 8),
-              Text(
-                currentPage.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              // モード説明がある場合のみiアイコンを表示
-              if (currentPage.modeDescription != null)
-                IconButton(
-                  icon: const Icon(Icons.info_outline, size: 20),
-                  onPressed: () => showModeDescription(context, currentPage),
+          title: ConstrainedBox(
+            // AppBarの高さ（kToolbarHeight）を上限にする制約をかける
+            constraints: const BoxConstraints(maxHeight: kToolbarHeight),
+            child: Padding(
+              padding: EdgeInsetsGeometry.symmetric(vertical: 10),
+              child: FittedBox(
+                fit: BoxFit.contain, // 高さいっぱいに収まるようにリサイズ
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => UserDetailDialog(
+                            uid: uid,
+                            userName: userName,
+                          ),
+                        );
+                      },
+                      child: Icon(Icons.account_circle_rounded,
+                          size: 200, color: textColor1(context)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      userName,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 100,
+                          color: textColor1(context)),
+                    ),
+                  ],
                 ),
-            ],
+              ),
+            ),
           ),
           // 右上：設定ボタン
           actions: [
+            if (currentPage.modeDescription != null)
+              IconButton(
+                icon: const Icon(Icons.info_outline),
+                onPressed: () => showModeDescription(context, currentPage),
+              ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
