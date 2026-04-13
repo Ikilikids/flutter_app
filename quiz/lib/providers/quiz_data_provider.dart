@@ -20,7 +20,7 @@ Future<List<List<dynamic>>> juniorEngRawCsv(Ref ref) async {
 Future<Map<int, List<EngPartData>>> integratedEngQuiz(Ref ref) async {
   // 英単語専用のプロバイダーを監視
   final rows = await ref.watch(juniorEngRawCsvProvider.future);
-  // 可変データの初期値を監視 (初回のみ実行されるように)
+  // 可変データの統計情報を監視 (初回読み込みのみ待機)
   final statsMap = await ref.watch(wordStatsNotifierProvider.future);
 
   final Map<int, List<EngPartData>> scoreMap = {};

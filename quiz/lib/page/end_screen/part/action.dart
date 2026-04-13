@@ -20,8 +20,10 @@ class ActionSection extends ConsumerWidget {
       0.95,
     );
     final isLimitedMode = quizinfo.modeData.islimited;
-    final availableCount = activeMap[1]?.length ?? 0;
     final isReviewMode = quizinfo.detail.resisterOrigin == "復習モード";
+    final availableCount = isReviewMode
+        ? ref.watch(filteredReviewCountProvider)
+        : (activeMap[1]?.length ?? 0);
 
     // 復習モードの場合、必要な問題数(qcount)が足りているかチェック
     final hasEnoughQuestions =

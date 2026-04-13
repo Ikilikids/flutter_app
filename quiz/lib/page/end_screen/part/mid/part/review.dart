@@ -2,6 +2,7 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz/page/eng_word_stats_tile.dart';
 import "package:quiz/quiz.dart";
 
 // These typedefs are local to this file for now.
@@ -85,7 +86,6 @@ class _ReviewTabBarView extends StatelessWidget {
 
         return Column(
           children: [
-            // 問題表示エリア
             Expanded(
               flex: 2,
               child: SizedBox(
@@ -93,7 +93,11 @@ class _ReviewTabBarView extends StatelessWidget {
                 child: QuestionDisplayArea(index: index),
               ),
             ),
-            // 解答・解説エリア
+            if (question is EngMakingData)
+              Padding(
+                padding: EdgeInsetsGeometry.only(bottom: 10),
+                child: EngWordStatsTile(question: question),
+              ),
             Expanded(
               flex: 1,
               child: _AnswerDisplayArea(question: question, index: index),

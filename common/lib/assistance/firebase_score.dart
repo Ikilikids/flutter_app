@@ -115,22 +115,21 @@ class ScoreManager {
     }
 
     // 2. カテゴリスコア (カテゴリ別 + 全合計をまとめて処理)
-    if (session.categortScore.isNotEmpty) {
-      final total = session.categortScore.values.fold(0.0, (s, v) => s + v);
-      final allScores = {...session.categortScore, '全合計': total};
 
-      allScores.forEach((catName, catScore) {
-        final roundedCat = (catScore * 100).roundToDouble() / 100;
-        for (var type in PeriodType.values) {
-          registers.add(ResisterData(
-            id: '${catName}_t',
-            periodType: type,
-            score: roundedCat,
-            forceAdd: true,
-          ));
-        }
-      });
-    }
+    final total = session.categortScore.values.fold(0.0, (s, v) => s + v);
+    final allScores = {...session.categortScore, '全合計': total};
+
+    allScores.forEach((catName, catScore) {
+      final roundedCat = (catScore * 100).roundToDouble() / 100;
+      for (var type in PeriodType.values) {
+        registers.add(ResisterData(
+          id: '${catName}_t',
+          periodType: type,
+          score: roundedCat,
+          forceAdd: true,
+        ));
+      }
+    });
 
     // --- B. 書き込み・順位取得フェーズ ---
     final Map<PeriodType, double> scores = {};
@@ -164,7 +163,6 @@ class ScoreManager {
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
-
         // 4. その場で順位を数える（ここが targetIdForReturn の時だけ動く）
         if (data.id == targetIdForReturn) {
           final q = commonRank(data.id, data.periodType);

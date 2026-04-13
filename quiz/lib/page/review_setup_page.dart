@@ -5,7 +5,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import "package:quiz/quiz.dart";
 
 import '../providers/eng_review_provider.dart';
-import '../providers/word_stats_provider.dart';
 
 class ReviewSetupPage extends HookConsumerWidget {
   const ReviewSetupPage({super.key});
@@ -21,6 +20,28 @@ class ReviewSetupPage extends HookConsumerWidget {
     final selectedParts =
         useState<Set<String>>({"名詞", "動詞", "形容詞", "副詞", "その他"});
 
+    // フィルタ条件が変更されたらプロバイダーを更新
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(engReviewFilterProvider.notifier).state = EngReviewFilter(
+          parts: selectedParts.value,
+          levels: selectedLevels.value,
+          metric: selectedMetric.value,
+          range: rangeValues.value,
+          star: useStar.value,
+          heart: useHeart.value,
+        );
+      });
+      return null;
+    }, [
+      selectedParts.value,
+      selectedLevels.value,
+      selectedMetric.value,
+      rangeValues.value,
+      useStar.value,
+      useHeart.value
+    ]);
+
     // 指標が切り替わった時にレンジを初期化
     useEffect(() {
       rangeValues.value =
@@ -29,7 +50,7 @@ class ReviewSetupPage extends HookConsumerWidget {
     }, [selectedMetric.value]);
 
     // --- データ取得 ---
-    final statsAsync = ref.watch(wordStatsNotifierProvider);
+    final totalMatches = ref.watch(filteredReviewCountProvider);
     final integratedAsync = ref.watch(integratedEngQuizProvider);
 
     return integratedAsync.when(
@@ -38,67 +59,6 @@ class ReviewSetupPage extends HookConsumerWidget {
       error: (err, stack) =>
           Scaffold(body: Center(child: Text("エラーが発生しました:$err"))),
       data: (integratedData) {
-        final allWords = useMemoized(() {
-          final List<EngPartData> allItems = [];
-          integratedData.forEach((key, value) {
-            allItems.addAll(value);
-          });
-          return allItems;
-        }, [integratedData]);
-
-        final statsMap = statsAsync.value ?? {};
-
-        // --- フィルタリングロジック ---
-        final matchingWords = allWords.where((word) {
-          final s = statsMap[word.word.toLowerCase()] ?? const WordStats();
-
-          // 1. タグ
-          bool tagMatch = false;
-          if (useStar.value && s.star) tagMatch = true;
-          if (useHeart.value && s.heart) tagMatch = true;
-          if (!useStar.value && !useHeart.value) tagMatch = true;
-
-          // 2. 指標 (選択されたメトリクスとレンジ)
-          double value = 0;
-          switch (selectedMetric.value) {
-            case ReviewMetric.accuracyRate:
-              value = s.accuracyRate;
-              break;
-            case ReviewMetric.correctCount:
-              value = s.correctCount.toDouble();
-              break;
-            case ReviewMetric.incorrectCount:
-              value = s.incorrectCount.toDouble();
-              break;
-            case ReviewMetric.recentCorrectCount:
-              value = s.recentCorrectCount.toDouble();
-              break;
-            case ReviewMetric.recentIncorrectCount:
-              value = s.recentIncorrectCount.toDouble();
-              break;
-            case ReviewMetric.totalPlayCount:
-              value = s.totalPlayCount.toDouble();
-              break;
-          }
-          bool metricMatch = value >= rangeValues.value.start &&
-              value <= rangeValues.value.end;
-
-          // 3. レベル
-          bool levelMatch = selectedLevels.value.contains(word.totalScore);
-
-          // 4. 品詞
-          bool partMatch = selectedParts.value.contains(word.middle) ||
-              (word.middle != "名詞" &&
-                  word.middle != "動詞" &&
-                  word.middle != "形容詞" &&
-                  word.middle != "副詞" &&
-                  selectedParts.value.contains("その他"));
-
-          return tagMatch && metricMatch && levelMatch && partMatch;
-        }).toList();
-
-        final totalMatches = matchingWords.length;
-
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
@@ -110,7 +70,7 @@ class ReviewSetupPage extends HookConsumerWidget {
                 _buildTagSwitch(
                     context, '★ 星付き', Icons.star, Colors.orange, useStar),
                 _buildTagSwitch(
-                    context, '♪ 登録済み', Icons.music_note, Colors.red, useHeart),
+                    context, '♪ 登録済み', Icons.favorite, Colors.red, useHeart),
               ]),
               const SizedBox(height: 28),
 
@@ -358,7 +318,6 @@ class ReviewSetupPage extends HookConsumerWidget {
                   ? () {
                       ref.read(selectedQuizIdProvider.notifier).update(
                           QuizId(resisterOrigin: "復習モード", modeType: "z"));
-                      // 1. 英単語専用のフィルタを「登録」
                       ref.read(engReviewFilterProvider.notifier).state =
                           EngReviewFilter(
                         parts: parts,
@@ -368,9 +327,6 @@ class ReviewSetupPage extends HookConsumerWidget {
                         star: star,
                         heart: heart,
                       );
-
-                      // 2. 問題数をシステム（UserStatus）に「登録」
-                      // resisterOrigin: "復習モード", modeType: "z"
                       ref
                           .read(userStatusNotifierProvider.notifier)
                           .updateQcount(

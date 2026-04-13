@@ -11,17 +11,18 @@ typedef GamePageBuilder = Widget Function(
     BuildContext context, DetailConfig quizinfo);
 typedef LoadBuilder = void Function(
     BuildContext context, WidgetRef ref, DetailConfig quizinfo);
-typedef EndBuilder = Widget Function();
 typedef SettingWidgetsBuilder = List<Widget> Function(
     BuildContext, String, Function);
 
 @freezed
-class AdditionalPageConfig with _$AdditionalPageConfig {
-  const factory AdditionalPageConfig({
+class PageConfig with _$PageConfig {
+  const factory PageConfig({
     required String title,
     required IconData icon,
+    required Color color,
+    String? modeDescription,
     required AdditionalPageBuilder builder,
-  }) = _AdditionalPageConfig;
+  }) = _PageConfig;
 }
 
 // 既存のTypedef
@@ -42,10 +43,9 @@ class AllData with _$AllData {
   bool get isRotation => appData.isRotation;
   String get URL => appData.URL;
   GamePageBuilder get mainGame => appData.mainGame;
-  AdditionalPageConfig? get additionalPage1 => appData.additionalPage1;
-  AdditionalPageConfig? get additionalPage2 => appData.additionalPage2;
+  PageConfig? get additionalPage1 => appData.additionalPage1;
+  PageConfig? get additionalPage2 => appData.additionalPage2;
   LoadBuilder? get loadGame => appData.loadGame;
-  EndBuilder? get endBuilder => appData.endBuilder;
   SettingWidgetsBuilder? get settingWidgets => appData.settingWidgets;
 
   String? get BannerId => appData.bannerId;
@@ -63,10 +63,9 @@ class AppData with _$AppData {
     required String URL,
     required GamePageBuilder mainGame,
     LoadBuilder? loadGame,
-    EndBuilder? endBuilder,
     SettingWidgetsBuilder? settingWidgets,
-    AdditionalPageConfig? additionalPage1,
-    AdditionalPageConfig? additionalPage2,
+    PageConfig? additionalPage1,
+    PageConfig? additionalPage2,
     String? bannerId,
     String? interId,
     String? rewardId,

@@ -4,6 +4,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import "package:quiz/quiz.dart";
 
+import 'eng_word_stats_tile.dart';
+
 class Quizscreen extends HookConsumerWidget {
   const Quizscreen({super.key});
 
@@ -25,6 +27,7 @@ class Quizscreen extends HookConsumerWidget {
 
     final notifier = ref.read(quizSessionNotifierProvider.notifier);
     final activeConfig = ref.read(currentDetailConfigProvider);
+    print(activeConfig.detail);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 初期化
@@ -108,8 +111,9 @@ class Quizscreen extends HookConsumerWidget {
                     const Expanded(flex: 5, child: LatexKeyboardView()),
                   ],
                   if (P is EngMakingData) ...[
-                    const Expanded(flex: 3, child: EngDisplayView()),
-                    const Expanded(flex: 4, child: EngKeyboardView()),
+                    const Expanded(flex: 2, child: EngWordStatsTile()),
+                    const Expanded(flex: 4, child: EngDisplayView()),
+                    const Expanded(flex: 5, child: EngKeyboardView()),
                   ],
                   if (P is OptionMakingData)
                     Expanded(flex: 7, child: QuizOptions()),

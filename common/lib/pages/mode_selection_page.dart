@@ -16,23 +16,21 @@ class CommonModeSelectionPage extends HookConsumerWidget {
       // ゲームモード（allData.mid）
       ...allData.mid.asMap().entries.map((e) {
         // builderの中身を外側で定義しておくとスッキリします
-        WidgetBuilder pageBuilder;
-        if (e.key == 2 && additionalPage1 != null) {
-          pageBuilder = (context) => additionalPage1.builder(context);
-        } else {
-          pageBuilder = (context) => CommonDetailCard(modeIndex: e.key);
+        if (e.key == 0 || e.key == 1) {
+          WidgetBuilder pageBuilder =
+              (context) => CommonDetailCard(modeIndex: e.key);
+
+          return PageConfig(
+            title: l10n(context, e.value.modeData.modeTitle),
+            icon: e.value.modeData.modeIcon,
+            color: _getGameModeColor(e.key),
+            builder: pageBuilder,
+            modeDescription: e.value.modeData.modeDescription, // 追加：モード説明を渡す
+          );
         }
+      }).whereType<PageConfig>(), // nullを除外
+      if (additionalPage1 != null) additionalPage1,
 
-        return PageConfig(
-          title: l10n(context, e.value.modeData.modeTitle),
-          icon: e.value.modeData.modeIcon,
-          color: _getGameModeColor(e.key),
-          builder: pageBuilder,
-          modeDescription: e.value.modeData.modeDescription, // 追加：モード説明を渡す
-        );
-      }),
-
-      // ランキング
       PageConfig(
           title: l10n(context, 'rankingButton'),
           icon: Icons.emoji_events,
@@ -42,18 +40,7 @@ class CommonModeSelectionPage extends HookConsumerWidget {
               "・レーダーチャートの1位の方の記録をMaxとしています。"),
 
       // 追加ページ2
-      if (additionalPage2 != null)
-        PageConfig(
-          title: additionalPage2.title,
-          icon: additionalPage2.icon,
-          color: Colors.deepOrange, // 任意の色
-          builder: (context) => additionalPage2.builder(context),
-          modeDescription:
-              "・上から、単語検索、並び替え,昇順/降順,タグ登録(☆♪)、品詞絞り込み、レベル絞り込みとなっています。\n\n"
-              "・それぞれの単語の色は品詞を示しています。(赤：動詞, 青：名詞, 黄：形容詞, 緑：副詞, 紫：その他)\n\n"
-              "・単語の下に直近5回の結果とすべての期間の結果を載せています。\n\n"
-              "・△はヒントありで正解を示しています。正答率は△を50%として集計しています。",
-        ),
+      if (additionalPage2 != null) additionalPage2
     ];
 
     // インデックスが範囲外にならないようガード
@@ -130,25 +117,8 @@ class CommonModeSelectionPage extends HookConsumerWidget {
         return Colors.blue;
       case 1:
         return Colors.red;
-      case 2:
-        return Colors.green;
       default:
         return Colors.blueGrey;
     }
   }
-}
-
-// 内部管理用のクラス
-class PageConfig {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final WidgetBuilder builder;
-  String? modeDescription; // 追加：モード説明用のフィールド
-  PageConfig(
-      {required this.title,
-      required this.icon,
-      required this.color,
-      required this.builder,
-      this.modeDescription});
 }

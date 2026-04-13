@@ -11,7 +11,9 @@ final _appConfig = AllData(
     appIcon: Icons.translate,
     symbols: ["A", "B", "C", "D", "E", "F", "G", "H"],
     isRotation: false,
-    URL: "https://play.google.com/store/apps/details?id=jp.ponta.music_sense",
+    URL: "https://play.google.com/store/apps/details?id=jp.ponta.junior_eng",
+    bannerId: "ca-app-pub-1440692612851416/9369558908",
+    interId: "ca-app-pub-1440692612851416/5183113913",
     loadGame:
         (BuildContext context, WidgetRef ref, DetailConfig quizinfo) async {
       // 1. パース済みの全データを取得
@@ -19,14 +21,26 @@ final _appConfig = AllData(
     },
     mainGame: (BuildContext context, DetailConfig quizinfo) =>
         const Quizscreen(),
-    additionalPage1: AdditionalPageConfig(
-        builder: (BuildContext context) => const ReviewSetupPage(),
-        title: "復習モード",
-        icon: Icons.find_replace),
-    additionalPage2: AdditionalPageConfig(
-        builder: (BuildContext context) => const WordListPage(),
-        title: "単語リスト",
-        icon: Icons.style),
+    additionalPage1: PageConfig(
+      builder: (BuildContext context) => const ReviewSetupPage(),
+      title: "復習モード",
+      icon: Icons.find_replace,
+      color: Colors.green,
+      modeDescription: "・条件で問題を絞り込めるモードです。\n"
+          "・トレーニングモードと同じく5問または10問を選ぶことができます\n"
+          "・ヒントは最後の2文字以外利用できます。",
+    ),
+    additionalPage2: PageConfig(
+      builder: (BuildContext context) => const WordListPage(),
+      title: "単語リスト",
+      icon: Icons.style,
+      color: Colors.deepOrange,
+      modeDescription:
+          "・上から、単語検索、並び替え,昇順/降順,タグ登録(☆♪)、品詞絞り込み、レベル絞り込みとなっています。\n\n"
+          "・それぞれの単語の色は品詞を示しています。(赤：動詞, 青：名詞, 黄：形容詞, 緑：副詞, 紫：その他)\n\n"
+          "・単語の下に直近5回の結果とすべての期間の結果を載せています。\n\n"
+          "・△はヒントありで正解を示しています。正答率は△を50%として集計しています。",
+    ),
   ),
   mid: [
     MidData(
@@ -242,21 +256,18 @@ final _appConfig = AllData(
         modeIcon: Icons.history,
         modeType: "z",
         modeTitle: "復習モード",
-        modeDescription: "・条件で問題を絞り込めるモードです。\n"
-            "・トレーニングモードと同じく5問または10問を選ぶことができます\n"
-            "・ヒントは最後の2文字以外利用できます。",
         isSmallerBetter: false,
       ),
       detail: [
         DetailData(
-          quizId: const QuizId(resisterOrigin: "復習モード", modeType: "z"),
-          sort: "",
-          displayLabel: "復習モード",
-          method: "",
-          description: "",
-          color: "6",
-          circleColor: "",
-        ),
+            quizId: const QuizId(resisterOrigin: "復習モード", modeType: "z"),
+            sort: "",
+            displayLabel: "復習モード",
+            method: "",
+            description: "",
+            color: "6",
+            circleColor: "",
+            detailIcon: Icons.history),
       ],
     )
   ],

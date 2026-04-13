@@ -56,7 +56,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
     }, const []);
 
     return PopScope(
-      canPop: true,
+      canPop: false,
       child: AppAdScaffold(
         advisible: false,
         body: Center(

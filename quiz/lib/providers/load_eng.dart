@@ -19,9 +19,10 @@ class EngQuizLoader {
 
     integratedData.forEach((score, partList) {
       for (var part in partList) {
-        if (customFilter != null) {
+        if (customFilter != null && quizinfo.detail.sort == "") {
           // --- A. 登録済みフィルタ（復習モード）を使用 ---
-          if (!_checkCustomFilter(customFilter, part, statsMap)) continue;
+          final s = statsMap[part.word.toLowerCase()] ?? const WordStats();
+          if (!customFilter.matches(part, s)) continue;
         } else {
           // --- B. 従来の sort 文字列を使用 ---
           final sortParts = quizinfo.detail.sort.split(';');
@@ -43,57 +44,6 @@ class EngQuizLoader {
 
     allCandidates.shuffle();
     return {1: allCandidates};
-  }
-
-  /// 構造化されたカスタムフィルタによるチェック
-  static bool _checkCustomFilter(EngReviewFilter filter, EngPartData part,
-      Map<String, WordStats> statsMap) {
-    // 1. 品詞チェック
-    final domain = part.middle;
-    bool partMatch = filter.parts.contains(domain) ||
-        (domain != "名詞" &&
-            domain != "動詞" &&
-            domain != "形容詞" &&
-            domain != "副詞" &&
-            filter.parts.contains("その他"));
-    if (!partMatch) return false;
-
-    // 2. レベルチェック
-    if (!filter.levels.contains(part.totalScore)) return false;
-
-    // 3. 統計・タグチェック
-    final s = statsMap[part.word.toLowerCase()] ?? const WordStats();
-
-    // タグ判定
-    bool tagMatch = false;
-    if (filter.star && s.star) tagMatch = true;
-    if (filter.heart && s.heart) tagMatch = true;
-    if (!filter.star && !filter.heart) tagMatch = true;
-    if (!tagMatch) return false;
-
-    // 指標判定
-    double val = 0;
-    switch (filter.metric) {
-      case ReviewMetric.accuracyRate:
-        val = s.accuracyRate;
-        break;
-      case ReviewMetric.correctCount:
-        val = s.correctCount.toDouble();
-        break;
-      case ReviewMetric.incorrectCount:
-        val = s.incorrectCount.toDouble();
-        break;
-      case ReviewMetric.recentCorrectCount:
-        val = s.recentCorrectCount.toDouble();
-        break;
-      case ReviewMetric.recentIncorrectCount:
-        val = s.recentIncorrectCount.toDouble();
-        break;
-      case ReviewMetric.totalPlayCount:
-        val = s.totalPlayCount.toDouble();
-        break;
-    }
-    return val >= filter.range.start && val <= filter.range.end;
   }
 
   static bool _checkReviewFilter(List<String> sortParts, WordStats s) {
