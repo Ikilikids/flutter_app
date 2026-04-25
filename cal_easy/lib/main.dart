@@ -1,6 +1,5 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:quiz/quiz.dart';
 
 import 'firebase_options.dart';
 import 'setting_widgets.dart';
@@ -83,9 +82,6 @@ final _appConfig = AllData(
       bannerId: "ca-app-pub-1440692612851416/5101110710",
       interId: "ca-app-pub-1440692612851416/6696946185",
       rewardId: "ca-app-pub-1440692612851416/5939549664",
-      loadGame: (context, ref, quizinfo) async =>
-          LoadQuiz(quizinfo: quizinfo).init(ref),
-      mainGame: (context, quizinfo) => const Quizscreen(),
       settingWidgets: (context, currentNumber, function) => [
             const Divider(height: 1),
             buildSectionHeader(context),

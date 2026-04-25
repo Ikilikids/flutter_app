@@ -12,11 +12,15 @@ class ReviewSetupPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // --- 状態管理 (Hooks) ---
+    final bool isHigh =
+        ref.read(currentDetailConfigProvider).appData.appTitle.contains("高校");
+    print("復習モード: 高校版かどうか = $isHigh");
     final useStar = useState(false);
     final useHeart = useState(false);
     final selectedMetric = useState(ReviewMetric.accuracyRate);
     final rangeValues = useState(const RangeValues(0, 100));
-    final selectedLevels = useState<Set<int>>({1, 2, 3, 4});
+    final selectedLevels =
+        useState<Set<int>>(isHigh ? {1, 2, 3, 4, 5, 6, 7} : {1, 2, 3, 4});
     final selectedParts =
         useState<Set<String>>({"名詞", "動詞", "形容詞", "副詞", "その他"});
 
@@ -81,7 +85,7 @@ class ReviewSetupPage extends HookConsumerWidget {
 
               // --- 3. レベル ---
               _buildSectionHeader(context, Icons.layers, "レベル"),
-              _buildLevelChips(context, selectedLevels),
+              _buildLevelChips(context, selectedLevels, isHigh),
               const SizedBox(height: 28),
 
               // --- 4. 品詞 ---
@@ -241,11 +245,11 @@ class ReviewSetupPage extends HookConsumerWidget {
   }
 
   Widget _buildLevelChips(
-      BuildContext context, ValueNotifier<Set<int>> selected) {
+      BuildContext context, ValueNotifier<Set<int>> selected, bool isHigh) {
     return Wrap(
       spacing: 8,
       runSpacing: 4,
-      children: List.generate(4, (index) {
+      children: List.generate(isHigh ? 7 : 4, (index) {
         final level = index + 1;
         final isSelected = selected.value.contains(level);
         return FilterChip(

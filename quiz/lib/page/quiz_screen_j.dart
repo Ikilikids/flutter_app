@@ -123,8 +123,8 @@ class Quizscreen extends HookConsumerWidget {
                 Center(
                   child: Image.asset(
                     isDark
-                        ? 'assets/images/${resultMark.name}_dark.png'
-                        : 'assets/images/${resultMark.name}.png',
+                        ? 'packages/common/assets/images/${resultMark.name}_dark.png'
+                        : 'packages/common/assets/images/${resultMark.name}.png',
                     height: 300,
                   ),
                 ),

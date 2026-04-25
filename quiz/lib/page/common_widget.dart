@@ -157,8 +157,8 @@ class MaruPekeListWidget extends HookConsumerWidget {
         child: mark == QuizResult.unknown
             ? null
             : Image.asset(isDark
-                ? 'assets/images/${mark.name}_dark.png'
-                : 'assets/images/${mark.name}.png'),
+                ? 'packages/common/assets/images/${mark.name}_dark.png'
+                : 'packages/common/assets/images/${mark.name}.png'),
       );
     }
 

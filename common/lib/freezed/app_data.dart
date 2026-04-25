@@ -7,10 +7,6 @@ import '../common.dart';
 part 'app_data.freezed.dart';
 
 // --- Typedefs ---
-typedef GamePageBuilder = Widget Function(
-    BuildContext context, DetailConfig quizinfo);
-typedef LoadBuilder = void Function(
-    BuildContext context, WidgetRef ref, DetailConfig quizinfo);
 typedef SettingWidgetsBuilder = List<Widget> Function(
     BuildContext, String, Function);
 
@@ -42,10 +38,8 @@ class AllData with _$AllData {
   List<String> get symbols => appData.symbols;
   bool get isRotation => appData.isRotation;
   String get URL => appData.URL;
-  GamePageBuilder get mainGame => appData.mainGame;
   PageConfig? get additionalPage1 => appData.additionalPage1;
   PageConfig? get additionalPage2 => appData.additionalPage2;
-  LoadBuilder? get loadGame => appData.loadGame;
   SettingWidgetsBuilder? get settingWidgets => appData.settingWidgets;
 
   String? get BannerId => appData.bannerId;
@@ -61,8 +55,6 @@ class AppData with _$AppData {
     required List<String> symbols,
     required bool isRotation,
     required String URL,
-    required GamePageBuilder mainGame,
-    LoadBuilder? loadGame,
     SettingWidgetsBuilder? settingWidgets,
     PageConfig? additionalPage1,
     PageConfig? additionalPage2,

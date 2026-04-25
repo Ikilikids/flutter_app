@@ -2,20 +2,18 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'page/game_screen.dart';
 
 final _appConfig = AllData(
   appData: AppData(
-      appTitle: "reflectTitle",
-      appIcon: Icons.flash_on,
-      symbols: ["!!", "◯", "*", "♪"],
-      isRotation: true,
-      URL: "https://play.google.com/store/apps/details?id=jp.ponta.reflect",
-      bannerId: "ca-app-pub-1440692612851416/6348678971",
-      interId: "ca-app-pub-1440692612851416/5035597308",
-      rewardId: "ca-app-pub-1440692612851416/6205218489",
-      mainGame: (BuildContext context, DetailConfig quizinfo) =>
-          Gamescreen(quizinfo: quizinfo)),
+    appTitle: "reflectTitle",
+    appIcon: Icons.flash_on,
+    symbols: ["!!", "◯", "*", "♪"],
+    isRotation: true,
+    URL: "https://play.google.com/store/apps/details?id=jp.ponta.reflect",
+    bannerId: "ca-app-pub-1440692612851416/6348678971",
+    interId: "ca-app-pub-1440692612851416/5035597308",
+    rewardId: "ca-app-pub-1440692612851416/6205218489",
+  ),
   mid: [
     MidData(
       modeData: ModeData(

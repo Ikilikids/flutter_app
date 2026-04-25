@@ -18,7 +18,7 @@ class SoundManager {
       'countdown2.mp3',
     };
     for (var file in primarySoundFiles) {
-      final data = await rootBundle.load('assets/sounds/$file');
+      final data = await rootBundle.load('packages/common/assets/sounds/$file');
       final id = await _soundpool.load(data);
       _soundIds[file] = id;
     }
@@ -33,16 +33,19 @@ class SoundManager {
       "hoi.mp3",
       "pipi.mp3",
       "pi.mp3",
+      "star.mp3",
+      "heart.mp3",
       for (int i = 0; i <= 9; i++) '$i.mp3',
     };
     for (var file in secondSoundFiles) {
-      final data = await rootBundle.load('assets/sounds/$file');
+      final data = await rootBundle.load('packages/common/assets/sounds/$file');
       final id = await _soundpool.load(data);
       _soundIds[file] = id;
     }
   }
 
   void playSound(String name) {
+    print("Playing sound: $name");
     final id = _soundIds[name];
     if (id != null) _soundpool.play(id);
   }

@@ -1,6 +1,8 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class CommonModeSelectionPage extends HookConsumerWidget {
   const CommonModeSelectionPage({super.key});
@@ -49,90 +51,106 @@ class CommonModeSelectionPage extends HookConsumerWidget {
     final safeIndex = selectedIndex >= pages.length ? 0 : selectedIndex;
     final currentPage = pages[safeIndex];
 
-    return PopScope(
-      canPop: false,
-      child: AppAdScaffold(
-        advisible: true,
-        // --- 2. AppBarは現在のページ設定から取得 ---
-        appBar: AppBar(
-          // 中央：アイコンとタイトル
-          title: ConstrainedBox(
-            // AppBarの高さ（kToolbarHeight）を上限にする制約をかける
-            constraints: const BoxConstraints(maxHeight: kToolbarHeight),
-            child: Padding(
-              padding: EdgeInsetsGeometry.symmetric(vertical: 10),
-              child: FittedBox(
-                fit: BoxFit.contain, // 高さいっぱいに収まるようにリサイズ
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => UserDetailDialog(
-                            uid: uid,
-                            userName: userName,
-                          ),
-                        );
-                      },
-                      child: Icon(Icons.account_circle_rounded,
-                          size: 200, color: textColor1(context)),
+    return VisibilityDetector(
+        key: const Key('CommonModeSelectionPageKey'),
+        onVisibilityChanged: (info) {
+          // 画面が少しでも（0より大きく）見えた時、かつ「完全に」戻ってきたタイミング（1.0）
+          if (info.visibleFraction == 1.0) {
+            final player = ref.read(audioPlayerManagerProvider);
+
+            // もし止まっていたら、どのIndexだろうとお構いなしに鳴らす
+            if (player.state != PlayerState.playing) {
+              ref
+                  .read(audioPlayerManagerProvider.notifier)
+                  .play('assets/sounds/Thunderbolt.mp3');
+            }
+          }
+        },
+        child: PopScope(
+          canPop: false,
+          child: AppAdScaffold(
+            advisible: true,
+            // --- 2. AppBarは現在のページ設定から取得 ---
+            appBar: AppBar(
+              // 中央：アイコンとタイトル
+              title: ConstrainedBox(
+                // AppBarの高さ（kToolbarHeight）を上限にする制約をかける
+                constraints: const BoxConstraints(maxHeight: kToolbarHeight),
+                child: Padding(
+                  padding: EdgeInsetsGeometry.symmetric(vertical: 10),
+                  child: FittedBox(
+                    fit: BoxFit.contain, // 高さいっぱいに収まるようにリサイズ
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => UserDetailDialog(
+                                uid: uid,
+                                userName: userName,
+                              ),
+                            );
+                          },
+                          child: Icon(Icons.account_circle_rounded,
+                              size: 200, color: textColor1(context)),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          userName,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 100,
+                              color: textColor1(context)),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      userName,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 100,
-                          color: textColor1(context)),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+              // 右上：設定ボタン
+              actions: [
+                if (currentPage.modeDescription != null)
+                  IconButton(
+                    icon: const Icon(Icons.info_outline),
+                    onPressed: () => showModeDescription(context, currentPage),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SettingsPage()),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8), // 右端に少し余白
+              ],
+            ),
+            // --- 3. IndexedStack もリストから生成 ---
+            body: IndexedStack(
+              index: safeIndex,
+              children: pages.map((p) => p.builder(context)).toList(),
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: safeIndex,
+              onTap: (index) =>
+                  ref.read(selectedModeIndexProvider.notifier).update(index),
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: currentPage.color,
+              unselectedItemColor: Colors.grey,
+              // --- 4. BottomNavigationBarItem も同じリストから生成 ---
+              items: pages
+                  .map((p) => BottomNavigationBarItem(
+                        icon: Icon(p.icon),
+                        label: p.title,
+                      ))
+                  .toList(),
             ),
           ),
-          // 右上：設定ボタン
-          actions: [
-            if (currentPage.modeDescription != null)
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                onPressed: () => showModeDescription(context, currentPage),
-              ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-            ),
-            const SizedBox(width: 8), // 右端に少し余白
-          ],
-        ),
-        // --- 3. IndexedStack もリストから生成 ---
-        body: IndexedStack(
-          index: safeIndex,
-          children: pages.map((p) => p.builder(context)).toList(),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: safeIndex,
-          onTap: (index) =>
-              ref.read(selectedModeIndexProvider.notifier).update(index),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: currentPage.color,
-          unselectedItemColor: Colors.grey,
-          // --- 4. BottomNavigationBarItem も同じリストから生成 ---
-          items: pages
-              .map((p) => BottomNavigationBarItem(
-                    icon: Icon(p.icon),
-                    label: p.title,
-                  ))
-              .toList(),
-        ),
-      ),
-    );
+        ));
   }
 
   // ゲームモードの色分けだけ残す

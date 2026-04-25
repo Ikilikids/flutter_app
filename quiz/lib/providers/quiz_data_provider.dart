@@ -11,7 +11,8 @@ part 'quiz_data_provider.g.dart';
 /// 1. 固定データ: 英単語CSVのパース結果をキャッシュ
 @Riverpod(keepAlive: true)
 Future<List<List<dynamic>>> juniorEngRawCsv(Ref ref) async {
-  final csvString = await rootBundle.loadString("assets/csv/eng_data.csv");
+  final csvString =
+      await rootBundle.loadString("packages/common/assets/csv/eng_data.csv");
   return const CsvToListConverter().convert(csvString);
 }
 
@@ -30,7 +31,7 @@ Future<Map<int, List<EngPartData>>> integratedEngQuiz(Ref ref) async {
 
     final word = row[1].toString().trim();
     final meaning = row[2].toString().trim();
-    final totalScore = ((row[0] ~/ 400) + 1).clamp(1, 7);
+    final totalScore = (((row[0] - 1) ~/ 400) + 1).clamp(1, 7);
 
     final statsKey = word.toLowerCase();
     final stats = statsMap[statsKey] ?? const WordStats();

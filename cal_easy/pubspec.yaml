@@ -2,7 +2,7 @@ name: cal_easy
 description: "A new Flutter project."
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 8.0.1+30
+version: 8.0.2+31
 
 environment:
   sdk: ^3.5.4
@@ -34,6 +34,8 @@ dependencies:
   hooks_riverpod: ^2.6.1
   package_info_plus: ^8.0.0
   url_launcher: ^6.3.0 # ストアを開く用
+  audioplayers: ^6.6.0
+  visibility_detector: ^0.4.0
 
 dev_dependencies:
   flutter_test:
@@ -44,12 +46,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/sounds/
-    - assets/images/
-    - assets/csv/
 
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icon.png"
+  image_path: "packages/common/asset/cal_easy.png"

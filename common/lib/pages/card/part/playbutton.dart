@@ -31,6 +31,7 @@ class PlayButton extends HookConsumerWidget {
       if (config.modeData.islimited) {
         await ref.read(userStatusNotifierProvider.notifier).recordPlay(quizId);
       }
+      ref.read(audioPlayerManagerProvider.notifier).stop();
       if (context.mounted) {
         Navigator.push(
           context,

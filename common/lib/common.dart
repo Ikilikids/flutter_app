@@ -36,6 +36,7 @@ export 'providers/app_shared.dart';
 export 'providers/app_sound.dart';
 export 'providers/app_theme.dart';
 export 'providers/app_uid.dart';
+export 'providers/audio_provider.dart';
 export 'providers/my_rank_provider.dart';
 export 'providers/ui_provider.dart';
 export 'providers/user_status_provider.dart';

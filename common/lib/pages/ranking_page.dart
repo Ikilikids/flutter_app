@@ -109,7 +109,7 @@ class CommonRankingPage extends HookConsumerWidget {
     // --- Tab Controllers ---
     // keysを指定することで、タブの中身が変わった時にコントローラーを自動再生成
     final modeTabController =
-        useTabController(initialLength: allData.mid.length, keys: [modeTabs]);
+        useTabController(initialLength: 2, keys: [modeTabs]);
     final quizTabController = useTabController(
       initialLength: quizTabs.length,
       keys: [quizTabs],

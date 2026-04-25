@@ -60,8 +60,8 @@ class _ReviewTabBar extends StatelessWidget {
                 const SizedBox(width: 4),
                 Image.asset(
                   isDark
-                      ? 'assets/images/${isCorrect.name}_dark.png'
-                      : 'assets/images/${isCorrect.name}.png',
+                      ? 'packages/common/assets/images/${isCorrect.name}_dark.png'
+                      : 'packages/common/assets/images/${isCorrect.name}.png',
                   height: 20,
                 ),
               ],

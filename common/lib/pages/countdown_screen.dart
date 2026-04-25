@@ -2,6 +2,7 @@ import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart'; // flutter_hooks をインポート
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz/quiz.dart';
 
 class CommonCountdownScreen extends HookConsumerWidget {
   const CommonCountdownScreen({super.key});
@@ -17,14 +18,13 @@ class CommonCountdownScreen extends HookConsumerWidget {
 
     // useEffect を使って初期化処理を行う（マウント時に1回だけ実行）
     useEffect(() {
-      final gameBuilder = allData.mainGame;
-      final loadBuilder = allData.loadGame;
+      final isReflect =
+          ref.watch(currentDetailConfigProvider).appData.appTitle ==
+              "reflectTitle";
       final sound = ref.read(appSoundProvider);
 
       // ゲームのロード処理
-      if (loadBuilder != null) {
-        loadBuilder(context, ref, quizData);
-      }
+      init(ref);
 
       // カウントダウンタイマーのロジック
       Future<void> startTimer() async {
@@ -43,7 +43,7 @@ class CommonCountdownScreen extends HookConsumerWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => gameBuilder(context, quizData),
+                  builder: (_) => isReflect ? Gamescreen() : Quizscreen(),
                 ),
               );
             }

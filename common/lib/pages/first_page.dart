@@ -21,6 +21,7 @@ class CommonFirstPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // --- State & Controllers (Hooks) ---
+    final notifier = ref.read(audioPlayerManagerProvider.notifier);
     final name = ref.watch(appUserNameProvider);
     final status = ref.watch(userStatusNotifierProvider);
     final isReady = name.hasValue && status.hasValue;
@@ -55,6 +56,9 @@ class CommonFirstPage extends HookConsumerWidget {
     // --- Effects (InitState の代わり) ---
 
     useEffect(() {
+      // 起動時に少しだけ待ってから再生
+      notifier.play('assets/sounds/Thunderbolt.mp3');
+
       _checkFirstLaunch();
 
       // アニメーションを開始
@@ -62,7 +66,7 @@ class CommonFirstPage extends HookConsumerWidget {
       blinkController.repeat(reverse: true);
 
       // アニメーション完了後 (1000ms後) に重い初期化処理を開始
-      Future.delayed(const Duration(milliseconds: 1000), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (!context.mounted) return;
 
         if (!kIsWeb) {
@@ -92,7 +96,7 @@ class CommonFirstPage extends HookConsumerWidget {
 
         if (UpdateManager.needsUpdate == true) {
           if (context.mounted) {
-            UpdateManager.showUpdateDialog(context, allData.appData.URL);
+            UpdateManager.showUpdateDialog(context, allData.URL);
             isNavigating.value = false;
           }
           return;

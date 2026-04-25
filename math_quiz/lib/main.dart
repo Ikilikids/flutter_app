@@ -1,7 +1,5 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:quiz/quiz.dart';
 
 import 'firebase_options.dart';
 
@@ -33,13 +31,6 @@ final _appConfig = AllData(
     URL: "https://play.google.com/store/apps/details?id=jp.ponta.mathquiz",
     bannerId: "ca-app-pub-1440692612851416/6568630311",
     interId: "ca-app-pub-1440692612851416/7404533363",
-    loadGame:
-        (BuildContext context, WidgetRef ref, DetailConfig quizinfo) async {
-      // 1. パース済みの全データを取得
-      LoadQuiz(quizinfo: quizinfo).init(ref);
-    },
-    mainGame: (BuildContext context, DetailConfig quizinfo) =>
-        const Quizscreen(), // const を追加
   ),
   mid: [
     MidData(

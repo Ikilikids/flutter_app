@@ -1,6 +1,5 @@
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:quiz/quiz.dart';
 
 import 'firebase_options.dart';
@@ -14,13 +13,6 @@ final _appConfig = AllData(
     URL: "https://play.google.com/store/apps/details?id=jp.ponta.junior_eng",
     bannerId: "ca-app-pub-1440692612851416/9369558908",
     interId: "ca-app-pub-1440692612851416/5183113913",
-    loadGame:
-        (BuildContext context, WidgetRef ref, DetailConfig quizinfo) async {
-      // 1. パース済みの全データを取得
-      LoadQuiz(quizinfo: quizinfo).init(ref);
-    },
-    mainGame: (BuildContext context, DetailConfig quizinfo) =>
-        const Quizscreen(),
     additionalPage1: PageConfig(
       builder: (BuildContext context) => const ReviewSetupPage(),
       title: "復習モード",
@@ -170,9 +162,9 @@ final _appConfig = AllData(
             sort: "12345;4",
             displayLabel: "ハイレベル(★4)",
             method: "★4レベルの全種類、400単語(中学難関レベル)",
-            description: "中学難関レベルの単語も収録！さらに上を目指す人に！",
+            description: "余裕な人は「とことん高校英単語」へ!!",
             color: "6",
-            circleColor: "6",
+            circleColor: "12345",
             detailIcon: Icons.trending_up),
       ],
     ),
@@ -256,18 +248,21 @@ final _appConfig = AllData(
         modeIcon: Icons.history,
         modeType: "z",
         modeTitle: "復習モード",
+        modeDescription: "・条件で問題を絞り込めるモードです。\n"
+            "・トレーニングモードと同じく5問または10問を選ぶことができます\n"
+            "・ヒントは最後の2文字以外利用できます。",
         isSmallerBetter: false,
       ),
       detail: [
         DetailData(
-            quizId: const QuizId(resisterOrigin: "復習モード", modeType: "z"),
-            sort: "",
-            displayLabel: "復習モード",
-            method: "",
-            description: "",
-            color: "6",
-            circleColor: "",
-            detailIcon: Icons.history),
+          quizId: const QuizId(resisterOrigin: "復習モード", modeType: "z"),
+          sort: "",
+          displayLabel: "復習モード",
+          method: "",
+          description: "",
+          color: "6",
+          circleColor: "",
+        ),
       ],
     )
   ],

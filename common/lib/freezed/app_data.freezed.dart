@@ -402,8 +402,6 @@ mixin _$AppData {
   List<String> get symbols => throw _privateConstructorUsedError;
   bool get isRotation => throw _privateConstructorUsedError;
   String get URL => throw _privateConstructorUsedError;
-  GamePageBuilder get mainGame => throw _privateConstructorUsedError;
-  LoadBuilder? get loadGame => throw _privateConstructorUsedError;
   SettingWidgetsBuilder? get settingWidgets =>
       throw _privateConstructorUsedError;
   PageConfig? get additionalPage1 => throw _privateConstructorUsedError;
@@ -429,8 +427,6 @@ abstract class $AppDataCopyWith<$Res> {
       List<String> symbols,
       bool isRotation,
       String URL,
-      GamePageBuilder mainGame,
-      LoadBuilder? loadGame,
       SettingWidgetsBuilder? settingWidgets,
       PageConfig? additionalPage1,
       PageConfig? additionalPage2,
@@ -462,8 +458,6 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
     Object? symbols = null,
     Object? isRotation = null,
     Object? URL = null,
-    Object? mainGame = null,
-    Object? loadGame = freezed,
     Object? settingWidgets = freezed,
     Object? additionalPage1 = freezed,
     Object? additionalPage2 = freezed,
@@ -492,14 +486,6 @@ class _$AppDataCopyWithImpl<$Res, $Val extends AppData>
           ? _value.URL
           : URL // ignore: cast_nullable_to_non_nullable
               as String,
-      mainGame: null == mainGame
-          ? _value.mainGame
-          : mainGame // ignore: cast_nullable_to_non_nullable
-              as GamePageBuilder,
-      loadGame: freezed == loadGame
-          ? _value.loadGame
-          : loadGame // ignore: cast_nullable_to_non_nullable
-              as LoadBuilder?,
       settingWidgets: freezed == settingWidgets
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
@@ -569,8 +555,6 @@ abstract class _$$AppDataImplCopyWith<$Res> implements $AppDataCopyWith<$Res> {
       List<String> symbols,
       bool isRotation,
       String URL,
-      GamePageBuilder mainGame,
-      LoadBuilder? loadGame,
       SettingWidgetsBuilder? settingWidgets,
       PageConfig? additionalPage1,
       PageConfig? additionalPage2,
@@ -602,8 +586,6 @@ class __$$AppDataImplCopyWithImpl<$Res>
     Object? symbols = null,
     Object? isRotation = null,
     Object? URL = null,
-    Object? mainGame = null,
-    Object? loadGame = freezed,
     Object? settingWidgets = freezed,
     Object? additionalPage1 = freezed,
     Object? additionalPage2 = freezed,
@@ -632,14 +614,6 @@ class __$$AppDataImplCopyWithImpl<$Res>
           ? _value.URL
           : URL // ignore: cast_nullable_to_non_nullable
               as String,
-      mainGame: null == mainGame
-          ? _value.mainGame
-          : mainGame // ignore: cast_nullable_to_non_nullable
-              as GamePageBuilder,
-      loadGame: freezed == loadGame
-          ? _value.loadGame
-          : loadGame // ignore: cast_nullable_to_non_nullable
-              as LoadBuilder?,
       settingWidgets: freezed == settingWidgets
           ? _value.settingWidgets
           : settingWidgets // ignore: cast_nullable_to_non_nullable
@@ -677,8 +651,6 @@ class _$AppDataImpl implements _AppData {
       required final List<String> symbols,
       required this.isRotation,
       required this.URL,
-      required this.mainGame,
-      this.loadGame,
       this.settingWidgets,
       this.additionalPage1,
       this.additionalPage2,
@@ -704,10 +676,6 @@ class _$AppDataImpl implements _AppData {
   @override
   final String URL;
   @override
-  final GamePageBuilder mainGame;
-  @override
-  final LoadBuilder? loadGame;
-  @override
   final SettingWidgetsBuilder? settingWidgets;
   @override
   final PageConfig? additionalPage1;
@@ -722,7 +690,7 @@ class _$AppDataImpl implements _AppData {
 
   @override
   String toString() {
-    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, mainGame: $mainGame, loadGame: $loadGame, settingWidgets: $settingWidgets, additionalPage1: $additionalPage1, additionalPage2: $additionalPage2, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
+    return 'AppData(appTitle: $appTitle, appIcon: $appIcon, symbols: $symbols, isRotation: $isRotation, URL: $URL, settingWidgets: $settingWidgets, additionalPage1: $additionalPage1, additionalPage2: $additionalPage2, bannerId: $bannerId, interId: $interId, rewardId: $rewardId)';
   }
 
   @override
@@ -737,10 +705,6 @@ class _$AppDataImpl implements _AppData {
             (identical(other.isRotation, isRotation) ||
                 other.isRotation == isRotation) &&
             (identical(other.URL, URL) || other.URL == URL) &&
-            (identical(other.mainGame, mainGame) ||
-                other.mainGame == mainGame) &&
-            (identical(other.loadGame, loadGame) ||
-                other.loadGame == loadGame) &&
             (identical(other.settingWidgets, settingWidgets) ||
                 other.settingWidgets == settingWidgets) &&
             (identical(other.additionalPage1, additionalPage1) ||
@@ -762,8 +726,6 @@ class _$AppDataImpl implements _AppData {
       const DeepCollectionEquality().hash(_symbols),
       isRotation,
       URL,
-      mainGame,
-      loadGame,
       settingWidgets,
       additionalPage1,
       additionalPage2,
@@ -787,8 +749,6 @@ abstract class _AppData implements AppData {
       required final List<String> symbols,
       required final bool isRotation,
       required final String URL,
-      required final GamePageBuilder mainGame,
-      final LoadBuilder? loadGame,
       final SettingWidgetsBuilder? settingWidgets,
       final PageConfig? additionalPage1,
       final PageConfig? additionalPage2,
@@ -806,10 +766,6 @@ abstract class _AppData implements AppData {
   bool get isRotation;
   @override
   String get URL;
-  @override
-  GamePageBuilder get mainGame;
-  @override
-  LoadBuilder? get loadGame;
   @override
   SettingWidgetsBuilder? get settingWidgets;
   @override

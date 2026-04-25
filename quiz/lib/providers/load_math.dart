@@ -7,7 +7,12 @@ import 'package:quiz/quiz.dart';
 import 'quiz_models.dart';
 
 Future<Map<int, List<PartData>>> load(DetailConfig quizinfo) async {
-  final csv = await rootBundle.loadString("assets/csv/quizdata.csv");
+  final isCalEasy = quizinfo.appData.appTitle == "appTitle";
+  print(
+      "Loading quiz data for ${quizinfo.detail.displayLabel} (isCalEasy: $isCalEasy)");
+  final csv = await rootBundle.loadString(isCalEasy
+      ? "packages/common/assets/csv/cal_easy_data.csv"
+      : "packages/common/assets/csv/math_data.csv");
   final rows = const CsvToListConverter().convert(csv);
   final Map<int, List<PartData>> scoreIndexMap = {};
 

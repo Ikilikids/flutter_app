@@ -8,14 +8,7 @@ import '../providers/word_stats_provider.dart';
 
 // --- メインWidget ---
 
-enum WordSortOption {
-  field,
-  word,
-  correctCount,
-  hintCount,
-  incorrectCount,
-  accuracyRate
-}
+enum WordSortOption { field, word, correctCount, incorrectCount, accuracyRate }
 
 class WordListPage extends HookConsumerWidget {
   const WordListPage({super.key});
@@ -38,7 +31,8 @@ class WordListPage extends HookConsumerWidget {
     // --- データ取得 (非同期) ---
     final integratedAsync = ref.watch(integratedEngQuizProvider);
     final integratedData = integratedAsync.value;
-
+    final bool isHigh =
+        ref.read(currentDetailConfigProvider).appData.appTitle.contains("高校");
     // 初回ロード時のみLoadingを表示
     if (integratedData == null) {
       return integratedAsync.when(
@@ -67,15 +61,27 @@ class WordListPage extends HookConsumerWidget {
     final filterOptions = useMemoized(() {
       final domains = wordListData.map((e) => e.middle).toSet().toList()
         ..sort();
-      final levels = wordListData.map((e) => e.totalScore).toSet().toList()
-        ..sort();
+
+      // ★修正: 中学版の場合はレベルの選択肢も1-4に絞る
+      Iterable<int> levelIterable = wordListData.map((e) => e.totalScore);
+      if (!isHigh) {
+        levelIterable = levelIterable.where((l) => l >= 1 && l <= 4);
+      }
+
+      final levels = levelIterable.toSet().toList()..sort();
       return (domains: domains, levels: levels);
-    }, [wordListData]);
+    }, [wordListData]); // isHighを依存配列に追加
 
     // フィルタリングとソートの適用
     final displayListData = useMemoized(() {
       List<PartData> list = List.from(wordListData);
 
+      // ★追加: 中学版（isHigh == false）の場合はレベル1-4のみに制限
+      if (!isHigh) {
+        list = list
+            .where((item) => item.totalScore >= 1 && item.totalScore <= 4)
+            .toList();
+      }
       // 1. カテゴリ絞り込み
       if (selectedDomains.value.isNotEmpty) {
         list = list
@@ -139,9 +145,6 @@ class WordListPage extends HookConsumerWidget {
             break;
           case WordSortOption.correctCount:
             cmp = statsA.correctCount.compareTo(statsB.correctCount);
-            break;
-          case WordSortOption.hintCount:
-            cmp = statsA.hintCount.compareTo(statsB.hintCount);
             break;
           case WordSortOption.incorrectCount:
             cmp = statsA.incorrectCount.compareTo(statsB.incorrectCount);
@@ -261,9 +264,6 @@ Widget _buildUnifiedControlPanel(
                 DropdownMenuItem(
                     value: WordSortOption.correctCount,
                     child: Text("正解数", style: TextStyle(fontSize: 13))),
-                DropdownMenuItem(
-                    value: WordSortOption.hintCount,
-                    child: Text("準正解数", style: TextStyle(fontSize: 13))),
                 DropdownMenuItem(
                     value: WordSortOption.incorrectCount,
                     child: Text("不正解数", style: TextStyle(fontSize: 13))),
@@ -638,7 +638,11 @@ class _WordCard extends HookConsumerWidget {
                         color: stats.star ? Colors.orange : Colors.grey,
                         size: 32,
                       ),
-                      onPressed: () => toggleMarker('star'),
+                      onPressed: () {
+                        toggleMarker('star');
+                        if (!stats.star)
+                          ref.read(appSoundProvider).playSound("star.mp3");
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -649,7 +653,11 @@ class _WordCard extends HookConsumerWidget {
                         color: stats.heart ? Colors.red : Colors.grey,
                         size: 32,
                       ),
-                      onPressed: () => toggleMarker('heart'),
+                      onPressed: () {
+                        toggleMarker('heart');
+                        if (!stats.heart)
+                          ref.read(appSoundProvider).playSound("heart.mp3");
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),

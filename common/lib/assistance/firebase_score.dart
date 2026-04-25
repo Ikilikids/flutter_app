@@ -159,12 +159,19 @@ class ScoreManager {
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
 
-          final userSet = data.userRef(uid).set({
-            'score': newScore,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          Future<void>? userSet;
 
-          await Future.wait([rankSet, userSet]);
+          if (data.periodType == PeriodType.all) {
+            userSet = data.userRef(uid).set({
+              'score': newScore,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+
+          await Future.wait([
+            rankSet,
+            if (userSet != null) userSet,
+          ]);
         }
 
         // 4. 順位取得 (targetId かつ PeriodType.all の時だけに限定)

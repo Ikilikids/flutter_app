@@ -132,7 +132,11 @@ class EngWordStatsTile extends HookConsumerWidget {
                   color: stats.star ? Colors.orange : Colors.grey,
                   size: 28,
                 ),
-                onPressed: () => toggleMarker('star'),
+                onPressed: () {
+                  toggleMarker('star');
+                  if (!stats.star)
+                    ref.read(appSoundProvider).playSound("star.mp3");
+                },
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
@@ -143,7 +147,11 @@ class EngWordStatsTile extends HookConsumerWidget {
                   color: stats.heart ? Colors.red : Colors.grey,
                   size: 28,
                 ),
-                onPressed: () => toggleMarker('heart'),
+                onPressed: () {
+                  toggleMarker('heart');
+                  if (!stats.heart)
+                    ref.read(appSoundProvider).playSound("heart.mp3");
+                },
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
