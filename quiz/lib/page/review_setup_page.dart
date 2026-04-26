@@ -332,8 +332,8 @@ class ReviewSetupPage extends HookConsumerWidget {
                         heart: heart,
                       );
                       ref
-                          .read(userStatusNotifierProvider.notifier)
-                          .updateQcount(
+                          .read(quizCountNotifierProvider.notifier)
+                          .selectQuizCount(
                             QuizId(resisterOrigin: "復習モード", modeType: "z"),
                             qCount,
                           );

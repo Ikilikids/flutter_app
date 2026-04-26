@@ -29,7 +29,6 @@ export 'pages/mode_selection_page.dart';
 export 'pages/pipi_screen.dart';
 export 'pages/ranking_page.dart';
 export 'pages/settings_page.dart';
-// providers
 export 'providers/app_locale.dart';
 export 'providers/app_number.dart';
 export 'providers/app_shared.dart';
@@ -38,8 +37,12 @@ export 'providers/app_theme.dart';
 export 'providers/app_uid.dart';
 export 'providers/audio_provider.dart';
 export 'providers/my_rank_provider.dart';
+export 'providers/status/part/button_type.dart';
+export 'providers/status/part/quiz_count.dart';
+export 'providers/status/part/score.dart';
+// providers
+export 'providers/status/status.dart';
 export 'providers/ui_provider.dart';
-export 'providers/user_status_provider.dart';
 export 'src/generated/l10n/app_localizations.dart';
 // widgets
 export 'widgets/app_ad_scaffold.dart';

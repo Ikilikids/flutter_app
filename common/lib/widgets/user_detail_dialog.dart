@@ -42,7 +42,8 @@ class UserDetailDialog extends HookConsumerWidget {
               futures.add((() async {
                 final summary = await ScoreManager.getRankingSummary(
                   uid: uid,
-                  quizId: QuizId(resisterOrigin: tab.id, modeType: modeType),
+                  mode: modeType,
+                  quizId: tab.id,
                   isSmallerBetter: midData.modeData.isSmallerBetter,
                 );
                 newDataMap[docId] = summary;

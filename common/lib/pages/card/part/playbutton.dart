@@ -25,11 +25,13 @@ class PlayButton extends HookConsumerWidget {
       ref.read(selectedQuizIdProvider.notifier).update(quizId);
       if (qcount != null) {
         ref
-            .read(userStatusNotifierProvider.notifier)
-            .updateQcount(quizId, qcount!);
+            .read(quizCountNotifierProvider.notifier)
+            .selectQuizCount(quizId, qcount!);
       }
       if (config.modeData.islimited) {
-        await ref.read(userStatusNotifierProvider.notifier).recordPlay(quizId);
+        await ref
+            .read(playCountNotifierProvider.notifier)
+            .incrementPlayCount(quizId);
       }
       ref.read(audioPlayerManagerProvider.notifier).stop();
       if (context.mounted) {
@@ -43,9 +45,7 @@ class PlayButton extends HookConsumerWidget {
     void handleWatchAd() {
       if (RewardedAdManager.isAdReady) {
         RewardedAdManager.showAd(onReward: () async {
-          await ref
-              .read(userStatusNotifierProvider.notifier)
-              .grantReward(quizId);
+          await ref.read(rewardNotifierProvider.notifier).rewardGrant(quizId);
         });
       } else {
         RewardedAdManager.loadAd();

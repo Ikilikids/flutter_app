@@ -129,11 +129,11 @@ class CommonRankingPage extends HookConsumerWidget {
         isLoading.value = true;
         final modeType = gameData.modeData.modeType;
         // 直接IDを結合してキーを作成
-        final rankingKey = "${subjectId}_${modeType}";
 
         // ScoreManager.getRanking を再び使用（uidが含まれるようになったため）
         final data = await ScoreManager.getRanking(
-          rankingId: rankingKey,
+          modeType: modeType,
+          subjectId: subjectId,
           periodType: periodType,
           isSmallerBetter: gameData.isSmallerBetter,
         );

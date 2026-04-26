@@ -138,8 +138,8 @@ void expandForAppTitle(
   if (list == null || list.isEmpty) return;
   int qCount = quizinfo.detail.sort == "4867" ? 10 : 20;
   ref
-      .read(userStatusNotifierProvider.notifier)
-      .updateQcount(quizinfo.detail.quizId, qCount);
+      .read(quizCountNotifierProvider.notifier)
+      .selectQuizCount(quizinfo.detail.quizId, qCount);
 
   final count = qCount ~/ list.length;
   List<PartData> expanded = [];

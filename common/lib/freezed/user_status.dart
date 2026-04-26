@@ -11,31 +11,14 @@ class QuizId with _$QuizId {
     required String modeType,
   }) = _QuizId;
 
+  factory QuizId.fromString(String key) {
+    final parts = key.split('_'); // 't_101' -> ['t', '101']
+    return QuizId(
+      resisterOrigin: parts[0],
+      modeType: parts[1],
+    );
+  }
+
   @override
   String toString() => '${resisterOrigin}_$modeType';
-}
-
-enum QuizButtonType {
-  play,
-  playSecond,
-  watchAd,
-  alreadyPlayed,
-}
-
-@freezed
-class QuizStatus with _$QuizStatus {
-  const factory QuizStatus({
-    required QuizId id,
-    @Default(0) num highScore,
-    @Default(QuizButtonType.play) QuizButtonType buttonType,
-    @Default(0) int playCount,
-    @Default(5) int qCount,
-  }) = _QuizStatus;
-}
-
-@freezed
-class UserStatus with _$UserStatus {
-  const factory UserStatus({
-    required Map<QuizId, QuizStatus> quizzes,
-  }) = _UserStatus;
 }

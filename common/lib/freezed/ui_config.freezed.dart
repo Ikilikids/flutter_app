@@ -269,7 +269,7 @@ class _$DetailConfigCopyWithImpl<$Res, $Val extends DetailConfig>
     Object? modeData = null,
     Object? detail = null,
     Object? highScore = null,
-    Object? buttonType = null,
+    Object? buttonType = freezed,
     Object? qcount = null,
   }) {
     return _then(_value.copyWith(
@@ -289,7 +289,7 @@ class _$DetailConfigCopyWithImpl<$Res, $Val extends DetailConfig>
           ? _value.highScore
           : highScore // ignore: cast_nullable_to_non_nullable
               as num,
-      buttonType: null == buttonType
+      buttonType: freezed == buttonType
           ? _value.buttonType
           : buttonType // ignore: cast_nullable_to_non_nullable
               as QuizButtonType,
@@ -372,7 +372,7 @@ class __$$DetailConfigImplCopyWithImpl<$Res>
     Object? modeData = null,
     Object? detail = null,
     Object? highScore = null,
-    Object? buttonType = null,
+    Object? buttonType = freezed,
     Object? qcount = null,
   }) {
     return _then(_$DetailConfigImpl(
@@ -392,7 +392,7 @@ class __$$DetailConfigImplCopyWithImpl<$Res>
           ? _value.highScore
           : highScore // ignore: cast_nullable_to_non_nullable
               as num,
-      buttonType: null == buttonType
+      buttonType: freezed == buttonType
           ? _value.buttonType
           : buttonType // ignore: cast_nullable_to_non_nullable
               as QuizButtonType,
@@ -445,14 +445,14 @@ class _$DetailConfigImpl extends _DetailConfig {
             (identical(other.detail, detail) || other.detail == detail) &&
             (identical(other.highScore, highScore) ||
                 other.highScore == highScore) &&
-            (identical(other.buttonType, buttonType) ||
-                other.buttonType == buttonType) &&
+            const DeepCollectionEquality()
+                .equals(other.buttonType, buttonType) &&
             (identical(other.qcount, qcount) || other.qcount == qcount));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, appData, modeData, detail, highScore, buttonType, qcount);
+  int get hashCode => Object.hash(runtimeType, appData, modeData, detail,
+      highScore, const DeepCollectionEquality().hash(buttonType), qcount);
 
   /// Create a copy of DetailConfig
   /// with the given fields replaced by the non-null parameter values.

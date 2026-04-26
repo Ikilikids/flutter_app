@@ -40,21 +40,6 @@ enum PeriodType {
   }
 }
 
-CollectionReference<Map<String, dynamic>> commonRank(
-    String id, PeriodType periodType) {
-  return FirebaseFirestore.instance
-      .collection('rankings_v5')
-      .doc("${id}_${periodType.value}")
-      .collection('users');
-}
-
-CollectionReference<Map<String, dynamic>> commonUser(String uid) {
-  return FirebaseFirestore.instance
-      .collection('users2')
-      .doc(uid)
-      .collection('scores');
-}
-
 // --- 2. 登録データクラス ---
 class ResisterData {
   final String id;
@@ -68,15 +53,6 @@ class ResisterData {
     required this.score,
     required this.forceAdd,
   });
-
-  // enumのプロパティを直接使うので、外部のMapが不要になる
-  DocumentReference<Map<String, dynamic>> rankRef(String uid) {
-    return commonRank(id, periodType).doc(uid);
-  }
-
-  DocumentReference<Map<String, dynamic>> userRef(String uid) {
-    return commonUser(uid).doc(id);
-  }
 }
 
 class ScoreManager {
@@ -85,139 +61,171 @@ class ScoreManager {
     if (user == null) return;
     final uid = user.uid;
 
-    // 基本情報取得
     final quizinfo = ref.read(currentDetailConfigProvider);
-    final quizId = quizinfo.detail.quizId;
+    final modeName = quizinfo.detail.quizId.modeType;
+    final resister = quizinfo.detail.quizId.resisterOrigin;
     final isBattle = quizinfo.modeData.isbattle;
     final isSmallerBetter = quizinfo.modeData.isSmallerBetter;
     final userName = ref.read(appUserNameProvider).requireValue;
     final session = ref.read(quizSessionNotifierProvider);
 
+    // 1. スコア準備
     final double mainScore = switch (quizinfo.timeMode) {
       TimeMode.timeAttack => ref.read(quizElapsedTimerProvider).toDouble(),
-      TimeMode.countDown => session.totalScore.toDouble(),
-      TimeMode.learning => session.correctCount.toDouble(),
+      _ => session.totalScore.toDouble(),
     };
-
-    final List<ResisterData> registers = [];
-
-    // --- A. データ構築フェーズ (全部リストに詰める) ---
-
-    // 1. メインスコア (クイズ単位)
     final roundedMain = (mainScore * 100).roundToDouble() / 100;
-    for (var type in PeriodType.values) {
-      registers.add(ResisterData(
-        id: quizId.toString(),
-        periodType: type,
-        score: roundedMain,
-        forceAdd: !isBattle,
-      ));
-    }
 
-    // 2. カテゴリスコア (カテゴリ別 + 全合計をまとめて処理)
-
+    // カテゴリスコアの計算（全合計を含む）
     final total = session.categortScore.values.fold(0.0, (s, v) => s + v);
     final allScores = {...session.categortScore, '全合計': total};
 
-    allScores.forEach((catName, catScore) {
-      final roundedCat = (catScore * 100).roundToDouble() / 100;
-      for (var type in PeriodType.values) {
-        registers.add(ResisterData(
-          id: '${catName}_t',
-          periodType: type,
-          score: roundedCat,
-          forceAdd: true,
-        ));
-      }
-    });
-
-    // --- B. 書き込み・順位取得フェーズ ---
-    final Map<PeriodType, double> scores = {};
-    final Map<PeriodType, int> ranks = {};
-    final targetIdForReturn = isBattle ? quizId.toString() : '全合計_t';
-
     try {
-      // 全てのリクエストを並列で実行
-      await Future.wait(registers.map((data) async {
-        // 1. 現在のスコアを取得
-        final snap = await data.rankRef(uid).get();
+      final batch = FirebaseFirestore.instance.batch();
+
+      // A. メインスコアの保存
+      // 順位取得時に使うため、最新の計算後スコアを保持する変数
+      double latestMainTotal = 0.0;
+
+      for (var type in PeriodType.values) {
+        final rankRef = AppPath.rankingLog(modeName, resister, type, uid);
+        final snap = await rankRef.get();
         double prev = (snap.data()?['score'] as num?)?.toDouble() ?? 0.0;
-        double newScore = prev;
 
-        if (mainScore > 0) {
-          // 2. スコア計算
-          newScore = data.forceAdd
-              ? prev + data.score
-              : (isBetter(data.score, prev, isSmallerBetter)
-                  ? data.score
-                  : prev);
+        // バトル以外なら加算、バトル（記録更新系）ならisBetterで判定
+        double newScore = !isBattle
+            ? (prev + roundedMain)
+            : (isBetter(roundedMain, prev, isSmallerBetter)
+                ? roundedMain
+                : prev);
 
-          // 3. 保存 (Future.wait内なのでこれらも並列)
-          final rankSet = data.rankRef(uid).set({
-            'score': newScore,
-            'userName': userName,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        if (type == PeriodType.all) latestMainTotal = newScore;
 
-          Future<void>? userSet;
-
-          if (data.periodType == PeriodType.all) {
-            userSet = data.userRef(uid).set({
+        batch.set(
+            rankRef,
+            {
               'score': newScore,
+              'userName': userName,
               'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+            },
+            SetOptions(merge: true));
+
+        if (type == PeriodType.all) {
+          batch.set(
+              AppPath.userScore(uid, modeName, resister),
+              {
+                'score': newScore,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+        }
+      }
+
+      // B. カテゴリスコアの保存
+      final Map<String, double> latestCatTotals = {};
+
+      for (var entry in allScores.entries) {
+        final catId = entry.key;
+        final catScore = (entry.value * 100).roundToDouble() / 100;
+
+        for (var type in PeriodType.values) {
+          // カテゴリ累計は "count" モードの階層に固定
+          final rankRef = AppPath.rankingLog("count", catId, type, uid);
+          final snap = await rankRef.get();
+          double prev = (snap.data()?['score'] as num?)?.toDouble() ?? 0.0;
+          double newTotal = prev + catScore;
+
+          if (type == PeriodType.all) latestCatTotals[catId] = newTotal;
+
+          batch.set(
+              rankRef,
+              {
+                'score': newTotal,
+                'userName': userName,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+
+          if (type == PeriodType.all) {
+            batch.set(
+                AppPath.userScore(uid, "count", catId),
+                {
+                  'score': newTotal,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                },
+                SetOptions(merge: true));
           }
-
-          await Future.wait([
-            rankSet,
-            if (userSet != null) userSet,
-          ]);
         }
+      }
 
-        // 4. 順位取得 (targetId かつ PeriodType.all の時だけに限定)
-        // もし月間・週間の順位も欲しければ、ここを調整
-        if (data.id == targetIdForReturn) {
-          final q = commonRank(data.id, data.periodType);
-          final countSnap = isSmallerBetter
-              ? await q.where('score', isLessThan: newScore).count().get()
-              : await q.where('score', isGreaterThan: newScore).count().get();
+      // 書き込み実行
+      await batch.commit();
 
-          scores[data.periodType] = newScore;
-          ranks[data.periodType] = (countSnap.count ?? 0) + 1;
-        }
+      // C. 順位取得 & Provider更新
+      final Map<PeriodType, double> finalScores = {};
+      final Map<PeriodType, int> finalRanks = {};
 
-        // 5. ローカル更新
-        if (data.id == quizId.toString() && data.periodType == PeriodType.all) {
+      // 順位を計算する対象を決定
+      final targetId = isBattle ? resister : '全合計';
+      final targetMode = isBattle ? modeName : 'count';
+      final targetScoreForRank =
+          isBattle ? latestMainTotal : latestCatTotals['全合計']!;
+
+      await Future.wait(PeriodType.values.map((type) async {
+        final rankCol =
+            AppPath.rankingLog(targetMode, targetId, type, uid).parent;
+
+        final countSnap = isSmallerBetter
+            ? await rankCol
+                .where('score', isLessThan: targetScoreForRank)
+                .count()
+                .get()
+            : await rankCol
+                .where('score', isGreaterThan: targetScoreForRank)
+                .count()
+                .get();
+
+        final myRank = (countSnap.count ?? 0) + 1;
+
+        finalScores[type] = targetScoreForRank;
+        finalRanks[type] = myRank;
+
+        // ローカル更新 (メインスコアかつ全期間のみ)
+        if (type == PeriodType.all && isBattle) {
           ref
-              .read(userStatusNotifierProvider.notifier)
-              .updateScoreLocally(quizId, newScore);
+              .read(scoreNotifierProvider.notifier)
+              .updateScoreLocally(quizinfo.detail.quizId, latestMainTotal);
         }
       }));
 
-      // プロバイダー更新
-      ref.read(myScoreMapProvider.notifier).setMap(scores);
-      ref.read(myRankMapProvider.notifier).setMap(ranks);
+      // Providerへ最終反映
+      ref.read(myScoreMapProvider.notifier).setMap(finalScores);
+      ref.read(myRankMapProvider.notifier).setMap(finalRanks);
     } catch (e) {
       debugPrint('Error: $e');
     }
   }
 
   static Future<List<RankingEntry>> getRanking({
-    required String rankingId,
+    required String modeType,
+    required String subjectId,
     required PeriodType periodType,
     required bool isSmallerBetter,
   }) async {
-    final snap = await commonRank(rankingId, periodType)
-        .orderBy('score', descending: !isSmallerBetter)
-        .limit(30)
-        .get();
+    // rankings_v6/{mode}/quizzes/{quizId}/periods/{period}/users コレクションを取得
+    final snap =
+        await AppPath.rankingLog(modeType, subjectId, periodType, 'dummy')
+            .parent // doc(uid) の親である 'users' コレクションを参照
+            .orderBy('score', descending: !isSmallerBetter)
+            .limit(30)
+            .get();
 
     return snap.docs.map((d) {
       final data = d.data();
       return RankingEntry(
         uid: d.id,
         score: (data['score'] as num).toDouble(),
-        userName: data['userName'] ?? 'defaultUsername',
+        userName: data['userName'] ?? 'Unknown',
         date: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
     }).toList();
@@ -225,40 +233,36 @@ class ScoreManager {
 
   static Future<UserDialogData> getRankingSummary({
     required String uid,
-    required QuizId quizId,
+    required String mode, // modeを追加
+    required String quizId,
     required bool isSmallerBetter,
   }) async {
-    final docId = quizId.toString();
-
     try {
-      // 1. 自分のデータを取得
-      final doc = await commonUser(uid).doc(docId).get();
+      // 1. 自分のデータを新階層(users2/{uid}/modes/{mode}/quizzes/{quizId})から取得
+      final doc = await AppPath.userScore(uid, mode, quizId).get();
       final data = doc.exists ? doc.data() : null;
 
       final myScore = (data?['score'] as num?)?.toDouble() ?? 0.0;
       final updatedAt = (data?['updatedAt'] as Timestamp?)?.toDate();
 
-      // 2. クエリの準備
-      final rankingId = quizId.toString();
-      final q = commonRank(rankingId, PeriodType.all);
+      // 2. ランキング（PeriodType.all）の参照
+      final rankCol =
+          AppPath.rankingLog(mode, quizId, PeriodType.all, 'dummy').parent;
 
-      // 並列実行するリスト
       final futures = <Future>[
-        // トップスコアは常に取得する
-        q.orderBy('score', descending: !isSmallerBetter).limit(1).get(),
+        // トップスコア取得
+        rankCol.orderBy('score', descending: !isSmallerBetter).limit(1).get(),
       ];
 
-      // 自分のスコアがある場合のみ、順位計算を追加
       if (myScore > 0) {
+        // 順位カウント
         final rankQuery = isSmallerBetter
-            ? q.where('score', isLessThan: myScore).count().get()
-            : q.where('score', isGreaterThan: myScore).count().get();
+            ? rankCol.where('score', isLessThan: myScore).count().get()
+            : rankCol.where('score', isGreaterThan: myScore).count().get();
         futures.add(rankQuery);
       }
 
       final results = await Future.wait(futures);
-
-      // 結果の抽出
       final topSnap = results[0] as QuerySnapshot<Map<String, dynamic>>;
       final topScore = topSnap.docs.isNotEmpty
           ? (topSnap.docs.first.data()['score'] as num?)?.toDouble() ?? 0.0
@@ -283,25 +287,35 @@ class ScoreManager {
   }
 
   // 必要なスコアIDのリストを受け取って、それらだけを一括取得する
-  static Future<Map<String, double>> getScoresByIds(List<String> docIds) async {
+  static Future<Map<QuizId, double>> getScoresAll() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || docIds.isEmpty) return {};
+    if (user == null) return {};
 
-    final Map<String, double> scores = {};
+    final uid = user.uid;
+    final Map<QuizId, double> scores = {};
 
-    // Firestore の whereIn は一度に 30 件までなので分割して取得
-    for (var i = 0; i < docIds.length; i += 30) {
-      final chunk =
-          docIds.sublist(i, i + 30 > docIds.length ? docIds.length : i + 30);
+    // アプリで使う可能性のあるモードを「決め打ち」で定義しておく
+    // ※ここに含まれていれば、親ドキュメントが空（斜体）でも中身を拾える
+    final possibleModes = ['t', 'g', 'battle', 'timeAttack'];
 
-      final snap = await commonUser(user.uid)
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
+    try {
+      await Future.wait(possibleModes.map((mode) async {
+        // 親の doc(mode) が空でも、直接その下の collection('quizzes') は叩ける
+        final quizzesSnap = await FirebaseFirestore.instance
+            .collection('users7')
+            .doc(uid)
+            .collection('modes')
+            .doc(mode) // ここが斜体でもお構いなし
+            .collection('quizzes')
+            .get();
 
-      for (var doc in snap.docs) {
-        scores[doc.id] = (doc.data()['score'] as num?)?.toDouble() ?? 0.0;
-        print("Fetched score for ${doc.id}: ${scores[doc.id]}");
-      }
+        for (var doc in quizzesSnap.docs) {
+          final score = (doc.data()['score'] as num?)?.toDouble() ?? 0.0;
+          scores[QuizId(resisterOrigin: doc.id, modeType: mode)] = score;
+        }
+      }));
+    } catch (e) {
+      debugPrint('Error: $e');
     }
 
     return scores;
@@ -328,4 +342,32 @@ class UserDialogData {
         rank: 0,
         topScore: 0.0,
       );
+}
+
+class AppPath {
+  // ランキング側のパス: rankings_v6/{mode}/quizzes/{quizId}/periods/{period}/users/{uid}
+  static DocumentReference<Map<String, dynamic>> rankingLog(
+      String mode, String quizId, PeriodType period, String uid) {
+    return FirebaseFirestore.instance
+        .collection('rankings_v7')
+        .doc(mode)
+        .collection('quizzes')
+        .doc(quizId)
+        .collection('periods')
+        .doc(period.value)
+        .collection('users')
+        .doc(uid);
+  }
+
+  // ユーザー側のパス: users2/{uid}/modes/{mode}/quizzes/{quizId}
+  static DocumentReference<Map<String, dynamic>> userScore(
+      String uid, String mode, String quizId) {
+    return FirebaseFirestore.instance
+        .collection('users7')
+        .doc(uid)
+        .collection('modes')
+        .doc(mode)
+        .collection('quizzes')
+        .doc(quizId);
+  }
 }

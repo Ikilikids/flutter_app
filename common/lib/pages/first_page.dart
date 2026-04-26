@@ -23,7 +23,7 @@ class CommonFirstPage extends HookConsumerWidget {
     // --- State & Controllers (Hooks) ---
     final notifier = ref.read(audioPlayerManagerProvider.notifier);
     final name = ref.watch(appUserNameProvider);
-    final status = ref.watch(userStatusNotifierProvider);
+    final status = ref.watch(quizStatusMapProvider);
     final isReady = name.hasValue && status.hasValue;
     final isNavigating = useState(false);
 

@@ -6,7 +6,7 @@ part of 'ui_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$quizDetailHash() => r'883dac864ae47cf9cae2950eac5194b979f6a89d';
+String _$quizDetailHash() => r'cdf8df26314c0e587d80227a6f4b1d324368c527';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -65,7 +65,7 @@ class QuizDetailFamily extends Family<DetailConfig> {
   }
 
   static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
-    userStatusNotifierProvider
+    quizStatusMapProvider
   ];
 
   @override
@@ -73,8 +73,8 @@ class QuizDetailFamily extends Family<DetailConfig> {
 
   static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
       <ProviderOrFamily>{
-    userStatusNotifierProvider,
-    ...?userStatusNotifierProvider.allTransitiveDependencies
+    quizStatusMapProvider,
+    ...?quizStatusMapProvider.allTransitiveDependencies
   };
 
   @override

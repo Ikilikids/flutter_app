@@ -26,14 +26,13 @@ class SelectedQuizId extends _$SelectedQuizId {
 }
 
 /// ③ 1件合体工場 (Family)
-@Riverpod(keepAlive: true, dependencies: [UserStatusNotifier])
+@Riverpod(keepAlive: true, dependencies: [quizStatusMap])
 DetailConfig quizDetail(Ref ref, QuizId id) {
   final masterMid =
       allData.mid.firstWhere((m) => m.modeData.modeType == id.modeType);
   final detailData = masterMid.detail.firstWhere((d) => d.quizId == id);
 
-  final status =
-      ref.watch(userStatusNotifierProvider.select((s) => s.value?.quizzes[id]));
+  final status = ref.watch(quizStatusMapProvider.select((s) => s.value?[id]));
 
   return DetailConfig(
     appData: allData.appData,

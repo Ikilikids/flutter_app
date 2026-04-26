@@ -1,27 +1,26 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'audio_provider.dart';
+part of 'quiz_count.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$audioPlayerManagerHash() =>
-    r'a5ef59803204275c979fe11e98cda7229fb78c33';
+String _$quizCountNotifierHash() => r'a538efae53b5eb8f581cea180d227e56ca7a009c';
 
-/// See also [AudioPlayerManager].
-@ProviderFor(AudioPlayerManager)
-final audioPlayerManagerProvider =
-    NotifierProvider<AudioPlayerManager, AudioPlayer>.internal(
-  AudioPlayerManager.new,
-  name: r'audioPlayerManagerProvider',
+/// See also [QuizCountNotifier].
+@ProviderFor(QuizCountNotifier)
+final quizCountNotifierProvider =
+    AsyncNotifierProvider<QuizCountNotifier, Map<QuizId, int>>.internal(
+  QuizCountNotifier.new,
+  name: r'quizCountNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$audioPlayerManagerHash,
+      : _$quizCountNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$AudioPlayerManager = Notifier<AudioPlayer>;
+typedef _$QuizCountNotifier = AsyncNotifier<Map<QuizId, int>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
